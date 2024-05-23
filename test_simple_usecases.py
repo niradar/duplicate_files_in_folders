@@ -147,3 +147,30 @@ def test_extra_logging(setup_teardown):
     # Check that move_to has files 3,4
     move_to_files = set(os.listdir(move_to_dir))
     assert move_to_files == set([f"{i}.jpg" for i in range(3, 5)]), "Not all files have been moved to move_to directory"
+
+
+# test that if args.run but delete_empty_folders is false, then empty folders are not deleted
+def test_delete_empty_folders_false(setup_teardown):
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    setup_test_files(range(1, 6), range(1, 6))
+
+    # copy to source sub1 folder too
+    os.makedirs(os.path.join(source_dir, "sub1"))
+    copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
+
+    common_args.append("--run")
+    common_args.append("--no-delete_empty_folders")
+    args = parse_arguments(common_args)
+    main(args)
+
+    # sub1 folder should still be there
+    source_files = set(os.listdir(source_dir))
+    assert source_files == {"sub1"}, "Empty folders have been deleted"
+
+    move_to_files = set(os.listdir(move_to_dir))
+    assert move_to_files == set(
+        [f"{i}.jpg" for i in range(1, 6)] + ["source_dups"]), "Not all files have been moved to move_to directory"
+
+    # Check no change to target
+    target_files = set(os.listdir(target_dir))
+    assert target_files == set([f"{i}.jpg" for i in range(1, 6)]), "Target directory files have changed"
