@@ -3,28 +3,63 @@ import os
 import hashlib
 from datetime import datetime, timedelta
 import logging
+from threading import Lock
 
 logger = logging.getLogger(__name__)
 
 
 class HashManager:
     """Manages the storage and retrieval of file hashes."""
+    _instance = None
+    _lock = Lock()
 
     MAX_CACHE_TIME = 60 * 60 * 24 * 14  # max cache time, in seconds - 2 weeks
     AUTO_SAVE_THRESHOLD = 10  # Number of unsaved changes before auto-saving
 
+    def __new__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance.__initialized = False
+        return cls._instance
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            raise Exception("HashManager has not been initialized. Please initialize it first.")
+        return cls._instance
+
+    @classmethod
+    def reset_instance(cls):
+        with cls._lock:
+            cls._instance = None
+
     def __init__(self, target_folder: str = None, filename: str = 'hashes.pkl'):
-        """Initialize HashManager with the filename to store hashes."""
+        if self.__initialized:
+            return
+        self.__initialized = True
+
         self.filename = filename
         self.target_folder = target_folder
         self.persistent_data = self.load_data()
         self.temporary_data = pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
         self.unsaved_changes = 0
 
+        # attributes for cache hits and requests
+        self.persistent_cache_hits = 0
+        self.persistent_cache_requests = 0
+        self.temporary_cache_hits = 0
+        self.temporary_cache_requests = 0
+
     def load_data(self) -> pd.DataFrame:
-        """Load data from the file, or create a new DataFrame if the file doesn't exist."""
+        """Load only data relevant to the target folder from the file, or create a new DataFrame if the file doesn't
+        exist."""
         if os.path.exists(self.filename):
-            return pd.read_pickle(self.filename)
+            all_data = pd.read_pickle(self.filename)
+            if self.target_folder:
+                relevant_data = all_data[all_data['file_path'].str.startswith(self.target_folder)]
+                return relevant_data
+            return all_data
         else:
             logger.info(f"No existing hash file found. Creating a new one: {self.filename}")
             return pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
@@ -57,12 +92,22 @@ class HashManager:
 
     def get_hash(self, file_path: str) -> str:
         """Get the hash of a file, computing and storing it if necessary."""
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        """Get the hash of a file, computing and storing it if necessary."""
         if self.target_folder and file_path.startswith(self.target_folder):
+            self.persistent_cache_requests += 1  # Increment persistent cache requests
             result = self.persistent_data[self.persistent_data.file_path == file_path]
         else:
+            self.temporary_cache_requests += 1  # Increment temporary cache requests
             result = self.temporary_data[self.temporary_data.file_path == file_path]
 
         if not result.empty:
+            if self.target_folder and file_path.startswith(self.target_folder):
+                self.persistent_cache_hits += 1  # Increment persistent cache hits
+            else:
+                self.temporary_cache_hits += 1  # Increment temporary cache hits
             return result['hash_value'].values[0]
         else:
             hash_value = self.compute_hash(file_path)
@@ -109,6 +154,15 @@ class HashManager:
         except Exception as e:
             logger.error(f"Error hashing {file_path}: {e}")
             return ""
+
+    # debug method to print the current state of the HashManager
+    def print_state(self):
+        logger.info(f"Persistent data:\n{self.persistent_data}")
+        logger.info(f"Temporary data:\n{self.temporary_data}")
+        logger.info(f"Persistent cache hits: {self.persistent_cache_hits}")
+        logger.info(f"Persistent cache requests: {self.persistent_cache_requests}")
+        logger.info(f"Temporary cache hits: {self.temporary_cache_hits}")
+        logger.info(f"Temporary cache requests: {self.temporary_cache_requests}")
 
 
 # Example usage

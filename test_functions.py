@@ -1,4 +1,4 @@
-from df_finder3 import parse_arguments, get_file_hash, file_hash_cache, check_and_update_filename, \
+from df_finder3 import parse_arguments, check_and_update_filename, \
     clean_source_duplications, delete_empty_folders_in_tree, validate_duplicate_files_destination, validate_folder, \
     compare_files, collect_source_files, get_file_key, any_is_subfolder_of
 from test_helpers import *
@@ -43,54 +43,36 @@ def test_parse_arguments():
 
     # Test case 4: --ignore_diff argument with invalid values
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder, '--ignore_diff', 'invalid'])
+        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder, '--ignore_diff',
+                         'invalid'])
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 1
 
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder, '--ignore_diff', 'mdate,invalid'])
+        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+                         '--ignore_diff', 'mdate,invalid'])
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 1
 
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder, '--ignore_diff', 'mdate,checkall'])
+        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+                         '--ignore_diff', 'mdate,checkall'])
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 1
 
-    args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder, '--ignore_diff', 'checkall'])
+    args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+                            '--ignore_diff', 'checkall'])
     assert args.ignore_diff == set()
-
-
-# Pytest test cases for get_file_hash function
-def test_get_file_hash():
-    non_exist_file = 'tests/test-hash/non_exist_file.txt'
-    exist_file = 'tests/test-hash/20220526_110219.jpg'
-    exist_file_hash = '1f97ef2005daa54451c3ab2844471f4209332f68cfd3aeeda298a2d7aca2cea2'
-
-    # Test case 1: Test for a file that does not exist
-    with pytest.raises(FileNotFoundError):
-        get_file_hash(non_exist_file)
-
-
-
-    # Test case 2: Test for a file that exists
-    file_hash = get_file_hash(exist_file)
-    assert file_hash == exist_file_hash
-    assert file_hash_cache[exist_file] == exist_file_hash
-
-    # Test case 3: Test for a file that exists and is already in the cache
-    file_hash = get_file_hash(exist_file)
-    assert file_hash == exist_file_hash
 
 
 # Pytest test cases for check_and_update_filename function
 def test_check_and_update_filename():
     # Test case 1: Test for a file that does not exist
-    non_exist_file = 'tests/test-hash/non_exist_file.txt'
+    non_exist_file = 'tests/non_exist_file.txt'
     assert check_and_update_filename(non_exist_file) == non_exist_file
 
     # Test case 2: Test for a file that exists
-    exist_file = 'tests/test-hash/20220526_110219.jpg'
+    exist_file = 'tests/imgs/5.jpg'
     assert check_and_update_filename(exist_file) != exist_file
 
 
@@ -103,7 +85,6 @@ def test_clean_source_duplications(setup_teardown):
     # Setup the files in the source directory
     copy_files(range(1, 6), source_dir)
     copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
-
 
     args = parse_arguments(common_args)
     unique_duplicate_files_found, duplicate_files_moved = clean_source_duplications(args)
@@ -313,13 +294,13 @@ def test_validate_duplicate_files_destination(setup_teardown):
     assert excinfo.value.code == 1
 
     # test case 3: folder exist
-    assert validate_duplicate_files_destination(source_dir,run_mode=True) is True
+    assert validate_duplicate_files_destination(source_dir, run_mode=True) is True
 
     # test case 4: same as test case 1 but with run_mode=False
-    assert validate_duplicate_files_destination(os.path.join(source_dir, "sub1"),run_mode=False) is True
+    assert validate_duplicate_files_destination(os.path.join(source_dir, "sub1"), run_mode=False) is True
 
     # test case 5: non-existing folder but can be created, run_mode=False
-    assert validate_duplicate_files_destination(os.path.join(source_dir, "sub_new"),run_mode=False) is True
+    assert validate_duplicate_files_destination(os.path.join(source_dir, "sub_new"), run_mode=False) is True
 
 
 def test_validate_folder(setup_teardown):
@@ -397,7 +378,8 @@ def test_collect_source_files_simple(setup_teardown):
 
     args = parse_arguments(common_args)
     source_files = collect_source_files(args)
-    source_duplicates = {src_key: src_filepaths for src_key, src_filepaths in source_files.items() if len(src_filepaths) > 1}
+    source_duplicates = {src_key: src_filepaths for src_key, src_filepaths in source_files.items()
+                         if len(src_filepaths) > 1}
     assert len(source_duplicates) == 2, "Unique duplicate files found"
     assert source_duplicates == {
         get_file_key(args, os.path.join(source_dir, "3.jpg")): [(os.path.join(source_dir, "3.jpg"), 1), (os.path.join(source_dir, "sub1", "3.jpg"), 2)],

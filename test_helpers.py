@@ -1,8 +1,9 @@
 import pytest
 import os
 import shutil
+
+from hash_manager import HashManager
 from logging_config import setup_logging
-from df_finder3 import setup_hash
 
 # Define the base directory for the tests
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -57,15 +58,16 @@ def setup_teardown():
     source_dir = os.path.join(TEMP_DIR, "source")
     target_dir = os.path.join(TEMP_DIR, "target")
     move_to_dir = os.path.join(TEMP_DIR, "move_to")
+    hash_file = os.path.join(TEMP_DIR, "hashes.pkl")
     common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run"]
+    # Reset the singleton instance
+    HashManager.reset_instance()
+    HashManager(target_folder=target_dir, filename=hash_file)
 
     os.makedirs(source_dir)
     os.makedirs(target_dir)
     os.makedirs(move_to_dir)
-
     setup_logging()
-    setup_hash()
-
     yield source_dir, target_dir, move_to_dir, common_args
 
     # Teardown: Delete the temporary directories

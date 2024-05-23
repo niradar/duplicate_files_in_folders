@@ -29,43 +29,16 @@ import argparse
 import time
 import logging
 import tqdm
+from hash_manager import HashManager
 from logging_config import setup_logging
 from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
-file_hash_cache = {}
-hash_requests = 0
-hash_cache_hits = 0
-
-
-def setup_hash():
-    global file_hash_cache, hash_requests, hash_cache_hits
-    file_hash_cache = {}
-    hash_requests = 0
-    hash_cache_hits = 0
 
 
 def get_file_hash(file_path, buffer_size=8 * 1024 * 1024) -> str:
-    """ Compute hash of a file using a buffer size. """
-    global hash_requests, hash_cache_hits
-    hash_requests += 1
-    try:
-        if file_path in file_hash_cache:
-            hash_cache_hits += 1
-            return file_hash_cache[file_path]
-
-        hasher = hashlib.sha256()
-        with open(file_path, 'rb') as file:
-            buffer = file.read(buffer_size)
-            while buffer:
-                hasher.update(buffer)
-                buffer = file.read(buffer_size)
-        file_hash = hasher.hexdigest()
-        file_hash_cache[file_path] = file_hash
-        return file_hash
-    except Exception as e:
-        logger.error(f"Error hashing {file_path}: {e}")
-        raise
+    hash_manager = HashManager.get_instance()
+    return hash_manager.get_hash(file_path)
 
 
 def print_error(message):
@@ -356,7 +329,6 @@ def any_is_subfolder_of(folders: List[str]) -> bool:
 
 
 def main(args):
-    setup_hash()
     setup_logging()
     validate_folder(args.src, "Source")
     validate_folder(args.target, "Target")
@@ -367,10 +339,13 @@ def main(args):
     logger.info(f"Target folder: {args.target}")
     logger.info(f"Move to folder: {args.move_to}")
     logger.info(f"Ignoring Settings: mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}")
+    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None)
 
     (files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found,
      duplicate_source_files_moved) = find_and_process_duplicates(args)
-    logger.debug(f"Hash requests: {hash_requests}, cache hits: {hash_cache_hits}")
+    logger.debug(f"Hash requests: {hash_manager.persistent_cache_requests}, cache hits: "
+                 f"{hash_manager.persistent_cache_hits}")
+    hash_manager.save_data()
     res_str = f"Summary{" (Test Mode)" if not args.run else ""}: Move: {files_moved} files, Create: {files_created} copies"
     if duplicate_source_files_moved:
         res_str += f", Moved {duplicate_source_files_moved} duplicate files from the source folder"
@@ -381,12 +356,16 @@ def main(args):
 
 def confirm_script_execution(args):
     # if the script is run from command line, and not by pytest, ask for confirmation
-    if 'PYTEST_CURRENT_TEST' not in os.environ:
+    if not detect_pytest():
         print(f"This script will move duplicate files from {args.src}. No additional confirmation will be asked.")
         print("Do you want to continue? (y/n): ")
         if input().lower() != 'y':
             print("Exiting the script.")
             sys.exit(0)
+
+
+def detect_pytest():
+    return 'PYTEST_CURRENT_TEST' in os.environ
 
 
 if __name__ == "__main__":

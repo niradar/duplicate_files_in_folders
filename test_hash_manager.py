@@ -10,6 +10,9 @@ TEMP_DIR = "temp_test_dir"
 
 @pytest.fixture
 def setup_teardown_hash_manager():
+    # Reset the singleton instance
+    HashManager.reset_instance()
+
     # Setup: Create the temporary directories
     target_dir = os.path.join(TEMP_DIR, "target")
     hash_file = os.path.join(TEMP_DIR, "hashes.pkl")
@@ -109,6 +112,12 @@ def test_several_files_same_hash(setup_teardown_hash_manager):
     hash_manager.add_hash(file_path2, hash_value)
     assert hash_manager.get_hash(file_path1) == hash_value
     assert hash_manager.get_hash(file_path2) == hash_value
+
+
+def test_file_not_found(setup_teardown_hash_manager):
+    hash_manager, _, _ = setup_teardown_hash_manager
+    with pytest.raises(FileNotFoundError):
+        hash_manager.get_hash("non_existent_file.txt")
 
 
 if __name__ == "__main__":
