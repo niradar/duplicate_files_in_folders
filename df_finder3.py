@@ -28,15 +28,11 @@ from collections import defaultdict
 import argparse
 import time
 import logging
-
 import tqdm
-
 from logging_config import setup_logging
 from typing import Dict, List, Tuple
 
-setup_logging()
 logger = logging.getLogger(__name__)
-
 file_hash_cache = {}
 hash_requests = 0
 hash_cache_hits = 0
@@ -47,9 +43,6 @@ def setup_hash():
     file_hash_cache = {}
     hash_requests = 0
     hash_cache_hits = 0
-
-
-setup_hash()
 
 
 def get_file_hash(file_path, buffer_size=8 * 1024 * 1024) -> str:
@@ -193,7 +186,7 @@ def find_and_process_duplicates(args):
     files_moved = files_created = 0
     source_duplicates_to_process = {}
 
-    for src_key, src_filepaths in source_files.items():
+    for src_key, src_filepaths in tqdm.tqdm(source_files.items(), desc="Finding and processing duplicate files"):
         src_filepath, _ = src_filepaths[0]
         target_key = get_file_hash(src_filepath) if 'filename' in args.ignore_diff else os.path.basename(src_filepath)
         if target_key not in target_files:  # if the file is not found in the target folder, no need to process it
@@ -208,8 +201,7 @@ def find_and_process_duplicates(args):
                 srcs_to_move = source_duplicates[src_key].copy() if src_key in source_duplicates else []
                 files_created, files_moved = move_to_target_paths(args, src_filepath, target_paths_to_copy,
                                                                   srcs_to_move, files_created, files_moved)
-                filtered_group = [(src_path, depth) for src_path, depth in srcs_to_move if
-                                  os.path.exists(src_path)]
+                filtered_group = [(src_path, depth) for src_path, depth in srcs_to_move if os.path.exists(src_path)]
                 if filtered_group:
                     source_duplicates_to_process[src_key] = filtered_group
         except Exception as e:
@@ -295,7 +287,8 @@ def get_file_key(args, file_path) -> str:
 def collect_source_files(args) -> Dict[str, List[Tuple[str, int]]]:
     source_files = defaultdict(list)
     source_depth = args.src.count(os.sep)
-    for root, dirs, files in os.walk(args.src):
+    walk = list(os.walk(args.src))
+    for root, dirs, files in tqdm.tqdm(walk, desc="Collecting source files"):
         for f in files:
             full_path = os.path.join(root, f)
             if os.path.isfile(full_path):
@@ -325,11 +318,10 @@ def parse_arguments(cust_args=None):
                         help='Do not delete empty folders in the source folder.')
     parser.set_defaults(delete_empty_folders=True)
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS, default=False)
-
     args = parser.parse_args(cust_args if cust_args else None)
+
     if args.extra_logging:
         logger.setLevel(logging.DEBUG)
-
     args.ignore_diff = set(args.ignore_diff.split(','))
     if not args.ignore_diff.issubset({'mdate', 'filename', 'checkall'}):
         print_error("Invalid ignore_diff setting: must be 'mdate', 'filename' or 'checkall'.")
@@ -365,6 +357,7 @@ def any_is_subfolder_of(folders: List[str]) -> bool:
 
 def main(args):
     setup_hash()
+    setup_logging()
     validate_folder(args.src, "Source")
     validate_folder(args.target, "Target")
     validate_duplicate_files_destination(args.move_to, args.run)

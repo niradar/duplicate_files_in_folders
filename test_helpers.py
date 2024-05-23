@@ -1,7 +1,7 @@
 import pytest
 import os
 import shutil
-
+from logging_config import setup_logging
 from df_finder3 import setup_hash
 
 # Define the base directory for the tests
@@ -63,6 +63,7 @@ def setup_teardown():
     os.makedirs(target_dir)
     os.makedirs(move_to_dir)
 
+    setup_logging()
     setup_hash()
 
     yield source_dir, target_dir, move_to_dir, common_args
