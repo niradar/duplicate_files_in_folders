@@ -28,10 +28,12 @@ from collections import defaultdict
 import argparse
 import time
 import logging
+
+import tqdm
+
 from logging_config import setup_logging
 from typing import Dict, List, Tuple
 import traceback
-
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -51,7 +53,7 @@ def setup_hash():
 setup_hash()
 
 
-def get_file_hash(file_path, buffer_size=8*1024*1024) -> str:
+def get_file_hash(file_path, buffer_size=8 * 1024 * 1024) -> str:
     """ Compute hash of a file using a buffer size. """
     global hash_requests, hash_cache_hits
     hash_requests += 1
@@ -71,7 +73,7 @@ def get_file_hash(file_path, buffer_size=8*1024*1024) -> str:
         return file_hash
     except Exception as e:
         logger.error(f"Error hashing {file_path}: {e}")
-        return ""
+        raise
 
 
 def print_error(message):
@@ -170,7 +172,8 @@ def clean_source_duplications(args, keys_to_clean=None, given_duplicates: Dict[s
             duplicate_files_moved += 1
 
     if unique_duplicate_files_found:
-        logger.info(f"Cleaning source folder: Found {unique_duplicate_files_found} unique duplicate files in the source folder, moved {duplicate_files_moved} files to {source_dups_move_to}")
+        logger.info(
+            f"Cleaning source folder: Found {unique_duplicate_files_found} unique duplicate files in the source folder, moved {duplicate_files_moved} files to {source_dups_move_to}")
     return unique_duplicate_files_found, duplicate_files_moved
 
 
@@ -212,23 +215,21 @@ def find_and_process_duplicates(args):
                                                                   srcs_to_move, files_created, files_moved)
                 source_keys_to_remove.append(src_key)
         except Exception as e:
-            logger.error(f"Error handling {src_filepath}: {e} - {traceback.format_exc()}")
+            logger.exception(f"Error handling {src_filepath}: {e}")
+            raise
 
-    # clean source_duplicates dictionary from files that are already moved or don't need to be moved
-    keys_to_remove = []
+    source_duplicates_to_process = {}
     for src_key in source_duplicates:
         if src_key in source_keys_to_remove:
-            source_duplicates[src_key] = [(src_path, depth) for src_path, depth in source_duplicates[src_key] if os.path.exists(src_path)]
-            if not source_duplicates[src_key]:
-                keys_to_remove.append(src_key)
-        else:
-            keys_to_remove.append(src_key)
-    for key in keys_to_remove:
-        del source_duplicates[key]
+            filtered_group = [(src_path, depth) for src_path, depth in source_duplicates[src_key] if
+                              os.path.exists(src_path)]
+            if filtered_group:
+                source_duplicates_to_process[src_key] = filtered_group
 
     # clean source duplicates of files moved to the move_to folder
     unique_source_duplicate_files_found, duplicate_source_files_moved = (
-        clean_source_duplications(args, source_keys_to_remove, source_duplicates)) if source_duplicates else (0, 0)
+        clean_source_duplications(args, source_keys_to_remove, source_duplicates_to_process)) \
+        if source_duplicates_to_process else (0, 0)
 
     deleted_source_folders = delete_empty_folders_in_tree(args.src) if args.run and args.delete_empty_folders else 0
     return files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found, duplicate_source_files_moved
@@ -260,7 +261,9 @@ def move_to_target_paths(args, src_filepath, target_paths_to_copy, source_duplic
 
 def collect_target_files(args):
     target_files = defaultdict(list)
-    for root, dirs, files in os.walk(args.target):
+    # list so it won't be lazy
+    walk = list(os.walk(args.target))
+    for root, dirs, files in tqdm.tqdm(walk, desc="Collecting target files"):
         for f in files:
             full_path = os.path.join(root, f)
             key = f if 'filename' not in args.ignore_diff else get_file_hash(full_path)
@@ -320,9 +323,17 @@ def parse_arguments(cust_args=None):
     parser.add_argument('--move_to', required=True, type=str, help='Folder where the duplicates will be moved.')
     parser.add_argument('--run', action='store_true', help='Run without test mode. Default is test mode.')
     parser.add_argument('--extra_logging', action='store_true', help='Enable extra logging. Default is disabled.')
-    parser.add_argument('--ignore_diff', type=str, help='Comma-separated list of differences to ignore: mdate, filename, checkall. Default is ignore mdate.', default='mdate')
-    parser.add_argument('--copy_to_all', action='store_true', help='Copy file to all folders if found in multiple target folders. Default is move file to the first folder.', default=False)
-    parser.add_argument('--delete_empty_folders', action='store_true', help='Delete empty folders in the source folder. Default is True.', default=True)
+    parser.add_argument('--ignore_diff', type=str,
+                        help='Comma-separated list of differences to ignore: mdate, filename, checkall. Default is ignore mdate.',
+                        default='mdate')
+    parser.add_argument('--copy_to_all', action='store_true',
+                        help='Copy file to all folders if found in multiple target folders. Default is move file to the first folder.',
+                        default=False)
+    parser.add_argument('--delete_empty_folders', dest='delete_empty_folders', action='store_true',
+                        help='Delete empty folders in the source folder.')
+    parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
+                        help='Do not delete empty folders in the source folder.')
+    parser.set_defaults(delete_empty_folders=True)
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS, default=False)
 
     args = parser.parse_args(cust_args if cust_args else None)
