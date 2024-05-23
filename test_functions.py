@@ -68,8 +68,10 @@ def test_get_file_hash():
     exist_file_hash = '1f97ef2005daa54451c3ab2844471f4209332f68cfd3aeeda298a2d7aca2cea2'
 
     # Test case 1: Test for a file that does not exist
-    if get_file_hash(non_exist_file) != "":
-        assert False
+    with pytest.raises(FileNotFoundError):
+        get_file_hash(non_exist_file)
+
+
 
     # Test case 2: Test for a file that exists
     file_hash = get_file_hash(exist_file)
