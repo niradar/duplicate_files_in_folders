@@ -33,7 +33,6 @@ import tqdm
 
 from logging_config import setup_logging
 from typing import Dict, List, Tuple
-import traceback
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -190,13 +189,9 @@ def find_and_process_duplicates(args):
     # Store the source duplicates before processing
     source_duplicates: Dict[str, List[Tuple[str, int]]] = \
         {src_key: src_filepaths for src_key, src_filepaths in source_files.items() if len(src_filepaths) > 1}
-    for src_key, group in source_duplicates.items():
-        logger.debug(f"Duplicate group - {src_key}:")
-        for src_path in group:
-            logger.debug(f"Duplicate: {src_path}")
 
     files_moved = files_created = 0
-    source_keys_to_remove = []
+    source_duplicates_to_process = {}
 
     for src_key, src_filepaths in source_files.items():
         src_filepath, _ = src_filepaths[0]
@@ -213,22 +208,17 @@ def find_and_process_duplicates(args):
                 srcs_to_move = source_duplicates[src_key].copy() if src_key in source_duplicates else []
                 files_created, files_moved = move_to_target_paths(args, src_filepath, target_paths_to_copy,
                                                                   srcs_to_move, files_created, files_moved)
-                source_keys_to_remove.append(src_key)
+                filtered_group = [(src_path, depth) for src_path, depth in srcs_to_move if
+                                  os.path.exists(src_path)]
+                if filtered_group:
+                    source_duplicates_to_process[src_key] = filtered_group
         except Exception as e:
             logger.exception(f"Error handling {src_filepath}: {e}")
             raise
 
-    source_duplicates_to_process = {}
-    for src_key in source_duplicates:
-        if src_key in source_keys_to_remove:
-            filtered_group = [(src_path, depth) for src_path, depth in source_duplicates[src_key] if
-                              os.path.exists(src_path)]
-            if filtered_group:
-                source_duplicates_to_process[src_key] = filtered_group
-
     # clean source duplicates of files moved to the move_to folder
     unique_source_duplicate_files_found, duplicate_source_files_moved = (
-        clean_source_duplications(args, source_keys_to_remove, source_duplicates_to_process)) \
+        clean_source_duplications(args, source_duplicates_to_process.keys(), source_duplicates_to_process)) \
         if source_duplicates_to_process else (0, 0)
 
     deleted_source_folders = delete_empty_folders_in_tree(args.src) if args.run and args.delete_empty_folders else 0
@@ -330,7 +320,7 @@ def parse_arguments(cust_args=None):
                         help='Copy file to all folders if found in multiple target folders. Default is move file to the first folder.',
                         default=False)
     parser.add_argument('--delete_empty_folders', dest='delete_empty_folders', action='store_true',
-                        help='Delete empty folders in the source folder.')
+                        help='Delete empty folders in the source folder. Default is enabled.')
     parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
                         help='Do not delete empty folders in the source folder.')
     parser.set_defaults(delete_empty_folders=True)
