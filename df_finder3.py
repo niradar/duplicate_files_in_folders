@@ -1,0 +1,402 @@
+"""
+This script identifies and processes duplicate files between a source and target directory.
+
+MAIN USE CASE:
+- Source folder contains files without order.
+- Target folder contains files that some of them are sorted versions of the files in the source folder.
+- The script will move the files from the source folder to "dups" folder if they are found in the
+  target folder. It will keep the structure of the target folder in the "dups" folder.
+
+The script compares filename, modification date, size and hash of the files to identify duplicates.
+Settings allow to ignore differences in modification dates and filenames. The script can be run in test mode to
+simulate the actions without moving the files. The script also logs its actions and errors for traceability.
+"""
+
+# to improve
+# - hash manager class
+# - test with / at the end of the folder path
+# - deal with _files
+# - clear cache argument
+# - more tests - for less common cases
+# - arg to act only if all folder is subfolder of a target folder, recursively (bottom-up)
+
+import os
+import sys
+import hashlib
+import shutil
+from collections import defaultdict
+import argparse
+import time
+import logging
+from logging_config import setup_logging
+from typing import Dict, List, Tuple
+import traceback
+
+
+setup_logging()
+logger = logging.getLogger(__name__)
+
+file_hash_cache = {}
+hash_requests = 0
+hash_cache_hits = 0
+
+
+def setup_hash():
+    global file_hash_cache, hash_requests, hash_cache_hits
+    file_hash_cache = {}
+    hash_requests = 0
+    hash_cache_hits = 0
+
+
+setup_hash()
+
+
+def get_file_hash(file_path, buffer_size=8*1024*1024) -> str:
+    """ Compute hash of a file using a buffer size. """
+    global hash_requests, hash_cache_hits
+    hash_requests += 1
+    try:
+        if file_path in file_hash_cache:
+            hash_cache_hits += 1
+            return file_hash_cache[file_path]
+
+        hasher = hashlib.sha256()
+        with open(file_path, 'rb') as file:
+            buffer = file.read(buffer_size)
+            while buffer:
+                hasher.update(buffer)
+                buffer = file.read(buffer_size)
+        file_hash = hasher.hexdigest()
+        file_hash_cache[file_path] = file_hash
+        return file_hash
+    except Exception as e:
+        logger.error(f"Error hashing {file_path}: {e}")
+        return ""
+
+
+def print_error(message):
+    print(f"Error: {message}")
+    logger.critical(f"{message}")
+    sys.exit(1)
+
+
+def validate_folder(folder, name):
+    """ Validate if a folder exists and is not empty. """
+    if not os.path.isdir(folder) or not os.path.exists(folder):
+        print_error(f"{name} folder does not exist.")
+    if not os.listdir(folder):
+        print_error(f"{name} folder is empty.")
+    return True
+
+
+def check_and_update_filename(new_filename):
+    if os.path.exists(new_filename):
+        original_filename = new_filename
+        timestamp = int(time.time())  # Get current Unix timestamp
+        base, ext = os.path.splitext(new_filename)
+        new_filename = f"{base}_{timestamp}{ext}"  # Append timestamp to the filename
+        logger.info(f"Renaming of {original_filename} to {new_filename} is needed to avoid overwrite.")
+    return new_filename
+
+
+def copy_or_move_file(tgt_filepath: str, move_to: str, src_filepath: str, target: str, test_mode, move=True):
+    new_src_path = os.path.join(move_to, os.path.relpath(tgt_filepath, target))
+    new_src_dir = os.path.dirname(new_src_path)
+    if not os.path.exists(new_src_dir) and not test_mode:
+        os.makedirs(new_src_dir)
+    new_filename = check_and_update_filename(new_src_path)
+    src_to_dst = f"{src_filepath} to {new_filename}"
+    if not test_mode:
+        if move:
+            shutil.move(src_filepath, new_filename)
+        else:
+            shutil.copy(src_filepath, new_filename)
+        logger.info(f"{'Moved' if move else 'Copied'} {src_to_dst}")
+    else:
+        logger.info(f"Test Mode: Would {'move' if move else 'copy'} {src_to_dst}")
+    return new_filename
+
+
+def compare_files(src_filepath, tgt_filepath, ignore_diffs):
+    ignore_diffs = ignore_diffs if ignore_diffs else set('mdate')
+    if 'filename' not in ignore_diffs and os.path.basename(src_filepath) != os.path.basename(tgt_filepath):
+        return False
+    if 'mdate' not in ignore_diffs and not os.path.getmtime(src_filepath) == os.path.getmtime(tgt_filepath):
+        return False
+    if os.path.getsize(src_filepath) != os.path.getsize(tgt_filepath):
+        return False
+    return get_file_hash(src_filepath) == get_file_hash(tgt_filepath)
+
+
+def clean_source_duplications(args, keys_to_clean=None, given_duplicates: Dict[str, List[Tuple[str, int]]] = None):
+    """
+    Clean the source folder from duplicate files. Move the duplicates to a new folder under the move_to folder.
+    :param given_duplicates: if not None, use this dictionary of duplicates instead of finding them again.
+    :param args:
+    :param keys_to_clean: List of key to clean. If None, clean all duplicates but the first one from each group. \
+    If not None, clean only the duplicates with the hashes in the list but clean all the duplicates from the group.
+
+    :return:
+    """
+    source_duplicates = given_duplicates if given_duplicates else {
+        src_key: src_filepaths for src_key, src_filepaths in collect_source_files(args).items()
+        if len(src_filepaths) > 1
+    }
+    source: str = args.src
+    source_dups_move_to = os.path.join(args.move_to, os.path.basename(source) + "_dups")
+    unique_duplicate_files_found = duplicate_files_moved = 0
+
+    for group_key, group in source_duplicates.items():
+        if keys_to_clean and group_key not in keys_to_clean:
+            continue
+        logger.info(f"Found {len(group)} duplicate files for {group[0][0]}")
+
+        # Sort the files by their depth, then by their modification time or name
+        group.sort(key=lambda x: (x[1], x[0] if 'mdate' in args.ignore_diff else os.path.getmtime(x[0])))
+
+        unique_duplicate_files_found += 1
+        start_index = 1 if not keys_to_clean else 0
+        # Move all the other files to a new folder under the move_to folder
+        for src_filepath, _ in group[start_index:]:
+            new_src_path = os.path.join(source_dups_move_to, os.path.relpath(src_filepath, source))
+            new_src_dir = os.path.dirname(new_src_path)
+            if not os.path.exists(new_src_dir) and args.run:
+                os.makedirs(new_src_dir)
+            new_filename = check_and_update_filename(new_src_path)
+            src_to_dst = f"{src_filepath} to {new_filename}"
+            if args.run:
+                shutil.move(src_filepath, new_filename)
+                logger.info(f"Moved {src_to_dst}")
+            duplicate_files_moved += 1
+
+    if unique_duplicate_files_found:
+        logger.info(f"Cleaning source folder: Found {unique_duplicate_files_found} unique duplicate files in the source folder, moved {duplicate_files_moved} files to {source_dups_move_to}")
+    return unique_duplicate_files_found, duplicate_files_moved
+
+
+def find_and_process_duplicates(args):
+    source_files = collect_source_files(args)
+    total_source_files = sum(len(paths) for paths in source_files.values())
+    logger.info(f"Source folder: Found {total_source_files} files ({len(source_files)} unique files) in {args.src}")
+
+    target_files = collect_target_files(args)  # key is hash or filename, value is list of file paths
+    total_files = sum(len(paths) for paths in target_files.values())
+    key_type = "filenames" if 'filename' not in args.ignore_diff else "hashes"
+    logger.info(f"Found {total_files} files ({len(target_files)} unique {key_type}) in {args.target}")
+
+    # Store the source duplicates before processing
+    source_duplicates: Dict[str, List[Tuple[str, int]]] = \
+        {src_key: src_filepaths for src_key, src_filepaths in source_files.items() if len(src_filepaths) > 1}
+    for src_key, group in source_duplicates.items():
+        logger.debug(f"Duplicate group - {src_key}:")
+        for src_path in group:
+            logger.debug(f"Duplicate: {src_path}")
+
+    files_moved = files_created = 0
+    source_keys_to_remove = []
+
+    for src_key, src_filepaths in source_files.items():
+        src_filepath, _ = src_filepaths[0]
+        target_key = get_file_hash(src_filepath) if 'filename' in args.ignore_diff else os.path.basename(src_filepath)
+        if target_key not in target_files:  # if the file is not found in the target folder, no need to process it
+            continue
+        target_paths = target_files[target_key]  # all possible target paths for the source file
+        target_paths_to_copy = []
+        try:
+            for tgt_filepath in target_paths:
+                if compare_files(src_filepath, tgt_filepath, args.ignore_diff):
+                    target_paths_to_copy.append(tgt_filepath)
+            if target_paths_to_copy:
+                srcs_to_move = source_duplicates[src_key].copy() if src_key in source_duplicates else []
+                files_created, files_moved = move_to_target_paths(args, src_filepath, target_paths_to_copy,
+                                                                  srcs_to_move, files_created, files_moved)
+                source_keys_to_remove.append(src_key)
+        except Exception as e:
+            logger.error(f"Error handling {src_filepath}: {e} - {traceback.format_exc()}")
+
+    # clean source_duplicates dictionary from files that are already moved or don't need to be moved
+    keys_to_remove = []
+    for src_key in source_duplicates:
+        if src_key in source_keys_to_remove:
+            source_duplicates[src_key] = [(src_path, depth) for src_path, depth in source_duplicates[src_key] if os.path.exists(src_path)]
+            if not source_duplicates[src_key]:
+                keys_to_remove.append(src_key)
+        else:
+            keys_to_remove.append(src_key)
+    for key in keys_to_remove:
+        del source_duplicates[key]
+
+    # clean source duplicates of files moved to the move_to folder
+    unique_source_duplicate_files_found, duplicate_source_files_moved = (
+        clean_source_duplications(args, source_keys_to_remove, source_duplicates)) if source_duplicates else (0, 0)
+
+    deleted_source_folders = delete_empty_folders_in_tree(args.src) if args.run and args.delete_empty_folders else 0
+    return files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found, duplicate_source_files_moved
+
+
+def move_to_target_paths(args, src_filepath, target_paths_to_copy, source_duplicates, files_created, files_moved):
+    # future improvement: smarter move - we might have same folder structure between copies in source and target
+    if not source_duplicates:  # If source_duplicates is empty, use src_filepath for copying and moving
+        source_duplicates = [(src_filepath, 0)]
+    source_duplicates.sort(key=lambda x: x[0], reverse=True)  # sort by path name reverse for easier testing
+
+    if not args.copy_to_all:
+        copy_or_move_file(target_paths_to_copy[0], args.move_to, src_filepath, args.target, not args.run)
+        return files_created, files_moved + 1
+
+    num_to_copy = max(0, len(target_paths_to_copy) - len(source_duplicates))
+    if num_to_copy:  # Copy first source to make up for fewer source duplicates
+        for i in range(num_to_copy):
+            copy_or_move_file(target_paths_to_copy[i], args.move_to, src_filepath, args.target, not args.run, False)
+            files_created += 1
+
+    # Move each source duplicate to the corresponding target path
+    for (src, _), tgt in zip(source_duplicates, target_paths_to_copy[num_to_copy:]):
+        copy_or_move_file(tgt, args.move_to, src, args.target, not args.run, move=True)
+        files_moved += 1
+
+    return files_created, files_moved
+
+
+def collect_target_files(args):
+    target_files = defaultdict(list)
+    for root, dirs, files in os.walk(args.target):
+        for f in files:
+            full_path = os.path.join(root, f)
+            key = f if 'filename' not in args.ignore_diff else get_file_hash(full_path)
+            target_files[key].append(full_path)
+    if args.extra_logging:
+        for key, paths in target_files.items():
+            logger.debug(f"{key}: {paths}")
+    return target_files
+
+
+def delete_empty_folders_in_tree(base_path):
+    folders_by_depth = {}  # collect all folders in the source folder by depth
+    for root, dirs, files in os.walk(base_path, topdown=False):
+        if base_path == root:
+            continue
+        depth = root.count(os.sep) - base_path.count(os.sep)
+        if depth not in folders_by_depth:
+            folders_by_depth[depth] = []
+        folders_by_depth[depth].append(root)
+
+    deleted_folders = 0
+    # delete empty folders starting from the deepest level excluding the base_path folder
+    for depth in sorted(folders_by_depth.keys(), reverse=True):
+        for folder in folders_by_depth[depth]:
+            if not os.listdir(folder):
+                os.rmdir(folder)
+                logger.info(f"Deleted empty folder {folder}")
+                deleted_folders += 1
+    return deleted_folders
+
+
+def get_file_key(args, file_path) -> str:
+    hash_key: str = get_file_hash(file_path)
+    file_key: str = os.path.basename(file_path) if 'filename' not in args.ignore_diff else None
+    mdate_key: str = str(os.path.getmtime(file_path)) if 'mdate' not in args.ignore_diff else None
+    return '_'.join(filter(None, [hash_key, file_key, mdate_key]))
+
+
+def collect_source_files(args) -> Dict[str, List[Tuple[str, int]]]:
+    source_files = defaultdict(list)
+    source_depth = args.src.count(os.sep)
+    for root, dirs, files in os.walk(args.src):
+        for f in files:
+            full_path = os.path.join(root, f)
+            if os.path.isfile(full_path):
+                key = get_file_key(args, full_path)
+                depth = full_path.count(os.sep) - source_depth
+                source_files[key].append((full_path, depth))
+    return source_files
+
+
+def parse_arguments(cust_args=None):
+    parser = argparse.ArgumentParser(
+        description="Identify duplicate files between source and target folders, move duplicates to a separate folder.")
+    parser.add_argument('--src', required=True, help='Source folder')
+    parser.add_argument('--target', required=True, help='Target folder')
+    parser.add_argument('--move_to', required=True, type=str, help='Folder where the duplicates will be moved.')
+    parser.add_argument('--run', action='store_true', help='Run without test mode. Default is test mode.')
+    parser.add_argument('--extra_logging', action='store_true', help='Enable extra logging. Default is disabled.')
+    parser.add_argument('--ignore_diff', type=str, help='Comma-separated list of differences to ignore: mdate, filename, checkall. Default is ignore mdate.', default='mdate')
+    parser.add_argument('--copy_to_all', action='store_true', help='Copy file to all folders if found in multiple target folders. Default is move file to the first folder.', default=False)
+    parser.add_argument('--delete_empty_folders', action='store_true', help='Delete empty folders in the source folder. Default is True.', default=True)
+    parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS, default=False)
+
+    args = parser.parse_args(cust_args if cust_args else None)
+    if args.extra_logging:
+        logger.setLevel(logging.DEBUG)
+
+    args.ignore_diff = set(args.ignore_diff.split(','))
+    if not args.ignore_diff.issubset({'mdate', 'filename', 'checkall'}):
+        print_error("Invalid ignore_diff setting: must be 'mdate', 'filename' or 'checkall'.")
+    if 'checkall' in args.ignore_diff:
+        if len(args.ignore_diff) > 1:
+            print_error("Invalid ignore_diff setting: checkall cannot be used with other settings.")
+        args.ignore_diff = set()
+
+    return args
+
+
+def validate_duplicate_files_destination(duplicate_files_destination, run_mode):
+    if not os.path.isdir(duplicate_files_destination):
+        if run_mode:
+            try:
+                os.makedirs(duplicate_files_destination)
+                logger.info(f"Created destination folder {duplicate_files_destination}")
+            except Exception as e:
+                print_error(f"Error creating destination folder {duplicate_files_destination}: {e}")
+        else:
+            logger.info(f"Test Mode: Would create destination folder {duplicate_files_destination}")
+    return True
+
+
+def any_is_subfolder_of(folders: List[str]) -> bool:
+    for i in range(len(folders)):
+        for j in range(len(folders)):
+            if i != j and folders[i].startswith(folders[j]):
+                print_error(f"{folders[i]} is a subfolder of {folders[j]}")
+                return True
+    return False
+
+
+def main(args):
+    setup_hash()
+    validate_folder(args.src, "Source")
+    validate_folder(args.target, "Target")
+    validate_duplicate_files_destination(args.move_to, args.run)
+    any_is_subfolder_of([args.src, args.target, args.move_to])
+    confirm_script_execution(args)
+    logger.info(f"Source folder: {args.src}")
+    logger.info(f"Target folder: {args.target}")
+    logger.info(f"Move to folder: {args.move_to}")
+    logger.info(f"Ignoring Settings: mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}")
+
+    (files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found,
+     duplicate_source_files_moved) = find_and_process_duplicates(args)
+    logger.debug(f"Hash requests: {hash_requests}, cache hits: {hash_cache_hits}")
+    res_str = f"Summary{" (Test Mode)" if not args.run else ""}: Move: {files_moved} files, Create: {files_created} copies"
+    if duplicate_source_files_moved:
+        res_str += f", Moved {duplicate_source_files_moved} duplicate files from the source folder"
+    if deleted_source_folders:
+        res_str += f", Deleted: {deleted_source_folders} empty folders in the source folder"
+    logger.info(res_str)
+
+
+def confirm_script_execution(args):
+    # if the script is run from command line, and not by pytest, ask for confirmation
+    if 'PYTEST_CURRENT_TEST' not in os.environ:
+        print(f"This script will move duplicate files from {args.src}. No additional confirmation will be asked.")
+        print("Do you want to continue? (y/n): ")
+        if input().lower() != 'y':
+            print("Exiting the script.")
+            sys.exit(0)
+
+
+if __name__ == "__main__":
+    if os.name != 'nt':
+        print_error("This script was tested only on Windows. Modify and test it on other OS if needed.")
+    command_line_args = parse_arguments()
+    main(command_line_args)
