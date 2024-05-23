@@ -1,0 +1,6 @@
+/logs/
+.idea/
+/versions to keep/
+hashes.pkl
+*.bak
+.coverage
