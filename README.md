@@ -19,7 +19,7 @@ To install the necessary dependencies, use Conda with Python 3.11 and the `requi
 conda create -n duplicate_finder python=3.11
 conda activate duplicate_finder
 pip install -r requirements.txt
-
+```
 
 ## Usage
 
@@ -27,7 +27,7 @@ To run the script, use the following command:
 
 ```sh
 python df_finder3.py --src <source_folder> --target <target_folder> --move_to <move_to_folder> [options]
-
+```
 
 ### Options
 
@@ -43,21 +43,20 @@ python df_finder3.py --src <source_folder> --target <target_folder> --move_to <m
 
 ```sh
 python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/move_to --run
+```
 
-
-
-### Running Tests
+## Running Tests
 To run the tests, use pytest:
 
-sh
+```sh
 pytest
+```
 
-### Logging
+## Logging
 The script logs its actions and errors for traceability. The log file will be created in the same directory as the script under logs/ folder
 
 
 ## Possible Future Improvements
-
 - Test with `/` at the end of the folder path
 - Deal with `_files` folders in the source folder
 - More tests for less common cases
@@ -66,8 +65,11 @@ The script logs its actions and errors for traceability. The log file will be cr
 - Even if not copying to all, still move the duplicates to the move_to folder without copying them to other folders
 
 
-### Contributing
+## Contributing
 If you have suggestions for improving this script, please open an issue or submit a pull request.
 
-### License
+## Author
+This script was written by Nir Adar - [niradar@gmail.com](mailto:niradar@gmail.com)
+
+## License
 This project is licensed under the MIT License.
