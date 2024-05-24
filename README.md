@@ -57,12 +57,20 @@ The script logs its actions and errors for traceability. The log file will be cr
 
 
 ## Possible Future Improvements
-- Test with `/` at the end of the folder path
-- Deal with `_files` folders in the source folder
-- More tests for less common cases
-- Add an argument to act only if the entire folder is a subfolder of a target folder, recursively (bottom-up)
-- Option to keep the source folder structure in the move_to folder
-- Even if not copying to all, still move the duplicates to the move_to folder without copying them to other folders
+- [ ] More tests
+  - [ ] More tests for less common cases
+  - [ ] Test with `/` at the end of the folder path
+  - [ ] More tests to hash_manager.py 
+- [ ] Improve summary and user interface
+  - [X] Add a progress bar
+  - [ ] Add a better summary of the actions taken
+- [ ] Better handling of folders with saved html files
+  - [ ] Deal with `_files` folders in the source folder
+  - [ ] Move it only if all files are duplicates
+- [ ] More ways to influence how the script works
+  - [ ] Add an argument to act only if the entire folder is a subfolder of a target folder, recursively (bottom-up)
+  - [ ] Option to keep the source folder structure in the move_to folder
+- [ ] Even if argument --copy_to_all is not present, still move the duplicates to the move_to folder without copying them to other folders
 
 
 ## Contributing
