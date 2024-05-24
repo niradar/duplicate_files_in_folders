@@ -37,8 +37,8 @@ def test_add_and_get_hash(setup_teardown_hash_manager):
 
 
 def test_get_hash_computes_if_missing(setup_teardown_hash_manager):
-    hash_manager, _, _ = setup_teardown_hash_manager
-    file_path = os.path.join(hash_manager.target_folder, "file2.txt")
+    hash_manager, target_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(target_dir, "file2.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     computed_hash_value = hash_manager.compute_hash(file_path)
@@ -46,11 +46,11 @@ def test_get_hash_computes_if_missing(setup_teardown_hash_manager):
 
 
 def test_auto_save_threshold(setup_teardown_hash_manager):
-    hash_manager, _, hash_file = setup_teardown_hash_manager
+    hash_manager, target_dir, hash_file = setup_teardown_hash_manager
     prev_threshold = hash_manager.AUTO_SAVE_THRESHOLD
     hash_manager.AUTO_SAVE_THRESHOLD = 5
     for i in range(hash_manager.AUTO_SAVE_THRESHOLD):
-        file_path = os.path.join(hash_manager.target_folder, f"file{i}.txt")
+        file_path = os.path.join(target_dir, f"file{i}.txt")
         with open(file_path, 'w') as f:
             f.write(f"test content {i}")
         hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
@@ -62,9 +62,10 @@ def test_auto_save_threshold(setup_teardown_hash_manager):
 
     hash_manager.AUTO_SAVE_THRESHOLD = prev_threshold
 
+
 def test_clean_cache(setup_teardown_hash_manager):
-    hash_manager, _, _ = setup_teardown_hash_manager
-    file_path = os.path.join(hash_manager.target_folder, "file1.txt")
+    hash_manager, target_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(target_dir, "file1.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
@@ -74,8 +75,8 @@ def test_clean_cache(setup_teardown_hash_manager):
 
 
 def test_clean_expired_cache(setup_teardown_hash_manager):
-    hash_manager, _, _ = setup_teardown_hash_manager
-    file_path = os.path.join(hash_manager.target_folder, "file1.txt")
+    hash_manager, target_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(target_dir, "file1.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
@@ -86,9 +87,9 @@ def test_clean_expired_cache(setup_teardown_hash_manager):
 
 
 def test_get_hashes_by_folder(setup_teardown_hash_manager):
-    hash_manager, _, _ = setup_teardown_hash_manager
-    file_path1 = os.path.join(hash_manager.target_folder, "file1.txt")
-    file_path2 = os.path.join(hash_manager.target_folder, "file2.txt")
+    hash_manager, target_dir, _ = setup_teardown_hash_manager
+    file_path1 = os.path.join(target_dir, "file1.txt")
+    file_path2 = os.path.join(target_dir, "file2.txt")
     file_path3 = os.path.join(TEMP_DIR, "file3.txt")
     with open(file_path1, 'w') as f:
         f.write("test content 1")
@@ -125,8 +126,8 @@ def test_file_not_found(setup_teardown_hash_manager):
 
 
 def test_clean_cache_with_data(setup_teardown_hash_manager):
-    hash_manager, _, _ = setup_teardown_hash_manager
-    file_path = os.path.join(hash_manager.target_folder, "file1.txt")
+    hash_manager, target_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(target_dir, "file1.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
