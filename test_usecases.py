@@ -1,7 +1,7 @@
 import shutil
 
 from df_finder3 import main, parse_arguments
-from test_helpers import *
+from helpers_testing import *
 
 
 # Test 1 - content of source and target is exactly the same (all duplicates, all in the same base folder)
