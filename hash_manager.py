@@ -14,7 +14,7 @@ class HashManager:
     _lock = Lock()
 
     MAX_CACHE_TIME = 60 * 60 * 24 * 14  # max cache time, in seconds - 2 weeks
-    AUTO_SAVE_THRESHOLD = 5000  # Number of unsaved changes before auto-saving
+    AUTO_SAVE_THRESHOLD = 10000  # Number of unsaved changes before auto-saving
 
     def __new__(cls, *args, **kwargs):
         with cls._lock:
@@ -90,13 +90,12 @@ class HashManager:
                 all_data = pd.concat([all_data, self.persistent_data], ignore_index=True)
             elif not self.persistent_data.empty:
                 all_data = self.persistent_data
-
         else:
             all_data = self.persistent_data if not self.persistent_data.empty else pd.DataFrame(
                 columns=['file_path', 'hash_value', 'last_update'])
 
         all_data.to_pickle(self.filename)
-
+        self.unsaved_changes = 0
 
     def add_hash(self, file_path: str, hash_value: str) -> None:
         """Add a new hash to the appropriate DataFrame."""
