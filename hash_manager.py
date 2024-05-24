@@ -14,7 +14,7 @@ class HashManager:
     _lock = Lock()
 
     MAX_CACHE_TIME = 60 * 60 * 24 * 14  # max cache time, in seconds - 2 weeks
-    AUTO_SAVE_THRESHOLD = 10  # Number of unsaved changes before auto-saving
+    AUTO_SAVE_THRESHOLD = 5000  # Number of unsaved changes before auto-saving
 
     def __new__(cls, *args, **kwargs):
         with cls._lock:
@@ -64,10 +64,39 @@ class HashManager:
             logger.info(f"No existing hash file found. Creating a new one: {self.filename}")
             return pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
 
+    def ensure_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Ensure the DataFrame has the expected columns."""
+        expected_columns = ['file_path', 'hash_value', 'last_update']
+        for col in expected_columns:
+            if col not in df.columns:
+                df[col] = pd.NA
+        return df
+
     def save_data(self) -> None:
         """Save the current persistent DataFrame to a file."""
-        self.persistent_data.to_pickle(self.filename)
-        self.unsaved_changes = 0
+        if os.path.exists(self.filename):
+            all_data = pd.read_pickle(self.filename)
+            all_data = self.ensure_columns(all_data)
+
+            # Remove old data related to the current target folder
+            all_data = all_data[~all_data['file_path'].str.startswith(self.target_folder)]
+
+            # Drop all-NA rows in all_data and self.persistent_data
+            all_data = all_data.dropna(how='all')
+            self.persistent_data = self.persistent_data.dropna(how='all')
+
+            # Check if all_data or persistent_data is not empty before concatenation
+            if not all_data.empty and not self.persistent_data.empty:
+                all_data = pd.concat([all_data, self.persistent_data], ignore_index=True)
+            elif not self.persistent_data.empty:
+                all_data = self.persistent_data
+
+        else:
+            all_data = self.persistent_data if not self.persistent_data.empty else pd.DataFrame(
+                columns=['file_path', 'hash_value', 'last_update'])
+
+        all_data.to_pickle(self.filename)
+
 
     def add_hash(self, file_path: str, hash_value: str) -> None:
         """Add a new hash to the appropriate DataFrame."""
@@ -124,7 +153,7 @@ class HashManager:
             result = pd.concat([persistent_result, temporary_result])
         return result[['file_path', 'hash_value']].to_dict(orient='records')
 
-    def clean_cache(self) -> None:
+    def clear_cache(self) -> None:
         """Clean all cache files."""
         self.persistent_data = pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
         self.temporary_data = pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
@@ -172,6 +201,6 @@ if __name__ == "__main__":
     manager.add_hash('/path/to/target/file1.txt', 'hash1')
     manager.add_hash('/path/to/temp/file2.txt', 'hash2')
     print(manager.get_hash('/path/to/target/file1.txt'))
-    manager.clean_cache()
+    manager.clear_cache()
     manager.clean_expired_cache()
     manager.save_data()

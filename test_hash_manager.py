@@ -47,16 +47,20 @@ def test_get_hash_computes_if_missing(setup_teardown_hash_manager):
 
 def test_auto_save_threshold(setup_teardown_hash_manager):
     hash_manager, _, hash_file = setup_teardown_hash_manager
+    prev_threshold = hash_manager.AUTO_SAVE_THRESHOLD
+    hash_manager.AUTO_SAVE_THRESHOLD = 5
     for i in range(hash_manager.AUTO_SAVE_THRESHOLD):
         file_path = os.path.join(hash_manager.target_folder, f"file{i}.txt")
         with open(file_path, 'w') as f:
             f.write(f"test content {i}")
         hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
+
     # Check that the file is saved after the threshold is exceeded
     assert os.path.exists(hash_file)
     saved_data = pd.read_pickle(hash_file)
     assert len(saved_data) == hash_manager.AUTO_SAVE_THRESHOLD
 
+    hash_manager.AUTO_SAVE_THRESHOLD = prev_threshold
 
 def test_clean_cache(setup_teardown_hash_manager):
     hash_manager, _, _ = setup_teardown_hash_manager
@@ -64,7 +68,7 @@ def test_clean_cache(setup_teardown_hash_manager):
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
-    hash_manager.clean_cache()
+    hash_manager.clear_cache()
     assert hash_manager.persistent_data.empty
     assert hash_manager.temporary_data.empty
 
@@ -118,6 +122,17 @@ def test_file_not_found(setup_teardown_hash_manager):
     hash_manager, _, _ = setup_teardown_hash_manager
     with pytest.raises(FileNotFoundError):
         hash_manager.get_hash("non_existent_file.txt")
+
+
+def test_clean_cache_with_data(setup_teardown_hash_manager):
+    hash_manager, _, _ = setup_teardown_hash_manager
+    file_path = os.path.join(hash_manager.target_folder, "file1.txt")
+    with open(file_path, 'w') as f:
+        f.write("test content")
+    hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
+    hash_manager.clear_cache()
+    assert hash_manager.persistent_data.empty
+    assert hash_manager.temporary_data.empty
 
 
 if __name__ == "__main__":

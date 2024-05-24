@@ -13,16 +13,14 @@ simulate the actions without moving the files. The script also logs its actions 
 """
 
 # to improve
-# - hash manager class
 # - test with / at the end of the folder path
 # - deal with _files
-# - clear cache argument
 # - more tests - for less common cases
 # - arg to act only if all folder is subfolder of a target folder, recursively (bottom-up)
+# possible bug - we clear all the target folder cache when we save the data, but we might have data from previous runs that we didn't load to pd this time
 
 import os
 import sys
-import hashlib
 import shutil
 from collections import defaultdict
 import argparse
@@ -159,7 +157,7 @@ def find_and_process_duplicates(args):
     files_moved = files_created = 0
     source_duplicates_to_process = {}
 
-    for src_key, src_filepaths in tqdm.tqdm(source_files.items(), desc="Finding and processing duplicate files"):
+    for src_key, src_filepaths in tqdm.tqdm(source_files.items(), desc="Finding duplicate files"):
         src_filepath, _ = src_filepaths[0]
         target_key = get_file_hash(src_filepath) if 'filename' in args.ignore_diff else os.path.basename(src_filepath)
         if target_key not in target_files:  # if the file is not found in the target folder, no need to process it
@@ -218,7 +216,7 @@ def collect_target_files(args):
     target_files = defaultdict(list)
     # list so it won't be lazy
     walk = list(os.walk(args.target))
-    for root, dirs, files in tqdm.tqdm(walk, desc="Collecting target files"):
+    for root, dirs, files in tqdm.tqdm(walk, desc="Scanning target folders"):
         for f in files:
             full_path = os.path.join(root, f)
             key = f if 'filename' not in args.ignore_diff else get_file_hash(full_path)
@@ -261,7 +259,7 @@ def collect_source_files(args) -> Dict[str, List[Tuple[str, int]]]:
     source_files = defaultdict(list)
     source_depth = args.src.count(os.sep)
     walk = list(os.walk(args.src))
-    for root, dirs, files in tqdm.tqdm(walk, desc="Collecting source files"):
+    for root, dirs, files in tqdm.tqdm(walk, desc="Scanning source folders"):
         for f in files:
             full_path = os.path.join(root, f)
             if os.path.isfile(full_path):
@@ -290,7 +288,7 @@ def parse_arguments(cust_args=None):
     parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
                         help='Do not delete empty folders in the source folder.')
     parser.set_defaults(delete_empty_folders=True)
-    parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS, default=False)
+    parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args(cust_args if cust_args else None)
 
     if args.extra_logging:
@@ -340,6 +338,8 @@ def main(args):
     logger.info(f"Move to folder: {args.move_to}")
     logger.info(f"Ignoring Settings: mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}")
     hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None)
+    if args.clear_cache:
+        hash_manager.clear_cache()
 
     (files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found,
      duplicate_source_files_moved) = find_and_process_duplicates(args)
