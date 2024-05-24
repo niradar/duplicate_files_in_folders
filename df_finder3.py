@@ -12,12 +12,13 @@ Settings allow to ignore differences in modification dates and filenames. The sc
 simulate the actions without moving the files. The script also logs its actions and errors for traceability.
 """
 
-# to improve
+# possible future improvements:
 # - test with / at the end of the folder path
-# - deal with _files
-# - more tests - for less common cases
+# - deal with _files folders in the source folder
+# - more tests for less common cases
 # - arg to act only if all folder is subfolder of a target folder, recursively (bottom-up)
-# possible bug - we clear all the target folder cache when we save the data, but we might have data from previous runs that we didn't load to pd this time
+# - keep the source folder structure in the move_to folder - optional argument
+# - if not copy_to_all, still move the duplicates to the move_to folder, simply don't copy them to the other folders
 
 import os
 import sys
@@ -34,7 +35,7 @@ from typing import Dict, List, Tuple
 logger = logging.getLogger(__name__)
 
 
-def get_file_hash(file_path, buffer_size=8 * 1024 * 1024) -> str:
+def get_file_hash(file_path) -> str:
     hash_manager = HashManager.get_instance()
     return hash_manager.get_hash(file_path)
 
@@ -114,7 +115,7 @@ def clean_source_duplications(args, keys_to_clean=None, given_duplicates: Dict[s
     for group_key, group in source_duplicates.items():
         if keys_to_clean and group_key not in keys_to_clean:
             continue
-        logger.info(f"Found {len(group)} duplicate files for {group[0][0]}")
+        logger.debug(f"Found {len(group)} duplicate files for {group[0][0]}")
 
         # Sort the files by their depth, then by their modification time or name
         group.sort(key=lambda x: (x[1], x[0] if 'mdate' in args.ignore_diff else os.path.getmtime(x[0])))
@@ -263,9 +264,8 @@ def collect_source_files(args) -> Dict[str, List[Tuple[str, int]]]:
         for f in files:
             full_path = os.path.join(root, f)
             if os.path.isfile(full_path):
-                key = get_file_key(args, full_path)
                 depth = full_path.count(os.sep) - source_depth
-                source_files[key].append((full_path, depth))
+                source_files[get_file_key(args, full_path)].append((full_path, depth))
     return source_files
 
 
