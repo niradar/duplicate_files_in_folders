@@ -346,7 +346,7 @@ def main(args):
     logger.debug(f"Hash requests: {hash_manager.persistent_cache_requests}, cache hits: "
                  f"{hash_manager.persistent_cache_hits}")
     hash_manager.save_data()
-    res_str = f"Summary{" (Test Mode)" if not args.run else ""}: Move: {files_moved} files, Create: {files_created} copies"
+    res_str = f'Summary{" (Test Mode)" if not args.run else ""}: Move: {files_moved} files, Create: {files_created} copies'
     if duplicate_source_files_moved:
         res_str += f", Moved {duplicate_source_files_moved} duplicate files from the source folder"
     if deleted_source_folders:
