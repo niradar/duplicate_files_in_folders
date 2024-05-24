@@ -1,7 +1,6 @@
 from df_finder3 import main, parse_arguments
-from helpers_testing import *
-import logging
-from logging_config import setup_logging
+from tests.helpers_testing import *
+
 
 # Test 12 - files 1 to 6 in source subfolder sub1, files 1 to 2 and also 6 in source subfolder sub2, files 1 to 3 in target base folder, files 3 and 5 in target subfolder sub1
 # sub3 in source will contain files 1, 2, 3

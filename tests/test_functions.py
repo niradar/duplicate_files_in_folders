@@ -1,7 +1,7 @@
 from df_finder3 import parse_arguments, check_and_update_filename, \
     clean_source_duplications, delete_empty_folders_in_tree, validate_duplicate_files_destination, validate_folder, \
     compare_files, collect_source_files, get_file_key, any_is_subfolder_of
-from helpers_testing import *
+from tests.helpers_testing import *
 
 
 # Pytest test cases for parse_arguments function

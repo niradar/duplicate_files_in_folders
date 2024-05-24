@@ -1,5 +1,5 @@
 from df_finder3 import main, parse_arguments
-from helpers_testing import *
+from tests.helpers_testing import *
 
 
 def test_empty_source_folder(setup_teardown):

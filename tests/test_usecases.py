@@ -1,7 +1,5 @@
-import shutil
-
 from df_finder3 import main, parse_arguments
-from helpers_testing import *
+from tests.helpers_testing import *
 
 
 # Test 1 - content of source and target is exactly the same (all duplicates, all in the same base folder)
@@ -403,8 +401,8 @@ def test_duplicates_on_nested_folders_source_and_target(setup_teardown):
 def test18(setup_teardown):
     source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
-    shutil.copytree(os.path.join(BASE_DIR, "tests", "learn2_bug_minimal", "source"), source_dir, dirs_exist_ok=True)
-    shutil.copytree(os.path.join(BASE_DIR, "tests", "learn2_bug_minimal", "target"), target_dir, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(BASE_DIR, "learn2_bug_minimal", "source"), source_dir, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(BASE_DIR, "learn2_bug_minimal", "target"), target_dir, dirs_exist_ok=True)
 
     common_args.append("--copy_to_all")
     common_args.append("--ignore_diff")

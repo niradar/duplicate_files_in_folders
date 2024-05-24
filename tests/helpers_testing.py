@@ -9,10 +9,10 @@ from logging_config import setup_logging
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Define the directory containing the image files
-IMG_DIR = os.path.join(BASE_DIR, "tests", "imgs")
+IMG_DIR = os.path.join(BASE_DIR, "imgs")
 
 # Define a temporary directory for the tests
-TEMP_DIR = os.path.join(BASE_DIR, "tests", "temp")
+TEMP_DIR = os.path.join(BASE_DIR, "temp")
 
 img_files = {1: {'extension': 'jpg', 'original_name': '20220517_155135.jpg'},
              2: {'extension': 'jpg', 'original_name': '20220517_210649.jpg'},
