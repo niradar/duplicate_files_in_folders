@@ -1,24 +1,5 @@
-"""
-This script identifies and processes duplicate files between a source and target directory.
-
-MAIN USE CASE:
-- Source folder contains files without order.
-- Target folder contains files that some of them are sorted versions of the files in the source folder.
-- The script will move the files from the source folder to "dups" folder if they are found in the
-  target folder. It will keep the structure of the target folder in the "dups" folder.
-
-The script compares filename, modification date, size and hash of the files to identify duplicates.
-Settings allow to ignore differences in modification dates and filenames. The script can be run in test mode to
-simulate the actions without moving the files. The script also logs its actions and errors for traceability.
-"""
-
-# possible future improvements:
-# - test with / at the end of the folder path
-# - deal with _files folders in the source folder
-# - more tests for less common cases
-# - arg to act only if all folder is subfolder of a target folder, recursively (bottom-up)
-# - keep the source folder structure in the move_to folder - optional argument
-# - if not copy_to_all, still move the duplicates to the move_to folder, simply don't copy them to the other folders
+# Identifies and processes duplicate files between a source and target directory.
+# https://github.com/niradar/duplicate_files_in_folders
 
 import os
 import sys
