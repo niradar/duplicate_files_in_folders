@@ -71,10 +71,18 @@ The script logs its actions and errors for traceability. The log file will be cr
 - [ ] More ways to influence how the script works
   - [ ] Add an argument to act only if the entire folder is a subfolder of a target folder, recursively (bottom-up)
   - [ ] Option to keep the source folder structure in the move_to folder
-- [ ] Even if argument --copy_to_all is not present, still move the duplicates to the move_to folder without copying them to other folders
 - [ ] Add a way to ignore files with specific extensions / process only files with specific extensions
 - [ ] Consider using bloom filters for faster comparison (https://en.wikipedia.org/wiki/Bloom_filter)
 - [ ] To consider: make sure expired cache is removed over time even if not touched
+- [ ] More safeguards
+  - [ ] Check any file operation for errors
+  - [ ] Check before any file operation if the file is on target folder and don't allow it
+
+## Known Issues
+- [ ] Even if argument --copy_to_all is not present, still need to move the duplicates to the move_to folder without copying them to other folders
+- [ ] Hash manager clears all target before writing the new data, even if the new data not contains all the old data
+- [ ] Issue with files with non-standard characters in the filename - no reproducible yet
+
 
 ## Contributing
 If you have suggestions for improving this script, please open an issue or submit a pull request.
