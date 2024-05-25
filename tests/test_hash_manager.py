@@ -136,5 +136,21 @@ def test_clean_cache_with_data(setup_teardown_hash_manager):
     assert hash_manager.temporary_data.empty
 
 
+# make sure the script don't use expired cache
+def test_clean_expired_cache_with_data(setup_teardown_hash_manager):
+    hash_manager, target_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(target_dir, "file1.txt")
+    with open(file_path, 'w') as f:
+        f.write("test content")
+    hash_manager.add_hash(file_path, 'fake_hash_value')
+    hash_manager.persistent_data.at[0, 'last_update'] = (datetime.now() -
+                                                        timedelta(seconds=hash_manager.MAX_CACHE_TIME + 1))
+    assert hash_manager.persistent_data.at[0, 'last_update'] < datetime.now() - timedelta(seconds=hash_manager.MAX_CACHE_TIME)
+
+
+    # make sure the script don't use expired cache and compute the hash again
+    assert hash_manager.get_hash(file_path) != 'fake_hash_value'
+
+
 if __name__ == "__main__":
     pytest.main()

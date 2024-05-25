@@ -104,8 +104,10 @@ class HashManager:
 
         if self.target_folder and file_path.startswith(self.target_folder):
             if not self.persistent_data.empty:
-                self.persistent_data = pd.concat([self.persistent_data[self.persistent_data.file_path != file_path],
-                                                  new_entry], ignore_index=True)
+                # Remove the existing entry if it exists
+                self.persistent_data = self.persistent_data[self.persistent_data.file_path != file_path]
+                # Add the new entry
+                self.persistent_data = pd.concat([self.persistent_data, new_entry], ignore_index=True)
             else:
                 self.persistent_data = new_entry
             self.unsaved_changes += 1
@@ -113,8 +115,10 @@ class HashManager:
                 self.save_data()
         else:
             if not self.temporary_data.empty:
-                self.temporary_data = pd.concat([self.temporary_data[self.temporary_data.file_path != file_path],
-                                                 new_entry], ignore_index=True)
+                # Remove the existing entry if it exists
+                self.temporary_data = self.temporary_data[self.temporary_data.file_path != file_path]
+                # Add the new entry
+                self.temporary_data = pd.concat([self.temporary_data, new_entry], ignore_index=True)
             else:
                 self.temporary_data = new_entry
 
@@ -122,8 +126,6 @@ class HashManager:
         """Get the hash of a file, computing and storing it if necessary."""
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
-
-        """Get the hash of a file, computing and storing it if necessary."""
         if self.target_folder and file_path.startswith(self.target_folder):
             self.persistent_cache_requests += 1  # Increment persistent cache requests
             result = self.persistent_data[self.persistent_data.file_path == file_path]
@@ -131,16 +133,19 @@ class HashManager:
             self.temporary_cache_requests += 1  # Increment temporary cache requests
             result = self.temporary_data[self.temporary_data.file_path == file_path]
 
+        # Check if the hash is already stored and not expired
         if not result.empty:
-            if self.target_folder and file_path.startswith(self.target_folder):
-                self.persistent_cache_hits += 1  # Increment persistent cache hits
-            else:
-                self.temporary_cache_hits += 1  # Increment temporary cache hits
-            return result['hash_value'].values[0]
-        else:
-            hash_value = self.compute_hash(file_path)
-            self.add_hash(file_path, hash_value)
-            return hash_value
+            current_time = datetime.now()
+            last_update = result['last_update'].values[0]
+            if pd.Timestamp(last_update) > current_time - timedelta(seconds=self.MAX_CACHE_TIME):
+                if self.target_folder and file_path.startswith(self.target_folder):
+                    self.persistent_cache_hits += 1  # Increment persistent cache hits
+                else:
+                    self.temporary_cache_hits += 1  # Increment temporary cache hits
+                return result['hash_value'].values[0]
+        hash_value = self.compute_hash(file_path)
+        self.add_hash(file_path, hash_value)
+        return hash_value
 
     def get_hashes_by_folder(self, folder_path: str) -> dict:
         """Get all hashes for files in a specific folder, checking both persistent and temporary data."""
