@@ -80,10 +80,28 @@ def test_clean_expired_cache(setup_teardown_hash_manager):
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
-    hash_manager.temporary_data.at[0, 'last_update'] = (datetime.now() -
+    hash_manager.persistent_data.at[0, 'last_update'] = (datetime.now() -
                                                         timedelta(seconds=hash_manager.MAX_CACHE_TIME + 1))
     hash_manager.clean_expired_cache()
-    assert hash_manager.temporary_data.empty
+    assert hash_manager.persistent_data.empty
+
+
+def test_clean_expired_cache_mixed_data(setup_teardown_hash_manager):
+    hash_manager, target_dir, _ = setup_teardown_hash_manager
+    file_path1 = os.path.join(target_dir, "file1.txt")
+    file_path2 = os.path.join(target_dir, "file2.txt")
+    with open(file_path1, 'w') as f:
+        f.write("test content")
+    with open(file_path2, 'w') as f:
+        f.write("test content")
+    hash_manager.add_hash(file_path1, hash_manager.compute_hash(file_path1))
+    hash_manager.add_hash(file_path2, hash_manager.compute_hash(file_path2))
+    hash_manager.persistent_data.at[0, 'last_update'] = (datetime.now() -
+                                                        timedelta(seconds=hash_manager.MAX_CACHE_TIME + 1))
+    hash_manager.clean_expired_cache()
+    assert len(hash_manager.temporary_data) == 0
+    assert len(hash_manager.persistent_data) == 1
+    assert hash_manager.persistent_data.at[1, 'file_path'] == file_path2
 
 
 def test_get_hashes_by_folder(setup_teardown_hash_manager):

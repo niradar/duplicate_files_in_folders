@@ -166,10 +166,10 @@ class HashManager:
     def clean_expired_cache(self) -> None:
         """Clean cache files that have expired."""
         current_time = datetime.now()
-        expired_files = self.temporary_data[
-            (self.temporary_data.last_update < current_time - timedelta(seconds=self.MAX_CACHE_TIME))
+        expired_files = self.persistent_data[
+            (self.persistent_data.last_update < current_time - timedelta(seconds=self.MAX_CACHE_TIME))
         ]
-        self.temporary_data = self.temporary_data.drop(expired_files.index)
+        self.persistent_data = self.persistent_data.drop(expired_files.index)
         logger.info("Expired cache cleaned.")
 
     @staticmethod
