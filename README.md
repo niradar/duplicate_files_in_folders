@@ -64,6 +64,7 @@ The script logs its actions and errors for traceability. The log file will be cr
 - [ ] Improve summary and user interface
   - [X] Add a progress bar
   - [ ] Add a better summary of the actions taken
+  - [ ] Add summary also to the console output
 - [ ] Better handling of folders with saved html files
   - [ ] Deal with `_files` folders in the source folder
   - [ ] Move it only if all files are duplicates
@@ -71,7 +72,8 @@ The script logs its actions and errors for traceability. The log file will be cr
   - [ ] Add an argument to act only if the entire folder is a subfolder of a target folder, recursively (bottom-up)
   - [ ] Option to keep the source folder structure in the move_to folder
 - [ ] Even if argument --copy_to_all is not present, still move the duplicates to the move_to folder without copying them to other folders
-
+- [ ] Add a way to ignore files with specific extensions / process only files with specific extensions
+- [ ] Consider using bloom filters for faster comparison (https://en.wikipedia.org/wiki/Bloom_filter)
 
 ## Contributing
 If you have suggestions for improving this script, please open an issue or submit a pull request.
