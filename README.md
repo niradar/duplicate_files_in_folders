@@ -74,6 +74,7 @@ The script logs its actions and errors for traceability. The log file will be cr
 - [ ] Even if argument --copy_to_all is not present, still move the duplicates to the move_to folder without copying them to other folders
 - [ ] Add a way to ignore files with specific extensions / process only files with specific extensions
 - [ ] Consider using bloom filters for faster comparison (https://en.wikipedia.org/wiki/Bloom_filter)
+- [ ] To consider: make sure expired cache is removed over time even if not touched
 
 ## Contributing
 If you have suggestions for improving this script, please open an issue or submit a pull request.
