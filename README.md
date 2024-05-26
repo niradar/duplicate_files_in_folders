@@ -57,6 +57,7 @@ The script logs its actions and errors for traceability. The log file will be cr
 
 
 ## Possible Future Improvements
+- [ ] GitHub branch protection
 - [ ] More tests
   - [ ] More tests for less common cases
   - [ ] Test with `/` at the end of the folder path
