@@ -74,11 +74,13 @@ The script logs its actions and errors for traceability. The log file will be cr
   - [ ] Option to keep the source folder structure in the move_to folder
 - [ ] Add a way to ignore files with specific extensions / process only files with specific extensions
 - [ ] Consider using bloom filters for faster comparison (https://en.wikipedia.org/wiki/Bloom_filter)
+  - [ ] idea - save also the first part of the hash - when comparing large files - if no match after that part, you don't need to continue the check
 - [ ] To consider: make sure expired cache is removed over time even if not touched
 - [ ] More safeguards
   - [ ] Check any file operation for errors
   - [ ] Check before any file operation if the file is on target folder and don't allow it
-
+- [ ] Save also file size and modify date in hash. avoid io ops when needed. Compare performences before and after
+- [ ] Before checking target files also check if there is no chance we need them, for example - filename no match and not ingoring file name, or file size doesn't match
 ## Known Issues
 - [ ] Even if argument --copy_to_all is not present, still need to move the duplicates to the move_to folder without copying them to other folders
 - [ ] Hash manager clears all target before writing the new data, even if the new data not contains all the old data
