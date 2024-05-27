@@ -4,3 +4,4 @@
 *.pkl
 *.bak
 .coverage
+conda.bat
