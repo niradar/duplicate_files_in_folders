@@ -1,3 +1,5 @@
+import time
+
 from df_finder3 import parse_arguments, check_and_update_filename, \
     clean_source_duplications, delete_empty_folders_in_tree, validate_duplicate_files_destination, validate_folder, \
     compare_files, collect_source_files, get_file_key, any_is_subfolder_of
@@ -329,6 +331,9 @@ def test_compare_files(setup_teardown):
 
     # Setup the files in the source directory
     copy_files(range(1, 3), source_dir)
+
+    # sleep for 0.5 second to make sure the mdate is different
+    time.sleep(0.5)
     copy_files(range(1, 3), target_dir)
 
     # copy file 1 also with original name to source folder
