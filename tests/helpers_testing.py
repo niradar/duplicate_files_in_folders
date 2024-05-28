@@ -2,6 +2,7 @@ import pytest
 import os
 import shutil
 
+from df_finder3 import parse_arguments
 from hash_manager import HashManager
 from logging_config import setup_logging
 import file_manager
@@ -103,4 +104,15 @@ def get_folder_structure_include_subfolders(folder):
     return "\n" + "\n".join(tree)
 
 
+def simple_usecase_test(source_dir, target_dir, move_to_dir, max_files=3):
+    # Check if all files from source are now in base folder of move_to
+    source_files = set(os.listdir(source_dir))
+    assert not source_files, "Source directory is not empty"
+    move_to_files = set(os.listdir(move_to_dir))
+    assert move_to_files == set(
+        [f"{i}.jpg" for i in range(1, max_files+1)]), "Not all files have been moved to move_to directory"
+
+    # Check no change to target
+    target_files = set(os.listdir(target_dir))
+    assert target_files == set([f"{i}.jpg" for i in range(1, max_files+1)]), "Target directory files have changed"
 
