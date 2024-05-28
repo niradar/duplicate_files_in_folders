@@ -274,7 +274,7 @@ def parse_arguments(cust_args=None):
 
     if args.extra_logging:
         logger.setLevel(logging.DEBUG)
-    args.ignore_diff = set(args.ignore_diff.split(','))
+    args.ignore_diff = set(str(args.ignore_diff).split(','))
     if not args.ignore_diff.issubset({'mdate', 'filename', 'checkall'}):
         print_error("Invalid ignore_diff setting: must be 'mdate', 'filename' or 'checkall'.")
     if 'checkall' in args.ignore_diff:
@@ -307,26 +307,10 @@ def any_is_subfolder_of(folders: List[str]) -> bool:
     return False
 
 
-def main(args):
-    setup_logging()
-    validate_folder(args.src, "Source")
-    validate_folder(args.target, "Target")
-    validate_duplicate_files_destination(args.move_to, args.run)
-    any_is_subfolder_of([args.src, args.target, args.move_to])
-    confirm_script_execution(args)
-    logger.info(f"Source folder: {args.src}")
-    logger.info(f"Target folder: {args.target}")
-    logger.info(f"Move to folder: {args.move_to}")
-    logger.info(f"Ignoring Settings: mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}")
-    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None)
-    if args.clear_cache:
-        hash_manager.clear_cache()
-
-    (files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found,
-     duplicate_source_files_moved) = find_and_process_duplicates(args)
-    logger.debug(f"Hash requests: {hash_manager.persistent_cache_requests}, cache hits: "
-                 f"{hash_manager.persistent_cache_hits}")
-    hash_manager.save_data()
+def output_results(args, deleted_source_folders, duplicate_source_files_moved, files_created, files_moved, hash_manager):
+    cache_hits = f"Hash requests: {hash_manager.persistent_cache_requests + hash_manager.temporary_cache_requests}," + \
+                  f" Cache hits: {hash_manager.persistent_cache_hits + hash_manager.temporary_cache_hits}"
+    logger.debug(cache_hits)
     res_str = f'Summary{" (Test Mode)" if not args.run else ""}: Move: {files_moved} files, Create: {files_created} copies'
     if duplicate_source_files_moved:
         res_str += f", Moved {duplicate_source_files_moved} duplicate files from the source folder"
@@ -347,6 +331,26 @@ def confirm_script_execution(args):
 
 def detect_pytest():
     return 'PYTEST_CURRENT_TEST' in os.environ
+
+
+def main(args):
+    setup_logging()
+    validate_folder(args.src, "Source")
+    validate_folder(args.target, "Target")
+    validate_duplicate_files_destination(args.move_to, args.run)
+    any_is_subfolder_of([args.src, args.target, args.move_to])
+    confirm_script_execution(args)
+    logger.info(f"Source folder: {args.src}")
+    logger.info(f"Target folder: {args.target}")
+    logger.info(f"Move to folder: {args.move_to}")
+    logger.info(f"Ignoring Settings: mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}")
+    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None)
+    if args.clear_cache:
+        hash_manager.clear_cache()
+    (files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found,
+     duplicate_source_files_moved) = find_and_process_duplicates(args)
+    hash_manager.save_data()
+    output_results(args, deleted_source_folders, duplicate_source_files_moved, files_created, files_moved, hash_manager)
 
 
 if __name__ == "__main__":
