@@ -57,14 +57,12 @@ The script logs its actions and errors for traceability. The log file will be cr
 
 
 ## Possible Future Improvements
-- [ ] GitHub branch protection
 - [ ] More tests
   - [ ] More tests for less common cases
   - [ ] Test with `/` at the end of the folder path
   - [ ] More tests to hash_manager.py 
 - [ ] Improve summary and user interface
-  - [X] Add a progress bar
-  - [ ] Add a better summary of the actions taken
+    - [ ] Add a better summary of the actions taken
   - [ ] Add summary also to the console output
 - [ ] Better handling of folders with saved html files
   - [ ] Deal with `_files` folders in the source folder
