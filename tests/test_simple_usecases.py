@@ -28,7 +28,7 @@ def test_non_existing_source_folder(setup_teardown):
     _, target_dir, move_to_dir, _ = setup_teardown
     source_dir = os.path.join(TEMP_DIR, "non_existing_folder")
     setup_test_files([], range(1, 6))
-    custom_args = ["--source", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run"]
+    custom_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run"]
 
     with pytest.raises(SystemExit) as excinfo:
         args = parse_arguments(custom_args)
@@ -40,7 +40,7 @@ def test_non_existing_target_folder(setup_teardown):
     source_dir, _, move_to_dir, _ = setup_teardown
     target_dir = os.path.join(TEMP_DIR, "non_existing_folder")
     setup_test_files(range(1, 6), [])
-    custom_args = ["--source", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run"]
+    custom_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run"]
 
     with pytest.raises(SystemExit) as excinfo:
         args = parse_arguments(custom_args)
