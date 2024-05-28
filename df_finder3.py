@@ -49,19 +49,14 @@ def check_and_update_filename(new_filename):
 def copy_or_move_file(tgt_filepath: str, move_to: str, src_filepath: str, target: str, test_mode, move=True):
     new_src_path = os.path.join(move_to, os.path.relpath(tgt_filepath, target))
     new_src_dir = os.path.dirname(new_src_path)
-    fm = file_manager.FileManager()
-    if not os.path.exists(new_src_dir) and not test_mode:
+    fm = file_manager.FileManager(not test_mode)
+    if not os.path.exists(new_src_dir):
         fm.make_dirs(new_src_dir)
     new_filename = check_and_update_filename(new_src_path)
-    src_to_dst = f"{src_filepath} to {new_filename}"
-    if not test_mode:
-        if move:
-            fm.move_file(src_filepath, new_filename)
-        else:
-            fm.copy_file(src_filepath, new_filename)
-        logger.info(f"{'Moved' if move else 'Copied'} {src_to_dst}")
+    if move:
+        fm.move_file(src_filepath, new_filename)
     else:
-        logger.info(f"Test Mode: Would {'move' if move else 'copy'} {src_to_dst}")
+        fm.copy_file(src_filepath, new_filename)
     return new_filename
 
 
@@ -104,23 +99,21 @@ def clean_source_duplications(args, keys_to_clean=None, given_duplicates: Dict[s
 
         unique_duplicate_files_found += 1
         start_index = 1 if not keys_to_clean else 0
-        fm = file_manager.FileManager()
+        fm = file_manager.FileManager(args.run)
         # Move all the other files to a new folder under the move_to folder
         for src_filepath, _ in group[start_index:]:
             new_src_path = os.path.join(source_dups_move_to, os.path.relpath(src_filepath, source))
             new_src_dir = os.path.dirname(new_src_path)
-            if not os.path.exists(new_src_dir) and args.run:
+            if not os.path.exists(new_src_dir):
                 fm.make_dirs(new_src_dir)
             new_filename = check_and_update_filename(new_src_path)
-            src_to_dst = f"{src_filepath} to {new_filename}"
-            if args.run:
-                fm.move_file(src_filepath, new_filename)
-                logger.info(f"Moved {src_to_dst}")
+            fm.move_file(src_filepath, new_filename)
             duplicate_files_moved += 1
 
     if unique_duplicate_files_found:
         logger.info(
-            f"Cleaning source folder: Found {unique_duplicate_files_found} unique duplicate files in the source folder, moved {duplicate_files_moved} files to {source_dups_move_to}")
+            f"Cleaning source folder: Found {unique_duplicate_files_found} unique duplicate files in the source folder,"
+            f" moved {duplicate_files_moved} files to {source_dups_move_to}")
     return unique_duplicate_files_found, duplicate_files_moved
 
 
@@ -168,7 +161,7 @@ def find_and_process_duplicates(args):
         clean_source_duplications(args, source_duplicates_to_process.keys(), source_duplicates_to_process)) \
         if source_duplicates_to_process else (0, 0)
 
-    deleted_source_folders = delete_empty_folders_in_tree(args.src) if args.run and args.delete_empty_folders else 0
+    deleted_source_folders = delete_empty_folders_in_tree(args.src, args.run) if args.run and args.delete_empty_folders else 0
     return files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found, duplicate_source_files_moved
 
 
@@ -211,7 +204,7 @@ def collect_target_files(args):
     return target_files
 
 
-def delete_empty_folders_in_tree(base_path):
+def delete_empty_folders_in_tree(base_path, run_mode):
     folders_by_depth = {}  # collect all folders in the source folder by depth
     for root, dirs, files in os.walk(base_path, topdown=False):
         if base_path == root:
@@ -221,14 +214,13 @@ def delete_empty_folders_in_tree(base_path):
             folders_by_depth[depth] = []
         folders_by_depth[depth].append(root)
 
-    fm = file_manager.FileManager()
+    fm = file_manager.FileManager(run_mode)
     deleted_folders = 0
     # delete empty folders starting from the deepest level excluding the base_path folder
     for depth in sorted(folders_by_depth.keys(), reverse=True):
         for folder in folders_by_depth[depth]:
             if not os.listdir(folder):
                 fm.rmdir(folder)
-                logger.info(f"Deleted empty folder {folder}")
                 deleted_folders += 1
     return deleted_folders
 
@@ -290,16 +282,12 @@ def parse_arguments(cust_args=None):
 
 
 def validate_duplicate_files_destination(duplicate_files_destination, run_mode):
-    fm = file_manager.FileManager()
+    fm = file_manager.FileManager(run_mode)
     if not os.path.isdir(duplicate_files_destination):
-        if run_mode:
-            try:
-                fm.make_dirs(duplicate_files_destination)
-                logger.info(f"Created destination folder {duplicate_files_destination}")
-            except Exception as e:
-                print_error(f"Error creating destination folder {duplicate_files_destination}: {e}")
-        else:
-            logger.info(f"Test Mode: Would create destination folder {duplicate_files_destination}")
+        try:
+            fm.make_dirs(duplicate_files_destination)
+        except Exception as e:
+            print_error(f"Error creating destination folder {duplicate_files_destination}: {e}")
     return True
 
 
@@ -316,7 +304,7 @@ def output_results(args, deleted_source_folders, duplicate_source_files_moved, f
     summary_header = "Summary (Test Mode):" if not args.run else "Summary:"
     separator = "-" * max(len(summary_header), 40)
     cache_hits = f"Hash requests: {hash_manager.persistent_cache_requests + hash_manager.temporary_cache_requests}," + \
-                  f" Cache hits: {hash_manager.persistent_cache_hits + hash_manager.temporary_cache_hits}"
+                 f" Cache hits: {hash_manager.persistent_cache_hits + hash_manager.temporary_cache_hits}"
     logger.info(summary_header)
     logger.info(separator)
 
@@ -345,11 +333,7 @@ def detect_pytest():
 
 def main(args):
     setup_logging()
-    fm = file_manager.FileManager().reset_all()
-    fm.add_protected_dir(args.target)
-    fm.add_allowed_dir(args.src)
-    fm.add_allowed_dir(args.move_to)
-
+    file_manager.FileManager.reset_file_manager([args.target], [args.src, args.move_to], args.run)
     validate_folder(args.src, "Source")
     validate_folder(args.target, "Target")
     validate_duplicate_files_destination(args.move_to, args.run)
@@ -362,8 +346,6 @@ def main(args):
     hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None)
     if args.clear_cache:
         hash_manager.clear_cache()
-
-
     (files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found,
      duplicate_source_files_moved) = find_and_process_duplicates(args)
     hash_manager.save_data()

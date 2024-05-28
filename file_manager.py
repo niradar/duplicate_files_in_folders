@@ -1,6 +1,9 @@
 from pathlib import Path
 import shutil
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class FileManagerError(Exception):
@@ -16,10 +19,12 @@ class FileManager:
     _instance = None
     protected_dirs = set()
     allowed_dirs = set()  # If set, only operations in these directories are allowed. Acts as a whitelist
+    run_mode = False
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, run_mode, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(FileManager, cls).__new__(cls, *args, **kwargs)
+            cls._instance.run_mode = run_mode
         return cls._instance
 
     def add_protected_dir(self, dir_path):
@@ -60,7 +65,13 @@ class FileManager:
             raise ProtectedPathError(
                 f"Operation not allowed: Attempt to move protected file or to protected directory: {src} -> {dst}")
 
-        shutil.move(src_path, dst_path)
+        src_to_dst = f"{src_path} to {dst_path}"
+        if self.run_mode:
+            shutil.move(src_path, dst_path)
+            logger.info(f"Moved {src_to_dst}")
+        else:
+            logger.info(f"Would have moved {src_to_dst}")
+
         return True
 
     def copy_file(self, src, dst):
@@ -71,7 +82,12 @@ class FileManager:
             raise ProtectedPathError(
                 f"Operation not allowed: Attempt to copy file to protected directory: {src} -> {dst}")
 
-        shutil.copy2(src_path, dst_path)
+        src_to_dst = f"{src_path} to {dst_path}"
+        if self.run_mode:
+            shutil.copy2(src_path, dst_path)
+            logger.info(f"Copied {src_to_dst}")
+        else:
+            logger.info(f"Would have copied {src_to_dst}")
         return True
 
     def delete_file(self, file_path):
@@ -80,7 +96,11 @@ class FileManager:
         if self.is_protected_path(file_path):
             raise ProtectedPathError(f"Operation not allowed: Attempt to delete protected file: {file_path}")
 
-        os.remove(file_path)
+        if self.run_mode:
+            os.remove(file_path)
+            logger.info(f"Deleted {file_path}")
+        else:
+            logger.info(f"Would have deleted {file_path}")
         return True
 
     def make_dirs(self, dir_path):
@@ -89,8 +109,11 @@ class FileManager:
         if self.is_protected_path(dir_path):
             raise ProtectedPathError(f"Operation not allowed: Attempt to create directory in protected path: "
                                      f"{dir_path}")
-
-        os.makedirs(dir_path)
+        if self.run_mode:
+            os.makedirs(dir_path, exist_ok=True)
+            logger.info(f"Created directory {dir_path}")
+        else:
+            logger.info(f"Would have created directory {dir_path}")
         return True
 
     def rmdir(self, dir_path):
@@ -99,7 +122,11 @@ class FileManager:
         if self.is_protected_path(dir_path):
             raise ProtectedPathError(f"Operation not allowed: Attempt to delete protected directory: {dir_path}")
 
-        os.rmdir(dir_path)
+        if self.run_mode:
+            shutil.rmtree(dir_path)
+            logger.info(f"Deleted directory {dir_path}")
+        else:
+            logger.info(f"Would have deleted directory {dir_path}")
         return True
 
     def reset_protected_dirs(self):
@@ -113,4 +140,18 @@ class FileManager:
     def reset_all(self):
         self.reset_protected_dirs()
         self.reset_allowed_dirs()
+        return self
+
+    # new version for reset_file_manager that gets the protected and allowed directories as arguments
+    @staticmethod
+    def reset_file_manager(protected_dirs, allowed_dirs, run_mode):
+        FileManager._instance = None
+        fm = FileManager(run_mode).reset_all()
+        for dir_path in protected_dirs:
+            fm.add_protected_dir(dir_path)
+        for dir_path in allowed_dirs:
+            fm.add_allowed_dir(dir_path)
+
+    def set_run_mode(self, run_mode):
+        self.run_mode = run_mode
         return self

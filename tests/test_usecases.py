@@ -79,7 +79,7 @@ def test4_same_file_different_names(setup_teardown):
     for file_number in range(1, 5):
         src_file = os.path.join(IMG_DIR, f"{file_number}.jpg")
         dst_file = os.path.join(TEMP_DIR, "target", img_files[file_number]['original_name'])
-        shutil.copy(src_file, dst_file)
+        shutil.copy(src_file, str(dst_file))
 
     args = parse_arguments(common_args)
     main(args)
@@ -181,7 +181,6 @@ def test7(setup_teardown):
 
     # Remove the "--run" flag from the arguments
     common_args.remove("--run")
-
     args = parse_arguments(common_args)
     main(args)
 
@@ -228,7 +227,7 @@ def test8(setup_teardown):
     copy_files([6], os.path.join(TEMP_DIR, "target"))
     src_file = os.path.join(IMG_DIR, f"6.jpg")
     dst_file = os.path.join(TEMP_DIR, "target", img_files[6]['original_name'])
-    shutil.copy(src_file, dst_file)
+    shutil.copy(src_file, str(dst_file))
 
     # Add the "--copy_to_all" flag to the arguments
     common_args.append("--copy_to_all")
@@ -397,7 +396,7 @@ def test_duplicates_on_nested_folders_source_and_target(setup_teardown):
     assert not source_files, "Source directory is not empty"
 
 
-# this was a bug i couldn't reproduce, so i created a minimal test case with the same structure
+# this was a bug I couldn't reproduce, so I created a minimal test case with the same structure
 def test18(setup_teardown):
     source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
@@ -413,4 +412,3 @@ def test18(setup_teardown):
 
     source_files = set(os.listdir(source_dir))
     assert not source_files, "Source directory is not empty"
-

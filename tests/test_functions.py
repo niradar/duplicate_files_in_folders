@@ -3,6 +3,7 @@ import time
 from df_finder3 import parse_arguments, check_and_update_filename, \
     clean_source_duplications, delete_empty_folders_in_tree, validate_duplicate_files_destination, validate_folder, \
     compare_files, collect_source_files, get_file_key, any_is_subfolder_of
+from file_manager import FileManager
 from tests.helpers_testing import *
 
 
@@ -153,6 +154,8 @@ def test_clean_source_duplications_test_mode(setup_teardown):
     copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
 
     common_args.remove("--run")
+    FileManager._instance = None # reset the singleton instance to make sure it is not used
+    fm = FileManager(False).reset_all()
 
     args = parse_arguments(common_args)
     unique_duplicate_files_found, duplicate_files_moved = clean_source_duplications(args)
@@ -272,7 +275,7 @@ def test_delete_empty_folders_in_tree(setup_teardown):
 
     args = parse_arguments(common_args)
     unique_duplicate_files_found, duplicate_files_moved = clean_source_duplications(args)
-    delete_empty_folders_in_tree(source_dir)
+    delete_empty_folders_in_tree(source_dir, True)
     assert unique_duplicate_files_found == 5, "Unique duplicate files found"
 
     # check if all empty folders have been deleted
@@ -284,24 +287,29 @@ def test_delete_empty_folders_in_tree(setup_teardown):
 
 
 def test_validate_duplicate_files_destination(setup_teardown):
-    source_dir, _, _, _ = setup_teardown
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
     # test case 1: folder doesn't exist but can be created under the source folder
+    file_manager.FileManager.reset_file_manager([target_dir], [source_dir, move_to_dir], True)
     assert validate_duplicate_files_destination(os.path.join(source_dir, "sub1"), run_mode=True) is True
 
     # test case 2: folder doesn't exist and cannot be created
     with pytest.raises(SystemExit) as excinfo:
+        file_manager.FileManager.reset_file_manager([target_dir], [source_dir, move_to_dir], True)
         validate_duplicate_files_destination(os.path.join(source_dir, "\"^&%#$^%&!@"), run_mode=True)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 1
 
     # test case 3: folder exist
+    file_manager.FileManager.reset_file_manager([target_dir], [source_dir, move_to_dir], True)
     assert validate_duplicate_files_destination(source_dir, run_mode=True) is True
 
     # test case 4: same as test case 1 but with run_mode=False
+    file_manager.FileManager.reset_file_manager([target_dir], [source_dir, move_to_dir], True)
     assert validate_duplicate_files_destination(os.path.join(source_dir, "sub1"), run_mode=False) is True
 
     # test case 5: non-existing folder but can be created, run_mode=False
+    file_manager.FileManager.reset_file_manager([target_dir], [source_dir, move_to_dir], True)
     assert validate_duplicate_files_destination(os.path.join(source_dir, "sub_new"), run_mode=False) is True
 
 

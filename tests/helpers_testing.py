@@ -46,6 +46,7 @@ def get_folder_path(folder):
         res += subfolder[i] + os.sep
     return res[:-1]
 
+
 def copy_files(file_numbers, src_dir):
     for file_number in file_numbers:
         src_file = os.path.join(IMG_DIR, f"{file_number}.jpg")
@@ -55,6 +56,7 @@ def copy_files(file_numbers, src_dir):
 
 @pytest.fixture
 def setup_teardown():
+    setup_logging()
     # Setup: Create the temporary directories
     source_dir = os.path.join(TEMP_DIR, "source")
     target_dir = os.path.join(TEMP_DIR, "target")
@@ -65,15 +67,13 @@ def setup_teardown():
     HashManager.reset_instance()
     HashManager(target_folder=target_dir, filename=hash_file)
 
-    fm = file_manager.FileManager().reset_all()
-    fm.add_protected_dir(target_dir)
-    fm.add_allowed_dir(source_dir)
-    fm.add_allowed_dir(move_to_dir)
+    # change file_manager.FileManager.reset_file_manager() to the new arguments
+    file_manager.FileManager.reset_file_manager([target_dir], [source_dir, move_to_dir], True)
 
     os.makedirs(source_dir)
     os.makedirs(target_dir)
     os.makedirs(move_to_dir)
-    setup_logging()
+
     yield source_dir, target_dir, move_to_dir, common_args
 
     # Teardown: Delete the temporary directories
@@ -114,4 +114,3 @@ def simple_usecase_test(source_dir, target_dir, move_to_dir, max_files=3):
     # Check no change to target
     target_files = set(os.listdir(target_dir))
     assert target_files == set([f"{i}.jpg" for i in range(1, max_files+1)]), "Target directory files have changed"
-
