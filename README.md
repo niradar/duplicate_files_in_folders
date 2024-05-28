@@ -59,7 +59,6 @@ The script logs its actions and errors for traceability. The log file will be cr
 ## Possible Future Improvements
 - [ ] More tests
   - [ ] More tests for less common cases
-  - [ ] Test with `/` at the end of the folder path
   - [ ] More tests to hash_manager.py 
 - [ ] Improve summary and user interface
     - [ ] Add a better summary of the actions taken
