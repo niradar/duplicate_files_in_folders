@@ -207,3 +207,13 @@ def test_move_to_folder_slash(setup_teardown):
     main(args)
 
     simple_usecase_test(source_dir, target_dir, move_to_dir, 3)
+
+
+def test_source_argument_instead_of_src_to_instead_of_move_to(setup_teardown):
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    setup_test_files(range(1, 4), range(1, 4))
+    common_args = ["--source", source_dir, "--target", target_dir, "--to", move_to_dir, "--run"]
+    args = parse_arguments(common_args)
+    main(args)
+
+    simple_usecase_test(source_dir, target_dir, move_to_dir, 3)

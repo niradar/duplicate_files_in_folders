@@ -256,9 +256,9 @@ def collect_source_files(args) -> Dict[str, List[Tuple[str, int]]]:
 def parse_arguments(cust_args=None):
     parser = argparse.ArgumentParser(
         description="Identify duplicate files between source and target folders, move duplicates to a separate folder.")
-    parser.add_argument('--src', required=True, help='Source folder')
-    parser.add_argument('--target', required=True, help='Target folder')
-    parser.add_argument('--move_to', required=True, type=str, help='Folder where the duplicates will be moved.')
+    parser.add_argument('--src', '--source', required=True, help='Source folder')
+    parser.add_argument('--target',  required=True, help='Target folder')
+    parser.add_argument('--move_to', '--to', required=True, type=str, help='Folder where the duplicates will be moved.')
     parser.add_argument('--run', action='store_true', help='Run without test mode. Default is test mode.')
     parser.add_argument('--extra_logging', action='store_true', help='Enable extra logging. Default is disabled.')
     parser.add_argument('--ignore_diff', type=str,
