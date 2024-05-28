@@ -76,7 +76,6 @@ The script logs its actions and errors for traceability. The log file will be cr
 - [ ] To consider: make sure expired cache is removed over time even if not touched
 - [ ] More safeguards
   - [ ] Check any file operation for errors
-  - [ ] Check before any file operation if the file is on target folder and don't allow it
 - [ ] Save also file size and modify date in hash. avoid io ops when needed. Compare performences before and after
 - [ ] Before checking target files also check if there is no chance we need them, for example - filename no match and not ingoring file name, or file size doesn't match
 ## Known Issues
