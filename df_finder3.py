@@ -258,21 +258,22 @@ def parse_arguments(cust_args=None):
         description="Identify duplicate files between source and target folders, move duplicates to a separate folder.")
     parser.add_argument('--src', '--source', required=True, help='Source folder')
     parser.add_argument('--target',  required=True, help='Target folder')
-    parser.add_argument('--move_to', '--to', required=True, type=str, help='Folder where the duplicates will be moved.')
+    parser.add_argument('--move_to', '--to', required=True, type=str, help='Folder where the duplicates '
+                                                                           'will be moved.')
     parser.add_argument('--run', action='store_true', help='Run without test mode. Default is test mode.')
-    parser.add_argument('--extra_logging', action='store_true', help='Enable extra logging. Default is disabled.')
-    parser.add_argument('--ignore_diff', type=str,
-                        help='Comma-separated list of differences to ignore: mdate, filename, checkall. Default is ignore mdate.',
+    parser.add_argument('--ignore_diff', type=str, help='Comma-separated list of differences to ignore: '
+                                                        'mdate, filename, checkall. Default is ignore mdate.',
                         default='mdate')
     parser.add_argument('--copy_to_all', action='store_true',
-                        help='Copy file to all folders if found in multiple target folders. Default is move file to the first folder.',
-                        default=False)
+                        help='Copy file to all folders if found in multiple target folders. Default is move file to the'
+                             ' first folder.', default=False)
     parser.add_argument('--delete_empty_folders', dest='delete_empty_folders', action='store_true',
                         help='Delete empty folders in the source folder. Default is enabled.')
     parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
                         help='Do not delete empty folders in the source folder.')
     parser.set_defaults(delete_empty_folders=True)
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
     args = parser.parse_args(cust_args if cust_args else None)
 
     if args.extra_logging:

@@ -32,7 +32,6 @@ python df_finder3.py --src <source_folder> --target <target_folder> --move_to <m
 ### Options
 
 - `--run`: Run without test mode (default is test mode).
-- `--extra_logging`: Enable extra logging (default is disabled).
 - `--ignore_diff`: Comma-separated list of differences to ignore: `mdate`, `filename`, `checkall` (default is `mdate`).
 - `--copy_to_all`: Copy file to all folders if found in multiple target folders (default is to move file to the first folder).
 - `--delete_empty_folders`: Delete empty folders in the source folder (default is enabled).
