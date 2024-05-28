@@ -2,7 +2,6 @@ import pytest
 import os
 import shutil
 
-from df_finder3 import parse_arguments
 from hash_manager import HashManager
 from logging_config import setup_logging
 import file_manager
