@@ -13,7 +13,7 @@ class HashManager:
     _instance = None
     _lock = Lock()
 
-    MAX_CACHE_TIME = 60 * 60 * 24 * 14  # max cache time, in seconds - 2 weeks
+    MAX_CACHE_TIME = 60 * 60 * 24 * 7 * 4  # max cache time, in seconds - 4 weeks
     AUTO_SAVE_THRESHOLD = 10000  # Number of unsaved changes before auto-saving
 
     def __new__(cls, *args, **kwargs):
