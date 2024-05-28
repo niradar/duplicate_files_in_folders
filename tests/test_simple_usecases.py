@@ -174,3 +174,36 @@ def test_delete_empty_folders_false(setup_teardown):
     # Check no change to target
     target_files = set(os.listdir(target_dir))
     assert target_files == set([f"{i}.jpg" for i in range(1, 6)]), "Target directory files have changed"
+
+
+# test slash at end of folder name - should work without errors
+def test_source_folder_slash(setup_teardown):
+    source_dir, target_dir, move_to_dir, _ = setup_teardown
+    setup_test_files(range(1, 4), range(1, 4))
+    common_args = ["--src", source_dir + "/", "--target", target_dir, "--move_to", move_to_dir, "--run"]
+    args = parse_arguments(common_args)
+    main(args)
+
+    simple_usecase_test(source_dir, target_dir, move_to_dir, 3)
+
+
+# test slash at end of folder name - should work without errors
+def test_target_folder_slash(setup_teardown):
+    source_dir, target_dir, move_to_dir, _ = setup_teardown
+    setup_test_files(range(1, 4), range(1, 4))
+    common_args = ["--src", source_dir, "--target", target_dir + "/", "--move_to", move_to_dir, "--run"]
+    args = parse_arguments(common_args)
+    main(args)
+
+    simple_usecase_test(source_dir, target_dir, move_to_dir, 3)
+
+
+# test slash at end of folder name - should work without errors
+def test_move_to_folder_slash(setup_teardown):
+    source_dir, target_dir, move_to_dir, _ = setup_teardown
+    setup_test_files(range(1, 4), range(1, 4))
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir + "/", "--run"]
+    args = parse_arguments(common_args)
+    main(args)
+
+    simple_usecase_test(source_dir, target_dir, move_to_dir, 3)
