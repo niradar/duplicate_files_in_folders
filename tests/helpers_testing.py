@@ -65,8 +65,10 @@ def setup_teardown():
     HashManager.reset_instance()
     HashManager(target_folder=target_dir, filename=hash_file)
 
-    fm = file_manager.FileManager().reset_protected_dirs()
+    fm = file_manager.FileManager().reset_all()
     fm.add_protected_dir(target_dir)
+    fm.add_allowed_dir(source_dir)
+    fm.add_allowed_dir(move_to_dir)
 
     os.makedirs(source_dir)
     os.makedirs(target_dir)

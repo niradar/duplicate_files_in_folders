@@ -344,6 +344,11 @@ def detect_pytest():
 
 def main(args):
     setup_logging()
+    fm = file_manager.FileManager().reset_all()
+    fm.add_protected_dir(args.target)
+    fm.add_allowed_dir(args.src)
+    fm.add_allowed_dir(args.move_to)
+
     validate_folder(args.src, "Source")
     validate_folder(args.target, "Target")
     validate_duplicate_files_destination(args.move_to, args.run)
@@ -356,8 +361,7 @@ def main(args):
     hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None)
     if args.clear_cache:
         hash_manager.clear_cache()
-    fm = file_manager.FileManager().reset_protected_dirs()
-    fm.add_protected_dir(args.target)
+
 
     (files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found,
      duplicate_source_files_moved) = find_and_process_duplicates(args)
