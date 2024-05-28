@@ -4,6 +4,7 @@ import shutil
 
 from hash_manager import HashManager
 from logging_config import setup_logging
+import file_manager
 
 # Define the base directory for the tests
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -63,6 +64,9 @@ def setup_teardown():
     # Reset the singleton instance
     HashManager.reset_instance()
     HashManager(target_folder=target_dir, filename=hash_file)
+
+    fm = file_manager.FileManager().reset_protected_dirs()
+    fm.add_protected_dir(target_dir)
 
     os.makedirs(source_dir)
     os.makedirs(target_dir)
