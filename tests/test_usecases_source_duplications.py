@@ -164,8 +164,6 @@ def test16(setup_teardown):
     assert target_sub_files == {"1.jpg"}, "Target sub directory files have changed"
 
 
-
-
 # different names, same content, copy_to_all, different folders in source and target, duplicates in source and target
 def test17(setup_teardown):
     source_dir, target_dir, move_to_dir, common_args = setup_teardown
@@ -364,8 +362,6 @@ def test_many_sources_few_targets_ignore_diff_mdate_extended(setup_teardown):
     # check that sub1 has files main2.jpg
     move_to_sub_files = set(os.listdir(os.path.join(move_to_dir, "sub1")))
     assert move_to_sub_files == {"main.jpg", "main2.jpg"}, "Not all files have been moved to move_to subdirectory"
-
-
 
 
 def test_many_sources_few_targets_ignore_diff_mdate_filename(setup_teardown):
