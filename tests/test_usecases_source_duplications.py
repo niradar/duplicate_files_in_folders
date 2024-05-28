@@ -30,14 +30,10 @@ def test12(setup_teardown):
     # sub1: 3.jpg, 5.jpg
     # sub3: 1.jpg, 2.jpg, 3.jpg
 
-    # shutil.copytree(TEMP_DIR, "c:\\temp\\before_test")
-
     common_args.append("--copy_to_all")
 
     args = parse_arguments(common_args)
     main(args)
-
-    # shutil.copytree(TEMP_DIR, "c:\\temp\\after_test")
 
     # source should contain only sub1
     source_files = set(os.listdir(source_dir))
@@ -203,16 +199,12 @@ def test17(setup_teardown):
     # hw10.jpg
     # sub2: HW10.jpg
 
-    #shutil.copytree(TEMP_DIR, "c:\\temp\\test17_before_test")
-
     common_args.append("--copy_to_all")
     common_args.append("--ignore_diff")
     common_args.append("filename,mdate")
 
     args = parse_arguments(common_args)
     main(args)
-
-    #shutil.copytree(TEMP_DIR, "c:\\temp\\test17_after_test")
 
     # Check if all files from source are now in base folder of move_to
     source_files = set(os.listdir(source_dir))
@@ -361,10 +353,6 @@ def test_many_sources_few_targets_ignore_diff_mdate_extended(setup_teardown):
 
     args = parse_arguments(common_args)
     main(args)
-
-    #logging.info(get_folder_structure_include_subfolders(source_dir))
-    #logging.info(get_folder_structure_include_subfolders(target_dir))
-    #logging.info(get_folder_structure_include_subfolders(move_to_dir))
 
     source_files = set(os.listdir(source_dir))
     assert source_files == {f"hw{i}.jpg" for i in range(2, 11)}, "Wrong files in source"
