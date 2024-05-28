@@ -129,17 +129,9 @@ class FileManager:
             logger.info(f"Would have deleted directory {dir_path}")
         return True
 
-    def reset_protected_dirs(self):
-        self.protected_dirs = set()
-        return self
-
-    def reset_allowed_dirs(self):
-        self.allowed_dirs = set()
-        return self
-
     def reset_all(self):
-        self.reset_protected_dirs()
-        self.reset_allowed_dirs()
+        self.protected_dirs = set()
+        self.allowed_dirs = set()
         return self
 
     # new version for reset_file_manager that gets the protected and allowed directories as arguments

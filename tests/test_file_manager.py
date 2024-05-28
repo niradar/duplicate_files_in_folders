@@ -198,24 +198,6 @@ def test_singleton():
     assert fm2 is not None
 
 
-def test_reset_protected_dirs():
-    fm = file_manager.FileManager(True).reset_all()
-    fm.add_protected_dir("C:\\")
-    fm.add_protected_dir("D:\\")
-    fm.reset_protected_dirs()
-    assert len(fm.protected_dirs) == 0
-    assert fm.protected_dirs == set()
-
-
-def test_reset_allowed_dirs():
-    fm = file_manager.FileManager(True).reset_all()
-    fm.add_allowed_dir("C:\\")
-    fm.add_allowed_dir("D:\\")
-    fm.reset_allowed_dirs()
-    assert len(fm.allowed_dirs) == 0
-    assert fm.allowed_dirs == set()
-
-
 def test_add_protected_dir():
     fm = file_manager.FileManager(True).reset_all()
     fm.add_protected_dir("C:\\")
