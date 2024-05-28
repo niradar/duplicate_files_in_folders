@@ -1,5 +1,6 @@
 from tests.helpers_testing import *
 from pathlib import Path
+from file_manager import FileManager
 
 # FileManager suppose to protect some directories from being moved, copied or deleted.
 
@@ -205,3 +206,52 @@ def test_add_protected_dir():
     assert len(fm.protected_dirs) == 2
     assert Path("C:\\").resolve() in fm.protected_dirs
     assert Path("D:\\").resolve() in fm.protected_dirs
+
+
+def get_folder_files_as_set(folder):
+    ret = set()
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            ret.add(os.path.join(root, file))
+    return ret
+
+
+def test_list_tree_os_scandir_bfs_simple(setup_teardown):
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    setup_test_files(range(1, 6), [2, 3])
+    fm = file_manager.FileManager.get_instance()
+
+    source_files = get_folder_files_as_set(source_dir)
+    source_tree = fm.list_tree_os_scandir_bfs(source_dir)  # result is in the form of full path
+    assert set(source_tree) == source_files
+
+    target_files = get_folder_files_as_set(target_dir)
+    target_tree = fm.list_tree_os_scandir_bfs(target_dir)  # result is in the form of full path
+    assert set(target_tree) == target_files
+
+
+# files only in source - root folder has 3 files and 2 sub folders. each sub folder has some files and 2 sub folders.
+# goes 3 levels deep.
+def test_list_tree_os_scandir_bfs_tree_with_many_subfolders(setup_teardown):
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+
+    os.makedirs(os.path.join(source_dir, "sub1"))
+    os.makedirs(os.path.join(source_dir, "sub2"))
+    os.makedirs(os.path.join(source_dir, "sub1", "sub1"))
+    os.makedirs(os.path.join(source_dir, "sub1", "sub2"))
+    os.makedirs(os.path.join(source_dir, "sub2", "sub1"))
+    os.makedirs(os.path.join(source_dir, "sub2", "sub2"))
+
+    copy_files(range(1, 4), source_dir)
+    copy_files(range(1, 3), os.path.join(source_dir, "sub1"))
+    copy_files(range(1, 3), os.path.join(source_dir, "sub2"))
+    copy_files(range(2, 4), os.path.join(source_dir, "sub1", "sub1"))
+    copy_files(range(3, 6), os.path.join(source_dir, "sub1", "sub2"))
+    copy_files(range(2, 5), os.path.join(source_dir, "sub2", "sub1"))
+    copy_files(range(1, 5), os.path.join(source_dir, "sub2", "sub2"))
+
+    fm = file_manager.FileManager.get_instance()
+    source_files = get_folder_files_as_set(source_dir)
+    source_tree = fm.list_tree_os_scandir_bfs(source_dir)  # result is in the form of full path
+    assert set(source_tree) == source_files
+

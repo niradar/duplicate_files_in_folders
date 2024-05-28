@@ -2,6 +2,8 @@ from pathlib import Path
 import shutil
 import os
 import logging
+import concurrent.futures
+from collections import deque
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +27,13 @@ class FileManager:
         if not cls._instance:
             cls._instance = super(FileManager, cls).__new__(cls, *args, **kwargs)
             cls._instance.run_mode = run_mode
+        return cls._instance
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            # create a new instance if it doesn't exist - run_mode is False by default. Should not happen in real life
+            cls._instance = cls(False)
         return cls._instance
 
     def add_protected_dir(self, dir_path):
@@ -129,12 +138,53 @@ class FileManager:
             logger.info(f"Would have deleted directory {dir_path}")
         return True
 
+    @staticmethod
+    def get_file_info(file_path):
+        stats = os.stat(file_path)
+        return {
+            'path': file_path,
+            'name': os.path.basename(file_path),
+            'size': stats.st_size,
+            'modified_time': stats.st_mtime,
+            'created_time': stats.st_ctime
+        }
+
+    @staticmethod
+    def list_tree_os_scandir_bfs(directory, raise_on_permission_error=False):
+        queue = deque([directory])
+        while queue:
+            current_dir = queue.popleft()
+            try:
+                with os.scandir(current_dir) as it:
+                    for entry in it:
+                        if entry.is_dir(follow_symlinks=False):
+                            queue.append(entry.path)
+                        else:
+                            yield entry.path
+            except PermissionError:
+                if raise_on_permission_error:
+                    raise
+                else:
+                    continue
+
+    @staticmethod
+    def get_files_and_stats(directory):
+        files_stats = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
+            for file_path in FileManager.list_tree_os_scandir_bfs(directory):
+                futures.append(executor.submit(FileManager.get_file_info, file_path))
+
+            for future in concurrent.futures.as_completed(futures):
+                files_stats.append(future.result())
+
+        return files_stats
+
     def reset_all(self):
         self.protected_dirs = set()
         self.allowed_dirs = set()
         return self
 
-    # new version for reset_file_manager that gets the protected and allowed directories as arguments
     @staticmethod
     def reset_file_manager(protected_dirs, allowed_dirs, run_mode):
         FileManager._instance = None
