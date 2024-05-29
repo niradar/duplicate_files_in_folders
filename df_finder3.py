@@ -2,9 +2,7 @@
 # https://github.com/niradar/duplicate_files_in_folders
 
 import os
-import sys
 from collections import defaultdict
-import argparse
 import time
 import logging
 import tqdm
@@ -12,6 +10,9 @@ from duplicate_files_in_folders import file_manager
 from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.logging_config import setup_logging
 from typing import Dict, List, Tuple
+
+from duplicate_files_in_folders.utils import validate_folder, confirm_script_execution, detect_pytest, \
+    any_is_subfolder_of, validate_duplicate_files_destination, parse_arguments, print_error, output_results
 
 logger = logging.getLogger(__name__)
 
@@ -21,26 +22,11 @@ def get_file_hash(file_path) -> str:
     return hash_manager.get_hash(file_path)
 
 
-def print_error(message):
-    print(f"Error: {message}")
-    logger.critical(f"{message}")
-    sys.exit(1)
-
-
-def validate_folder(folder, name):
-    """ Validate if a folder exists and is not empty. """
-    if not os.path.isdir(folder) or not os.path.exists(folder):
-        print_error(f"{name} folder does not exist.")
-    if not os.listdir(folder):
-        print_error(f"{name} folder is empty.")
-    return True
-
-
-def check_and_update_filename(new_filename):
-    if os.path.exists(new_filename):
-        original_filename = new_filename
+def check_and_update_filename(original_filename):
+    new_filename = original_filename
+    if os.path.exists(original_filename):
         timestamp = int(time.time())  # Get current Unix timestamp
-        base, ext = os.path.splitext(new_filename)
+        base, ext = os.path.splitext(original_filename)
         new_filename = f"{base}_{timestamp}{ext}"  # Append timestamp to the filename
         logger.info(f"Renaming of {original_filename} to {new_filename} is needed to avoid overwrite.")
     return new_filename
@@ -243,127 +229,6 @@ def collect_source_files(args) -> Dict[str, List[Tuple[str, int]]]:
                 depth = full_path.count(os.sep) - source_depth
                 source_files[get_file_key(args, full_path)].append((full_path, depth))
     return source_files
-
-
-def parse_arguments(cust_args=None):
-    parser = argparse.ArgumentParser(
-        description="Identify duplicate files between source and target folders, move duplicates to a separate folder.")
-    parser.add_argument('--src', '--source', required=True, help='Source folder')
-    parser.add_argument('--target',  required=True, help='Target folder')
-    parser.add_argument('--move_to', '--to', required=True, type=str, help='Folder where the duplicates '
-                                                                           'will be moved.')
-    parser.add_argument('--run', action='store_true', help='Run without test mode. Default is test mode.')
-    parser.add_argument('--ignore_diff', type=str, help='Comma-separated list of differences to ignore: '
-                                                        'mdate, filename, checkall. Default is ignore mdate.',
-                        default='mdate')
-    parser.add_argument('--copy_to_all', action='store_true',
-                        help='Copy file to all folders if found in multiple target folders. Default is move file to the'
-                             ' first folder.', default=False)
-    parser.add_argument('--whitelist_ext', type=str, help='Comma-separated list of file extensions to whitelist (only these will be checked).')
-    parser.add_argument('--blacklist_ext', type=str, help='Comma-separated list of file extensions to blacklist (these will not be checked).')
-    parser.add_argument('--min_size', type=str, help='Minimum file size to check. Specify with units (B, KB, MB).')
-    parser.add_argument('--max_size', type=str, help='Maximum file size to check. Specify with units (B, KB, MB).')
-    parser.add_argument('--delete_empty_folders', dest='delete_empty_folders', action='store_true',
-                        help='Delete empty folders in the source folder. Default is enabled.')
-    parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
-                        help='Do not delete empty folders in the source folder.')
-    parser.set_defaults(delete_empty_folders=True)
-    parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)
-    parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
-    args = parser.parse_args(cust_args if cust_args else None)
-
-    if args.extra_logging:
-        logger.setLevel(logging.DEBUG)
-    args.ignore_diff = set(str(args.ignore_diff).split(','))
-    if not args.ignore_diff.issubset({'mdate', 'filename', 'checkall'}):
-        parser.error("Invalid ignore_diff setting: must be 'mdate', 'filename' or 'checkall'.")
-    if 'checkall' in args.ignore_diff:
-        if len(args.ignore_diff) > 1:
-            parser.error("Invalid ignore_diff setting: checkall cannot be used with other settings.")
-        args.ignore_diff = set()
-
-    # Convert whitelist and blacklist to sets and check for mutual exclusivity
-    args.whitelist_ext = set(str(args.whitelist_ext).split(',')) if args.whitelist_ext else None
-    args.blacklist_ext = set(str(args.blacklist_ext).split(',')) if args.blacklist_ext else None
-
-    if args.whitelist_ext and args.blacklist_ext:
-        parser.error("You cannot specify both --whitelist_ext and --blacklist_ext at the same time.")
-
-    if args.min_size:
-        try:
-            args.min_size = parse_size(args.min_size)
-        except ValueError as e:
-            parser.error(f"Invalid value for --min_size: {e}")
-
-    if args.max_size:
-        try:
-            args.max_size = parse_size(args.max_size)
-        except ValueError as e:
-            parser.error(f"Invalid value for --max_size: {e}")
-
-    return args
-
-
-def parse_size(size_str):
-    """
-    Parses a human-readable file size string (e.g., '10MB') and returns the size in bytes.
-    """
-    units = {"B": 1, "KB": 1024, "MB": 1024 ** 2, "GB": 1024 ** 3}
-    size_str = size_str.upper()
-    for unit in units:
-        if size_str.endswith(unit):
-            return int(size_str[:-len(unit)]) * units[unit]
-    raise ValueError("Invalid size format")
-
-
-def validate_duplicate_files_destination(duplicate_files_destination, run_mode):
-    fm = file_manager.FileManager(run_mode)
-    if not os.path.isdir(duplicate_files_destination):
-        try:
-            fm.make_dirs(duplicate_files_destination)
-        except Exception as e:
-            print_error(f"Error creating destination folder {duplicate_files_destination}: {e}")
-    return True
-
-
-def any_is_subfolder_of(folders: List[str]) -> bool:
-    for i in range(len(folders)):
-        for j in range(len(folders)):
-            if i != j and folders[i].startswith(folders[j]):
-                print_error(f"{folders[i]} is a subfolder of {folders[j]}")
-                return True
-    return False
-
-
-def output_results(args, deleted_source_folders, duplicate_source_files_moved, files_created, files_moved, hash_manager):
-    summary_header = "Summary (Test Mode):" if not args.run else "Summary:"
-    separator = "-" * max(len(summary_header), 40)
-    cache_hits = f"Hash requests: {hash_manager.persistent_cache_requests + hash_manager.temporary_cache_requests}," + \
-                 f" Cache hits: {hash_manager.persistent_cache_hits + hash_manager.temporary_cache_hits}"
-    logger.info(summary_header)
-    logger.info(separator)
-
-    logger.debug(cache_hits)
-    res_str = f'Move: {files_moved} files, Create: {files_created} copies'
-    if duplicate_source_files_moved:
-        res_str += f", Moved {duplicate_source_files_moved} duplicate files from the source folder"
-    if deleted_source_folders:
-        res_str += f", Deleted: {deleted_source_folders} empty folders in the source folder"
-    logger.info(res_str)
-
-
-def confirm_script_execution(args):
-    # if the script is run from command line, and not by pytest, ask for confirmation
-    if not detect_pytest():
-        print(f"This script will move duplicate files from {args.src}. No additional confirmation will be asked.")
-        print("Do you want to continue? (y/n): ")
-        if input().lower() != 'y':
-            print("Exiting the script.")
-            sys.exit(0)
-
-
-def detect_pytest():
-    return 'PYTEST_CURRENT_TEST' in os.environ
 
 
 def main(args):

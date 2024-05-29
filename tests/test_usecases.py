@@ -1,4 +1,5 @@
-from df_finder3 import main, parse_arguments
+from df_finder3 import main
+from duplicate_files_in_folders.utils import parse_arguments
 from tests.helpers_testing import *
 
 
