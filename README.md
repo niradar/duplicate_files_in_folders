@@ -47,8 +47,15 @@ python df_finder3.py --src <source_folder> --target <target_folder> --move_to <m
 
 ### Example
 
+#### Simple usage:
 ```sh
 python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/move_to --run
+```
+
+#### Most common usage:
+Ignore differences in modification dates, copy the file to all target folders if found in multiple folders, and run without test mode:
+```sh
+python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/move_to --run --ignore_diff mdate --copy_to_all
 ```
 
 ## Running Tests
