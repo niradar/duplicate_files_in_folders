@@ -62,7 +62,7 @@ def copy_or_move_file(tgt_filepath: str, move_to: str, src_filepath: str, target
 
 def compare_files(src_filepath, tgt_filepath, ignore_diffs):
     ignore_diffs = ignore_diffs if ignore_diffs else set('mdate')
-    if 'filename' not in ignore_diffs and os.path.basename(src_filepath) != os.path.basename(tgt_filepath):
+    if 'filename' not in ignore_diffs and src_filepath[src_filepath.rfind(os.sep) + 1:] != tgt_filepath[tgt_filepath.rfind(os.sep) + 1:]:
         return False
     if 'mdate' not in ignore_diffs and not os.path.getmtime(src_filepath) == os.path.getmtime(tgt_filepath):
         return False
@@ -136,7 +136,7 @@ def find_and_process_duplicates(args):
 
     for src_key, src_filepaths in tqdm.tqdm(source_files.items(), desc="Finding duplicate files"):
         src_filepath, _ = src_filepaths[0]
-        target_key = get_file_hash(src_filepath) if 'filename' in args.ignore_diff else os.path.basename(src_filepath)
+        target_key = get_file_hash(src_filepath) if 'filename' in args.ignore_diff else src_filepath[src_filepath.rfind(os.sep) + 1:]
         if target_key not in target_files:  # if the file is not found in the target folder, no need to process it
             continue
         target_paths = target_files[target_key]  # all possible target paths for the source file
@@ -227,7 +227,7 @@ def delete_empty_folders_in_tree(base_path, run_mode):
 
 def get_file_key(args, file_path) -> str:
     hash_key: str = get_file_hash(file_path)
-    file_key: str = os.path.basename(file_path) if 'filename' not in args.ignore_diff else None
+    file_key: str = file_path[file_path.rfind(os.sep) + 1:] if 'filename' not in args.ignore_diff else None
     mdate_key: str = str(os.path.getmtime(file_path)) if 'mdate' not in args.ignore_diff else None
     return '_'.join(filter(None, [hash_key, file_key, mdate_key]))
 
