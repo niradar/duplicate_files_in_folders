@@ -63,9 +63,6 @@ The script logs its actions and errors for traceability. The log file will be cr
 
 
 ## Possible Future Improvements
-- [ ] More tests
-  - [ ] More tests for less common cases
-  - [ ] More tests to hash_manager.py 
 - [ ] Improve summary and user interface
     - [ ] Add a better summary of the actions taken
   - [ ] Add summary also to the console output
@@ -81,7 +78,6 @@ The script logs its actions and errors for traceability. The log file will be cr
 - [ ] To consider: make sure expired cache is removed over time even if not touched
 - [ ] More safeguards
   - [ ] Check any file operation for errors
-- [ ] Save also file size and modify date in hash. avoid io ops when needed. Compare performences before and after
 - [ ] Before checking target files also check if there is no chance we need them, for example - filename no match and not ingoring file name, or file size doesn't match
 ## Known Issues
 - [ ] Even if argument --copy_to_all is not present, still need to move the duplicates to the move_to folder without copying them to other folders
