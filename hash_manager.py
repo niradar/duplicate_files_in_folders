@@ -57,7 +57,8 @@ class HashManager:
         if os.path.exists(self.filename):
             all_data = pd.read_pickle(self.filename)
             if self.target_folder:
-                relevant_data = all_data[all_data['file_path'].str.startswith(self.target_folder)]
+                # os.sep is needed in case target folder is a substring of another folder,  example: /target, /target2
+                relevant_data = all_data[all_data['file_path'].str.startswith(self.target_folder + os.sep)]
                 return relevant_data
             return all_data
         else:
@@ -84,7 +85,7 @@ class HashManager:
             all_data = HashManager.ensure_columns(all_data)
 
             # Remove old data related to the current target folder
-            all_data = all_data[~all_data['file_path'].str.startswith(self.target_folder)]
+            all_data = all_data[~all_data['file_path'].str.startswith(self.target_folder + os.sep)]
 
             # Drop all-NA rows in all_data and self.persistent_data
             all_data = all_data.dropna(how='all')
@@ -107,7 +108,7 @@ class HashManager:
         current_time = datetime.now()
         new_entry = pd.DataFrame({'file_path': [file_path], 'hash_value': [hash_value], 'last_update': [current_time]})
 
-        if self.target_folder and file_path.startswith(self.target_folder):
+        if self.target_folder and file_path.startswith(self.target_folder + os.sep):
             if not self.persistent_data.empty:
                 # Remove the existing entry if it exists
                 self.persistent_data = self.persistent_data[self.persistent_data.file_path != file_path]
@@ -131,7 +132,7 @@ class HashManager:
         """Get the hash of a file, computing and storing it if necessary."""
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
-        if self.target_folder and file_path.startswith(self.target_folder):
+        if self.target_folder and file_path.startswith(self.target_folder + os.sep):
             self.persistent_cache_requests += 1  # Increment persistent cache requests
             result = self.persistent_data[self.persistent_data.file_path == file_path]
         else:
@@ -143,7 +144,7 @@ class HashManager:
             current_time = datetime.now()
             last_update = result['last_update'].values[0]
             if pd.Timestamp(last_update) > current_time - timedelta(seconds=self.MAX_CACHE_TIME):
-                if self.target_folder and file_path.startswith(self.target_folder):
+                if self.target_folder and file_path.startswith(self.target_folder + os.sep):
                     self.persistent_cache_hits += 1  # Increment persistent cache hits
                 else:
                     self.temporary_cache_hits += 1  # Increment temporary cache hits
@@ -154,8 +155,8 @@ class HashManager:
 
     def get_hashes_by_folder(self, folder_path: str) -> dict:
         """Get all hashes for files in a specific folder, checking both persistent and temporary data."""
-        persistent_result = self.persistent_data[self.persistent_data.file_path.str.startswith(folder_path)]
-        temporary_result = self.temporary_data[self.temporary_data.file_path.str.startswith(folder_path)]
+        persistent_result = self.persistent_data[self.persistent_data.file_path.str.startswith(folder_path + os.sep)]
+        temporary_result = self.temporary_data[self.temporary_data.file_path.str.startswith(folder_path + os.sep)]
         if persistent_result.empty and temporary_result.empty:
             result = pd.DataFrame(columns=['file_path', 'hash_value'])
         else:
