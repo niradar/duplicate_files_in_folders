@@ -180,9 +180,8 @@ class FileManager:
                             queue.append(entry.path)
                         else:
                             stats = entry.stat()
-                            path = entry.path
                             files_stats.append(
-                                {'path': path, 'size': stats.st_size, 'name': path[path.rfind(os.sep) + 1:],
+                                {'path': entry.path, 'size': stats.st_size, 'name': entry.name,
                                  'modified_time': stats.st_mtime, 'created_time': stats.st_ctime})
             except PermissionError:
                 if raise_on_permission_error:

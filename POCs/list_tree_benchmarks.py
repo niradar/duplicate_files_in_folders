@@ -210,8 +210,7 @@ def get_files_and_stats_v9_scandir_deque_generic(directory):
                         queue.append(entry.path)
                     else:
                         stats = entry.stat()
-                        path = entry.path
-                        files_stats.append({'path': path, 'size': stats.st_size, 'name': path[path.rfind(os.sep) + 1:],
+                        files_stats.append({'path': entry.path, 'size': stats.st_size, 'name': entry.name,
                                             'modified_time': stats.st_mtime, 'created_time': stats.st_ctime})
         except PermissionError:
             continue
