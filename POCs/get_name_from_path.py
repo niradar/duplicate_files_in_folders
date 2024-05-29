@@ -6,7 +6,6 @@ def fast_basename(path):
 
 
 test_path = "your/file/path/here"  # Define the test path
-test_path = "C:\\temp\\duplicate_files_in_folders\\get_name_from_path.py"
 
 # Measure performance of os.path.basename
 os_basename_time = timeit.timeit(lambda: os.path.basename(test_path), number=1000000)
