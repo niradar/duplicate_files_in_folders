@@ -170,5 +170,43 @@ def test_clean_expired_cache_with_data(setup_teardown_hash_manager):
     assert hash_manager.get_hash(file_path) != 'fake_hash_value'
 
 
+# save 4 data items in pd, save to file. second time load from file, then touch 2 items, save to file, load from file
+# make sure 4 items are in the file
+def test_save_load_data(setup_teardown_hash_manager):
+    hash_manager, target_dir, hash_file = setup_teardown_hash_manager
+    file_path1 = os.path.join(target_dir, "file1.txt")
+    file_path2 = os.path.join(target_dir, "file2.txt")
+    file_path3 = os.path.join(target_dir, "file3.txt")
+    file_path4 = os.path.join(target_dir, "file4.txt")
+    with open(file_path1, 'w') as f:
+        f.write("test content")
+    with open(file_path2, 'w') as f:
+        f.write("test content2")
+    with open(file_path3, 'w') as f:
+        f.write("test content3")
+    with open(file_path4, 'w') as f:
+        f.write("test content4")
+    hash_manager.add_hash(file_path1, hash_manager.compute_hash(file_path1))
+    hash_manager.add_hash(file_path2, hash_manager.compute_hash(file_path2))
+    hash_manager.add_hash(file_path3, hash_manager.compute_hash(file_path3))
+    hash_manager.add_hash(file_path4, hash_manager.compute_hash(file_path4))
+    hash_manager.save_data()
+
+    # load from file
+    HashManager.reset_instance()
+    hash_manager = HashManager(target_folder=target_dir, filename=hash_file)
+    assert len(hash_manager.persistent_data) == 4
+
+    # touch 2 items
+    hash_manager.add_hash(file_path1, hash_manager.compute_hash(file_path1))
+    hash_manager.add_hash(file_path2, hash_manager.compute_hash(file_path2))
+    hash_manager.save_data()
+
+    # load from file
+    HashManager.reset_instance()
+    hash_manager = HashManager(target_folder=target_dir, filename=hash_file)
+    assert len(hash_manager.persistent_data) == 4
+
+
 if __name__ == "__main__":
     pytest.main()
