@@ -2,8 +2,8 @@ from pathlib import Path
 import shutil
 import os
 import logging
-import concurrent.futures
 from collections import deque
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -168,16 +168,26 @@ class FileManager:
                     continue
 
     @staticmethod
-    def get_files_and_stats(directory):
+    def get_files_and_stats(directory, raise_on_permission_error=False) -> List[Dict]:
         files_stats = []
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = []
-            for file_path in FileManager.list_tree_os_scandir_bfs(directory):
-                futures.append(executor.submit(FileManager.get_file_info, file_path))
-
-            for future in concurrent.futures.as_completed(futures):
-                files_stats.append(future.result())
-
+        queue = deque([directory])
+        while queue:
+            current_dir = queue.popleft()
+            try:
+                with os.scandir(current_dir) as it:
+                    for entry in it:
+                        if entry.is_dir(follow_symlinks=False):
+                            queue.append(entry.path)
+                        else:
+                            stats = entry.stat()
+                            path = entry.path
+                            files_stats.append(
+                                {'path': path, 'size': stats.st_size, 'name': path[path.rfind(os.sep) + 1:],
+                                 'modified_time': stats.st_mtime, 'created_time': stats.st_ctime})
+            except PermissionError:
+                if raise_on_permission_error:
+                    raise
+                continue
         return files_stats
 
     def reset_all(self):
