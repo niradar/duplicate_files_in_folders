@@ -64,7 +64,8 @@ class HashManager:
             logger.info(f"No existing hash file found. Creating a new one: {self.filename}")
             return pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
 
-    def ensure_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def ensure_columns(df: pd.DataFrame) -> pd.DataFrame:
         """Ensure the DataFrame has the expected columns."""
         expected_columns = ['file_path', 'hash_value', 'last_update']
         for col in expected_columns:
@@ -76,7 +77,7 @@ class HashManager:
         """Save the current persistent DataFrame to a file."""
         if os.path.exists(self.filename):
             all_data = pd.read_pickle(self.filename)
-            all_data = self.ensure_columns(all_data)
+            all_data = HashManager.ensure_columns(all_data)
 
             # Remove old data related to the current target folder
             all_data = all_data[~all_data['file_path'].str.startswith(self.target_folder)]
@@ -169,8 +170,10 @@ class HashManager:
         expired_files = self.persistent_data[
             (self.persistent_data.last_update < current_time - timedelta(seconds=self.MAX_CACHE_TIME))
         ]
+        expired_files_count = len(expired_files)
         self.persistent_data = self.persistent_data.drop(expired_files.index)
-        logger.info("Expired cache cleaned.")
+        if expired_files_count > 0:
+            logger.info("{expired_files_count} expired cache items cleaned.")
 
     @staticmethod
     def compute_hash(file_path: str, buffer_size=8*1024*1024) -> str:
