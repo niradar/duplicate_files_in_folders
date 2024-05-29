@@ -239,3 +239,11 @@ if __name__ == "__main__":
         res = get_files_and_stats_v8_scandir_tpe_deque_generic(test_directory)
         for file_res in res:
             print(file_res)
+
+# Sample output
+# Average original function duration: 5.09 seconds
+# Average function v2 (oswalk, tpe, generic) duration: 3.28 seconds
+# Average function v3 (oswalk, tpe, class) duration: 3.91 seconds
+# Average function v6 (scandir, tpe, stack, class) duration: 3.66 seconds
+# Average function v7 (scandir, tpe, stack, generic) duration: 3.15 seconds
+# Average function v8 (scandir, tpe, deque, generic) duration: 3.11 seconds
