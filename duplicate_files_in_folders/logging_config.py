@@ -16,7 +16,9 @@ def setup_logging():
 
     if not is_test:
         # create logs folder if it doesn't exist
-        logs_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+        base_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logs_folder = os.path.join(base_folder, 'logs')
+
         os.makedirs(logs_folder, exist_ok=True)
 
         # Get the current time when the script starts
