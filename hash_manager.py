@@ -75,6 +75,10 @@ class HashManager:
 
     def save_data(self) -> None:
         """Save the current persistent DataFrame to a file."""
+
+        # Clean expired cache before saving - only for target folder
+        self.clean_expired_cache()
+
         if os.path.exists(self.filename):
             all_data = pd.read_pickle(self.filename)
             all_data = HashManager.ensure_columns(all_data)
@@ -173,7 +177,7 @@ class HashManager:
         expired_files_count = len(expired_files)
         self.persistent_data = self.persistent_data.drop(expired_files.index)
         if expired_files_count > 0:
-            logger.info("{expired_files_count} expired cache items cleaned.")
+            logger.info(f"{expired_files_count} expired cache items cleaned.")
 
     @staticmethod
     def compute_hash(file_path: str, buffer_size=8*1024*1024) -> str:
