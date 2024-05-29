@@ -77,10 +77,10 @@ def parse_arguments(cust_args=None):
     parser.add_argument('--copy_to_all', action='store_true',
                         help='Copy file to all folders if found in multiple target folders. Default is move file to the'
                              ' first folder.', default=False)
-    parser.add_argument('--whitelist_ext', type=str, help='Comma-separated list of file extensions to whitelist (only these will be checked).')
-    parser.add_argument('--blacklist_ext', type=str, help='Comma-separated list of file extensions to blacklist (these will not be checked).')
-    parser.add_argument('--min_size', type=str, help='Minimum file size to check. Specify with units (B, KB, MB).')
-    parser.add_argument('--max_size', type=str, help='Maximum file size to check. Specify with units (B, KB, MB).')
+    parser.add_argument('--whitelist_ext', type=str, help='Comma-separated list of file extensions to whitelist (only these will be checked). IN WORK, DONT USE YET')
+    parser.add_argument('--blacklist_ext', type=str, help='Comma-separated list of file extensions to blacklist (these will not be checked). IN WORK, DONT USE YET')
+    parser.add_argument('--min_size', type=str, help='Minimum file size to check. Specify with units (B, KB, MB). IN WORK, DONT USE YET')
+    parser.add_argument('--max_size', type=str, help='Maximum file size to check. Specify with units (B, KB, MB). IN WORK, DONT USE YET')
     parser.add_argument('--delete_empty_folders', dest='delete_empty_folders', action='store_true',
                         help='Delete empty folders in the source folder. Default is enabled.')
     parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
