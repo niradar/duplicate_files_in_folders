@@ -2,9 +2,9 @@ import pytest
 import os
 import shutil
 
-from hash_manager import HashManager
-from logging_config import setup_logging
-import file_manager
+from duplicate_files_in_folders.hash_manager import HashManager
+from duplicate_files_in_folders.logging_config import setup_logging
+from duplicate_files_in_folders import file_manager
 
 # Define the base directory for the tests
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

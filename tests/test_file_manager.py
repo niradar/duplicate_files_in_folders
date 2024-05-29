@@ -1,6 +1,6 @@
 from tests.helpers_testing import *
 from pathlib import Path
-from file_manager import FileManager
+
 
 # FileManager suppose to protect some directories from being moved, copied or deleted.
 

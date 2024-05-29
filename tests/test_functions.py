@@ -3,7 +3,7 @@ import time
 from df_finder3 import parse_arguments, check_and_update_filename, \
     clean_source_duplications, delete_empty_folders_in_tree, validate_duplicate_files_destination, validate_folder, \
     compare_files, collect_source_files, get_file_key, any_is_subfolder_of
-from file_manager import FileManager
+from duplicate_files_in_folders.file_manager import FileManager
 from tests.helpers_testing import *
 
 
@@ -49,19 +49,19 @@ def test_parse_arguments():
         parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder, '--ignore_diff',
                          'invalid'])
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
     with pytest.raises(SystemExit) as excinfo:
         parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
                          '--ignore_diff', 'mdate,invalid'])
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
     with pytest.raises(SystemExit) as excinfo:
         parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
                          '--ignore_diff', 'mdate,checkall'])
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
     args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
                             '--ignore_diff', 'checkall'])

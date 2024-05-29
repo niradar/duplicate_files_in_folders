@@ -8,9 +8,9 @@ import argparse
 import time
 import logging
 import tqdm
-import file_manager
-from hash_manager import HashManager
-from logging_config import setup_logging
+from duplicate_files_in_folders import file_manager
+from duplicate_files_in_folders.hash_manager import HashManager
+from duplicate_files_in_folders.logging_config import setup_logging
 from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
@@ -259,6 +259,10 @@ def parse_arguments(cust_args=None):
     parser.add_argument('--copy_to_all', action='store_true',
                         help='Copy file to all folders if found in multiple target folders. Default is move file to the'
                              ' first folder.', default=False)
+    parser.add_argument('--whitelist_ext', type=str, help='Comma-separated list of file extensions to whitelist (only these will be checked).')
+    parser.add_argument('--blacklist_ext', type=str, help='Comma-separated list of file extensions to blacklist (these will not be checked).')
+    parser.add_argument('--min_size', type=str, help='Minimum file size to check. Specify with units (B, KB, MB).')
+    parser.add_argument('--max_size', type=str, help='Maximum file size to check. Specify with units (B, KB, MB).')
     parser.add_argument('--delete_empty_folders', dest='delete_empty_folders', action='store_true',
                         help='Delete empty folders in the source folder. Default is enabled.')
     parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
@@ -272,13 +276,44 @@ def parse_arguments(cust_args=None):
         logger.setLevel(logging.DEBUG)
     args.ignore_diff = set(str(args.ignore_diff).split(','))
     if not args.ignore_diff.issubset({'mdate', 'filename', 'checkall'}):
-        print_error("Invalid ignore_diff setting: must be 'mdate', 'filename' or 'checkall'.")
+        parser.error("Invalid ignore_diff setting: must be 'mdate', 'filename' or 'checkall'.")
     if 'checkall' in args.ignore_diff:
         if len(args.ignore_diff) > 1:
-            print_error("Invalid ignore_diff setting: checkall cannot be used with other settings.")
+            parser.error("Invalid ignore_diff setting: checkall cannot be used with other settings.")
         args.ignore_diff = set()
 
+    # Convert whitelist and blacklist to sets and check for mutual exclusivity
+    args.whitelist_ext = set(str(args.whitelist_ext).split(',')) if args.whitelist_ext else None
+    args.blacklist_ext = set(str(args.blacklist_ext).split(',')) if args.blacklist_ext else None
+
+    if args.whitelist_ext and args.blacklist_ext:
+        parser.error("You cannot specify both --whitelist_ext and --blacklist_ext at the same time.")
+
+    if args.min_size:
+        try:
+            args.min_size = parse_size(args.min_size)
+        except ValueError as e:
+            parser.error(f"Invalid value for --min_size: {e}")
+
+    if args.max_size:
+        try:
+            args.max_size = parse_size(args.max_size)
+        except ValueError as e:
+            parser.error(f"Invalid value for --max_size: {e}")
+
     return args
+
+
+def parse_size(size_str):
+    """
+    Parses a human-readable file size string (e.g., '10MB') and returns the size in bytes.
+    """
+    units = {"B": 1, "KB": 1024, "MB": 1024 ** 2, "GB": 1024 ** 3}
+    size_str = size_str.upper()
+    for unit in units:
+        if size_str.endswith(unit):
+            return int(size_str[:-len(unit)]) * units[unit]
+    raise ValueError("Invalid size format")
 
 
 def validate_duplicate_files_destination(duplicate_files_destination, run_mode):

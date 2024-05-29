@@ -3,7 +3,7 @@ import os
 import shutil
 import pandas as pd
 from datetime import datetime, timedelta
-from hash_manager import HashManager
+from duplicate_files_in_folders.hash_manager import HashManager
 import logging
 
 TEMP_DIR = "temp_test_dir"
