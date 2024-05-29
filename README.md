@@ -13,8 +13,15 @@ The script compares filename, modification date, size, and hash of the files to 
 
 ## Installation
 
-To install the necessary dependencies, use Conda with Python 3.11 and the `requirements.txt` file:
+To install the necessary dependencies:
 
+1. Clone the repository and go into repository folder
+```sh
+git clone https://github.com/niradar/duplicate_files_in_folders.git
+cd duplicate_files_in_folders
+```
+
+2. Use Conda with Python 3.11 and the requirements.txt file to install the necessary dependencies:
 ```sh
 conda create -n duplicate_finder python=3.11
 conda activate duplicate_finder
