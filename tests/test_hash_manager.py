@@ -3,7 +3,7 @@ import os
 import shutil
 import pandas as pd
 from datetime import datetime, timedelta
-from hash_manager import HashManager  # Assuming your class is in a file named hash_manager.py
+from hash_manager import HashManager
 
 TEMP_DIR = "temp_test_dir"
 
@@ -17,9 +17,7 @@ def setup_teardown_hash_manager():
     target_dir = os.path.join(TEMP_DIR, "target")
     hash_file = os.path.join(TEMP_DIR, "hashes.pkl")
     os.makedirs(target_dir, exist_ok=True)
-
     hm = HashManager(target_folder=target_dir, filename=hash_file)
-
     yield hm, target_dir, hash_file
 
     # Teardown: Delete the temporary directories
@@ -97,7 +95,7 @@ def test_clean_expired_cache_mixed_data(setup_teardown_hash_manager):
     hash_manager.add_hash(file_path1, hash_manager.compute_hash(file_path1))
     hash_manager.add_hash(file_path2, hash_manager.compute_hash(file_path2))
     hash_manager.persistent_data.at[0, 'last_update'] = (datetime.now() -
-                                                        timedelta(seconds=hash_manager.MAX_CACHE_TIME + 1))
+                                                         timedelta(seconds=hash_manager.MAX_CACHE_TIME + 1))
     hash_manager.clean_expired_cache()
     assert len(hash_manager.temporary_data) == 0
     assert len(hash_manager.persistent_data) == 1
@@ -162,9 +160,8 @@ def test_clean_expired_cache_with_data(setup_teardown_hash_manager):
         f.write("test content")
     hash_manager.add_hash(file_path, 'fake_hash_value')
     hash_manager.persistent_data.at[0, 'last_update'] = (datetime.now() -
-                                                        timedelta(seconds=hash_manager.MAX_CACHE_TIME + 1))
+                                                         timedelta(seconds=hash_manager.MAX_CACHE_TIME + 1))
     assert hash_manager.persistent_data.at[0, 'last_update'] < datetime.now() - timedelta(seconds=hash_manager.MAX_CACHE_TIME)
-
 
     # make sure the script don't use expired cache and compute the hash again
     assert hash_manager.get_hash(file_path) != 'fake_hash_value'
