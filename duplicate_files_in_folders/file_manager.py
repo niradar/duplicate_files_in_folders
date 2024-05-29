@@ -3,7 +3,8 @@ import shutil
 import os
 import logging
 from collections import deque
-from typing import Dict, List, Tuple
+from typing import Dict, List
+import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +189,43 @@ class FileManager:
                     raise
                 continue
         return files_stats
+
+    def delete_empty_folders_in_tree(self, base_path, show_progress=False, progress_desc="Deleting empty folders"):
+        if self.is_protected_path(base_path):
+            raise ProtectedPathError(f"Operation not allowed: Attempt to delete empty folders in protected path: "
+                                     f"{base_path}")
+        folders_by_depth = {}  # collect all folders in the source folder by depth
+        for root, dirs, files in os.walk(base_path, topdown=False):
+            if base_path == root:
+                continue
+            depth = root.count(os.sep) - base_path.count(os.sep)
+            if depth not in folders_by_depth:
+                folders_by_depth[depth] = []
+            folders_by_depth[depth].append(root)
+
+        # Count all folders
+        total_folders = sum(len(folders) for folders in folders_by_depth.values())
+
+        # Initialize tqdm if progress display is enabled
+        progress_bar = tqdm.tqdm(total=total_folders, desc=progress_desc) if show_progress else None
+
+        deleted_folders = 0
+        # Delete empty folders starting from the deepest level excluding the base_path folder
+        for depth in sorted(folders_by_depth.keys(), reverse=True):
+            for folder in folders_by_depth[depth]:
+                if not os.listdir(folder):
+                    try:
+                        os.rmdir(folder)
+                        deleted_folders += 1
+                    except OSError as e:
+                        print(f"Error deleting folder {folder}: {e}")
+                if show_progress:
+                    progress_bar.update(1)
+
+        if show_progress:
+            progress_bar.close()
+
+        return deleted_folders
 
     def reset_all(self):
         self.protected_dirs = set()

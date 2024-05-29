@@ -147,7 +147,9 @@ def find_and_process_duplicates(args):
         clean_source_duplications(args, source_duplicates_to_process.keys(), source_duplicates_to_process)) \
         if source_duplicates_to_process else (0, 0)
 
-    deleted_source_folders = delete_empty_folders_in_tree(args.src, args.run) if args.run and args.delete_empty_folders else 0
+    fm = file_manager.FileManager(args.run)
+    deleted_source_folders = fm.delete_empty_folders_in_tree(args.src, show_progress=True) \
+        if args.run and args.delete_empty_folders else 0
     return files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found, duplicate_source_files_moved
 
 
@@ -190,27 +192,6 @@ def collect_target_files(args):
     return target_files
 
 
-def delete_empty_folders_in_tree(base_path, run_mode):
-    folders_by_depth = {}  # collect all folders in the source folder by depth
-    for root, dirs, files in os.walk(base_path, topdown=False):
-        if base_path == root:
-            continue
-        depth = root.count(os.sep) - base_path.count(os.sep)
-        if depth not in folders_by_depth:
-            folders_by_depth[depth] = []
-        folders_by_depth[depth].append(root)
-
-    fm = file_manager.FileManager(run_mode)
-    deleted_folders = 0
-    # delete empty folders starting from the deepest level excluding the base_path folder
-    for depth in sorted(folders_by_depth.keys(), reverse=True):
-        for folder in folders_by_depth[depth]:
-            if not os.listdir(folder):
-                fm.rmdir(folder)
-                deleted_folders += 1
-    return deleted_folders
-
-
 def get_file_key(args, file_path) -> str:
     hash_key: str = get_file_hash(file_path)
     file_key: str = file_path[file_path.rfind(os.sep) + 1:] if 'filename' not in args.ignore_diff else None
@@ -246,6 +227,7 @@ def main(args):
     hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None)
     if args.clear_cache:
         hash_manager.clear_cache()
+        hash_manager.save_data()
     (files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found,
      duplicate_source_files_moved) = find_and_process_duplicates(args)
     hash_manager.save_data()

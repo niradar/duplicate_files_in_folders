@@ -1,10 +1,11 @@
 import time
 
 from df_finder3 import check_and_update_filename, \
-    clean_source_duplications, delete_empty_folders_in_tree, compare_files, collect_source_files, get_file_key
+    clean_source_duplications, compare_files, collect_source_files, get_file_key
 from duplicate_files_in_folders.utils import parse_arguments, any_is_subfolder_of, validate_duplicate_files_destination, \
     detect_pytest, validate_folder
 from duplicate_files_in_folders.file_manager import FileManager
+
 from tests.helpers_testing import *
 
 
@@ -276,7 +277,9 @@ def test_delete_empty_folders_in_tree(setup_teardown):
 
     args = parse_arguments(common_args)
     unique_duplicate_files_found, duplicate_files_moved = clean_source_duplications(args)
-    delete_empty_folders_in_tree(source_dir, True)
+    fm = FileManager.get_instance()
+    fm.delete_empty_folders_in_tree(source_dir)
+
     assert unique_duplicate_files_found == 5, "Unique duplicate files found"
 
     # check if all empty folders have been deleted
