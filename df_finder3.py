@@ -235,7 +235,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    if os.name != 'nt':
-        print_error("This script was tested only on Windows. Modify and test it on other OS if needed.")
+#    if os.name != 'nt':
+#        print_error("This script was tested only on Windows. Modify and test it on other OS if needed.")
     command_line_args = parse_arguments()
     main(command_line_args)
