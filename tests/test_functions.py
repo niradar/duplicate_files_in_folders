@@ -300,7 +300,7 @@ def test_validate_duplicate_files_destination(setup_teardown):
     # test case 2: folder doesn't exist and cannot be created
     with pytest.raises(SystemExit) as excinfo:
         file_manager.FileManager.reset_file_manager([target_dir], [source_dir, move_to_dir], True)
-        validate_duplicate_files_destination(os.path.join(source_dir, "\"^&%/#$^%&!@"), run_mode=True)
+        validate_duplicate_files_destination(os.path.join(source_dir, "\"^&%/#$^\0%&!@"), run_mode=True)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 1
 
