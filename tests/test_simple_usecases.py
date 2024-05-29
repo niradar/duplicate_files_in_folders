@@ -1,3 +1,5 @@
+import os
+
 from df_finder3 import main, parse_arguments
 from tests.helpers_testing import *
 
@@ -180,7 +182,7 @@ def test_delete_empty_folders_false(setup_teardown):
 def test_source_folder_slash(setup_teardown):
     source_dir, target_dir, move_to_dir, _ = setup_teardown
     setup_test_files(range(1, 4), range(1, 4))
-    common_args = ["--src", source_dir + "/", "--target", target_dir, "--move_to", move_to_dir, "--run"]
+    common_args = ["--src", source_dir + os.sep, "--target", target_dir, "--move_to", move_to_dir, "--run"]
     args = parse_arguments(common_args)
     main(args)
 
@@ -191,7 +193,7 @@ def test_source_folder_slash(setup_teardown):
 def test_target_folder_slash(setup_teardown):
     source_dir, target_dir, move_to_dir, _ = setup_teardown
     setup_test_files(range(1, 4), range(1, 4))
-    common_args = ["--src", source_dir, "--target", target_dir + "/", "--move_to", move_to_dir, "--run"]
+    common_args = ["--src", source_dir, "--target", target_dir + os.sep, "--move_to", move_to_dir, "--run"]
     args = parse_arguments(common_args)
     main(args)
 
@@ -202,7 +204,7 @@ def test_target_folder_slash(setup_teardown):
 def test_move_to_folder_slash(setup_teardown):
     source_dir, target_dir, move_to_dir, _ = setup_teardown
     setup_test_files(range(1, 4), range(1, 4))
-    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir + "/", "--run"]
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir + os.sep, "--run"]
     args = parse_arguments(common_args)
     main(args)
 
