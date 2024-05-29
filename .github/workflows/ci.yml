@@ -3,7 +3,7 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  test:
+  test-windows:
     runs-on: windows-latest
 
     strategy:
