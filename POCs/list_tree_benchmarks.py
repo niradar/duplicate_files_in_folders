@@ -183,7 +183,7 @@ def get_files_and_stats_v8_scandir_tpe_deque_generic(directory, max_workers=8):
                         else:
                             yield entry.path
             except PermissionError:
-                print(f"Access is denied: '{current_dir}'")
+                # print(f"Access is denied: '{current_dir}'")
                 continue
 
     files_stats = []
@@ -198,12 +198,32 @@ def get_files_and_stats_v8_scandir_tpe_deque_generic(directory, max_workers=8):
     return files_stats
 
 
+def get_files_and_stats_v9_scandir_deque_generic(directory):
+    files_stats = []
+    queue = deque([directory])
+    while queue:
+        current_dir = queue.popleft()
+        try:
+            with os.scandir(current_dir) as it:
+                for entry in it:
+                    if entry.is_dir(follow_symlinks=False):
+                        queue.append(entry.path)
+                    else:
+                        stats = entry.stat()
+                        path = entry.path
+                        files_stats.append({'path': path, 'size': stats.st_size, 'name': path[path.rfind(os.sep) + 1:],
+                                            'modified_time': stats.st_mtime, 'created_time': stats.st_ctime})
+        except PermissionError:
+            continue
+    return files_stats
+
 def compare_performance(directory, iterations=5):
     durations_v2 = []
     durations_v3 = []
     durations_v6 = []
     durations_v7 = []
     durations_v8 = []
+    durations_v9 = []
     original_durations = []
 
     for _ in range(iterations):
@@ -213,6 +233,7 @@ def compare_performance(directory, iterations=5):
         durations_v6.append(timeit.timeit(lambda: get_files_and_stats_v6_scandir_tpe_stack_class(directory), number=1))
         durations_v7.append(timeit.timeit(lambda: get_files_and_stats_v7_scandir_tpe_stack_generic(directory), number=1))
         durations_v8.append(timeit.timeit(lambda: get_files_and_stats_v8_scandir_tpe_deque_generic(directory), number=1))
+        durations_v9.append(timeit.timeit(lambda: get_files_and_stats_v9_scandir_deque_generic(directory), number=1))
 
     # Candidate for the best result
     avg_original_duration = sum(original_durations) / iterations
@@ -221,6 +242,7 @@ def compare_performance(directory, iterations=5):
     avg_optimized_duration_v6 = sum(durations_v6) / iterations
     avg_optimized_duration_v7 = sum(durations_v7) / iterations
     avg_optimized_duration_v8 = sum(durations_v8) / iterations
+    avg_optimized_duration_v9 = sum(durations_v9) / iterations
 
     print(f"Average original function duration: {avg_original_duration:.2f} seconds")
     print(f"Average function v2 (oswalk, tpe, generic) duration: {avg_optimized_duration_v2:.2f} seconds")
@@ -228,6 +250,7 @@ def compare_performance(directory, iterations=5):
     print(f"Average function v6 (scandir, tpe, stack, class) duration: {avg_optimized_duration_v6:.2f} seconds")
     print(f"Average function v7 (scandir, tpe, stack, generic) duration: {avg_optimized_duration_v7:.2f} seconds")
     print(f"Average function v8 (scandir, tpe, deque, generic) duration: {avg_optimized_duration_v8:.2f} seconds")
+    print(f"Average function v9 (scandir, deque, generic) duration: {avg_optimized_duration_v9:.2f} seconds")
 
 
 if __name__ == "__main__":
@@ -236,14 +259,15 @@ if __name__ == "__main__":
 
     sample_output = False
     if sample_output:
-        res = get_files_and_stats_v8_scandir_tpe_deque_generic(test_directory)
+        res = get_files_and_stats_v9_scandir_deque_generic(test_directory)
         for file_res in res:
             print(file_res)
 
-# Sample output
+# Sample output:
 # Average original function duration: 5.09 seconds
 # Average function v2 (oswalk, tpe, generic) duration: 3.28 seconds
 # Average function v3 (oswalk, tpe, class) duration: 3.91 seconds
 # Average function v6 (scandir, tpe, stack, class) duration: 3.66 seconds
 # Average function v7 (scandir, tpe, stack, generic) duration: 3.15 seconds
 # Average function v8 (scandir, tpe, deque, generic) duration: 3.11 seconds
+# Average function v9 (scandir, deque, generic) duration: 0.40 seconds
