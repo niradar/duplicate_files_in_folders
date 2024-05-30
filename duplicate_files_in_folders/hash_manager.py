@@ -133,8 +133,6 @@ class HashManager:
 
     def get_hash(self, file_path: str) -> str:
         """Get the hash of a file, computing and storing it if necessary."""
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"File not found: {file_path}")
         if self.target_folder and file_path.startswith(self.target_folder + os.sep):
             self.persistent_cache_requests += 1  # Increment persistent cache requests
             result = self.persistent_data[self.persistent_data.file_path == file_path]
@@ -197,7 +195,7 @@ class HashManager:
             return file_hash
         except Exception as e:
             logger.error(f"Error hashing {file_path}: {e}")
-            return ""
+            raise
 
     # debug method to print the current state of the HashManager
     def print_state(self):
