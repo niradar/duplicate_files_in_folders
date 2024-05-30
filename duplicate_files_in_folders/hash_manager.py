@@ -34,7 +34,7 @@ class HashManager:
         with cls._lock:
             cls._instance = None
 
-    def __init__(self, target_folder: str = None, filename: str = 'hashes.pkl'):
+    def __init__(self, target_folder: str = None, filename='hashes.pkl'):
         if self.__initialized:
             return
         self.__initialized = True
@@ -54,6 +54,8 @@ class HashManager:
     def load_data(self) -> pd.DataFrame:
         """Load only data relevant to the target folder from the file, or create a new DataFrame if the file doesn't
         exist."""
+        if self.filename is None:  # for testing purposes
+            return pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
         if os.path.exists(self.filename):
             all_data = pd.read_pickle(self.filename)
             if self.target_folder:
@@ -76,7 +78,8 @@ class HashManager:
 
     def save_data(self) -> None:
         """Save the current persistent DataFrame to a file."""
-
+        if self.filename is None:  # for testing purposes
+            return
         # Clean expired cache before saving - only for target folder
         self.clean_expired_cache()
 
