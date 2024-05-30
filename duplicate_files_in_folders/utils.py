@@ -51,16 +51,25 @@ def validate_duplicate_files_destination(duplicate_files_destination, run_mode):
     return True
 
 
-def parse_size(size_str):
+def parse_size(size_str) -> int:
     """
     Parses a human-readable file size string (e.g., '10MB') and returns the size in bytes.
     """
-    units = {"B": 1, "KB": 1024, "MB": 1024 ** 2, "GB": 1024 ** 3}
+    units = {"KB": 1024, "MB": 1024 ** 2, "GB": 1024 ** 3, "B": 1}  # 'B' must be last to avoid matching 'KB'
     size_str = size_str.upper()
-    for unit in units:
-        if size_str.endswith(unit):
-            return int(size_str[:-len(unit)]) * units[unit]
-    raise ValueError("Invalid size format")
+    int_value = None
+    try:
+        for unit in units.keys():
+            if size_str.endswith(unit):
+                int_value = int(size_str[:-len(unit)]) * units[unit]
+                break
+        if int_value is None:
+            int_value = int(size_str)
+    except ValueError:
+        raise ValueError("Invalid size format")
+    if int_value < 0:
+        raise ValueError("Size cannot be negative")
+    return int_value
 
 
 def parse_arguments(cust_args=None):
@@ -77,16 +86,20 @@ def parse_arguments(cust_args=None):
     parser.add_argument('--copy_to_all', action='store_true',
                         help='Copy file to all folders if found in multiple target folders. Default is move file to the'
                              ' first folder.', default=False)
-    parser.add_argument('--whitelist_ext', type=str, help='Comma-separated list of file extensions to whitelist (only these will be checked). IN WORK, DONT USE YET')
-    parser.add_argument('--blacklist_ext', type=str, help='Comma-separated list of file extensions to blacklist (these will not be checked). IN WORK, DONT USE YET')
-    parser.add_argument('--min_size', type=str, help='Minimum file size to check. Specify with units (B, KB, MB). IN WORK, DONT USE YET')
-    parser.add_argument('--max_size', type=str, help='Maximum file size to check. Specify with units (B, KB, MB). IN WORK, DONT USE YET')
+    parser.add_argument('--whitelist_ext', type=str, help='Comma-separated list of file extensions to '
+                        'whitelist (only these will be checked). IN WORK, DONT USE YET')
+    parser.add_argument('--blacklist_ext', type=str, help='Comma-separated list of file extensions to '
+                        'blacklist (these will not be checked). IN WORK, DONT USE YET')
+    parser.add_argument('--min_size', type=str, help='Minimum file size to check. Specify with units '
+                        '(B, KB, MB). IN WORK, DONT USE YET', default=None)
+    parser.add_argument('--max_size', type=str, help='Maximum file size to check. Specify with units '
+                        '(B, KB, MB). IN WORK, DONT USE YET', default=None)
     parser.add_argument('--delete_empty_folders', dest='delete_empty_folders', action='store_true',
                         help='Delete empty folders in the source folder. Default is enabled.')
     parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
                         help='Do not delete empty folders in the source folder.')
     parser.set_defaults(delete_empty_folders=True)
-    parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)  # for testing
     parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
     args = parser.parse_args(cust_args if cust_args else None)
 
@@ -118,6 +131,9 @@ def parse_arguments(cust_args=None):
             args.max_size = parse_size(args.max_size)
         except ValueError as e:
             parser.error(f"Invalid value for --max_size: {e}")
+
+    if args.min_size and args.max_size and args.min_size > args.max_size:
+        parser.error("Minimum size must be less than maximum size.")
 
     return args
 

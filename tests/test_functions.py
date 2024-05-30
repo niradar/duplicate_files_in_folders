@@ -3,7 +3,7 @@ import time
 from df_finder3 import check_and_update_filename, \
     clean_source_duplications, compare_files, collect_source_files, get_file_key
 from duplicate_files_in_folders.utils import parse_arguments, any_is_subfolder_of, validate_duplicate_files_destination, \
-    detect_pytest, validate_folder
+    validate_folder, parse_size
 from duplicate_files_in_folders.file_manager import FileManager
 
 from tests.helpers_testing import *
@@ -441,4 +441,50 @@ def test_any_is_subfolder_of():
     assert any_is_subfolder_of(["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2", "C:\\Users\\user\\Desktop\\folder3"]) is False
 
 
+def test_parse_size():
+    # Test case 1: valid size string
+    assert parse_size("10KB") == 10240
+    assert parse_size("10MB") == 10485760
+    assert parse_size("10GB") == 10737418240
+    assert parse_size("10B") == 10
+
+    # Test case 2: invalid size string
+    with pytest.raises(ValueError) as excinfo:
+        parse_size("10KBs")
+    assert str(excinfo.value) == "Invalid size format"
+
+    # Test case 3: negative size
+    with pytest.raises(ValueError) as excinfo:
+        parse_size("-10KB")
+    assert str(excinfo.value) == "Size cannot be negative"
+
+    # Test case 4: invalid size string
+    with pytest.raises(ValueError) as excinfo:
+        parse_size("KB10")
+    assert str(excinfo.value) == "Invalid size format"
+
+    # Test case 5: only number, should be treated as bytes
+    assert parse_size("10") == 10
+
+    # Test case 6: negative number, should be treated as bytes but still raise an error
+    with pytest.raises(ValueError) as excinfo:
+        parse_size("-10")
+    assert str(excinfo.value) == "Size cannot be negative"
+
+    # Test case 7: invalid string
+    with pytest.raises(ValueError) as excinfo:
+        parse_size("invalid")
+    assert str(excinfo.value) == "Invalid size format"
+
+    # Test case 8: lowercase should be ok
+    assert parse_size("10kb") == 10240
+    assert parse_size("10mb") == 10485760
+    assert parse_size("10gb") == 10737418240
+
+    # Test case 9: zero should be ok
+    assert parse_size("0KB") == 0
+    assert parse_size("0MB") == 0
+    assert parse_size("0GB") == 0
+    assert parse_size("0B") == 0
+    assert parse_size("0") == 0
 
