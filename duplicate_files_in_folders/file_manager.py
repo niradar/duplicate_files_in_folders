@@ -42,7 +42,7 @@ class FileManager:
 
         # raise an error if the directory is already in the allowed_dirs
         if self.allowed_dirs and protected_dir in self.allowed_dirs:
-            raise FileManagerError(f"Attempt to protect a directory that is also in the allowed_dirs: {dir_path}")
+            raise FileManagerError(f"Cannot add a directory to both protected and allowed directories list: {dir_path}")
 
         if protected_dir not in self.protected_dirs:
             self.protected_dirs.add(protected_dir)
@@ -52,7 +52,7 @@ class FileManager:
 
         # raise an error if the directory is already in the protected_dirs
         if self.protected_dirs and allowed_dir in self.protected_dirs:
-            raise FileManagerError(f"Attempt to allow a directory that is also in the protected_dirs: {dir_path}")
+            raise FileManagerError(f"Cannot add a directory to both protected and allowed directories list: {dir_path}")
 
         if allowed_dir not in self.allowed_dirs:
             self.allowed_dirs.add(allowed_dir)
