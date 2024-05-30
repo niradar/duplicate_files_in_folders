@@ -42,7 +42,7 @@ def test2(setup_teardown):
 
 
 # test 3 - mix of unique file in each folder
-def test3(setup_teardown):
+def test3_unique_and_duplicate_files(setup_teardown):
     source_dir, target_dir, move_to_dir, common_args = setup_teardown
     setup_test_files(range(1, 5), range(3, 7))
     args = parse_arguments(common_args)
@@ -67,9 +67,8 @@ def test3(setup_teardown):
     args.move_to = args.move_to + "_2"
     main(args)
 
-    # check that move_to_2 is empty
-    move_to_files = set(os.listdir(move_to_dir + "_2"))
-    assert not move_to_files, "Second run of main() should not move any files"
+    # check that move_to_2 doesn't exist
+    assert not os.path.exists(move_to_dir + "_2"), "Second run of main() should not create move_to_2 directory"
 
 
 # test 4 - same files, different names
@@ -265,9 +264,8 @@ def test8(setup_teardown):
     args.move_to = args.move_to + "_2"
     main(args)
 
-    # check that move_to_2 is empty
-    move_to_files = set(os.listdir(move_to_dir + "_2"))
-    assert not move_to_files, "Second run of main() should not move any files"
+    # check that move_to_2 doesn't exist
+    assert not os.path.exists(move_to_dir + "_2"), "Second run of main() should not create move_to_2 directory"
 
 
 # Test 10 - files 1 to 5 in source subfolder sub1, files 1-5 in target base folder

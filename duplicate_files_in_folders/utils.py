@@ -4,7 +4,6 @@ import os
 import sys
 from typing import List
 
-from duplicate_files_in_folders import file_manager
 
 logger = logging.getLogger(__name__)
 
@@ -39,16 +38,6 @@ def any_is_subfolder_of(folders: List[str]) -> bool:
                 print_error(f"{folders[i]} is a subfolder of {folders[j]}")
                 return True
     return False
-
-
-def validate_duplicate_files_destination(duplicate_files_destination, run_mode):
-    fm = file_manager.FileManager(run_mode)
-    if not os.path.isdir(duplicate_files_destination):
-        try:
-            fm.make_dirs(duplicate_files_destination)
-        except Exception as e:
-            print_error(f"Error creating destination folder {duplicate_files_destination}: {e}")
-    return True
 
 
 def parse_size(size_str) -> int:

@@ -12,7 +12,7 @@ from duplicate_files_in_folders.logging_config import setup_logging
 from typing import Dict, List, Tuple
 
 from duplicate_files_in_folders.utils import validate_folder, confirm_script_execution, detect_pytest, \
-    any_is_subfolder_of, validate_duplicate_files_destination, parse_arguments, print_error, output_results
+    any_is_subfolder_of, parse_arguments, output_results
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +217,6 @@ def main(args):
     file_manager.FileManager.reset_file_manager([args.target], [args.src, args.move_to], args.run)
     validate_folder(args.src, "Source")
     validate_folder(args.target, "Target")
-    validate_duplicate_files_destination(args.move_to, args.run)
     any_is_subfolder_of([args.src, args.target, args.move_to])
     confirm_script_execution(args)
     logger.info(f"Source folder: {args.src}")
