@@ -194,6 +194,9 @@ class FileManager:
         if self.is_protected_path(base_path):
             raise ProtectedPathError(f"Operation not allowed: Attempt to delete empty folders in protected path: "
                                      f"{base_path}")
+        if not self.run_mode:
+            logger.info(f"Would have deleted empty folders in {base_path}")
+            return 0
         folders_by_depth = {}  # collect all folders in the source folder by depth
         for root, dirs, files in os.walk(base_path, topdown=False):
             if base_path == root:
@@ -240,6 +243,7 @@ class FileManager:
             fm.add_protected_dir(dir_path)
         for dir_path in allowed_dirs:
             fm.add_allowed_dir(dir_path)
+        return fm
 
     def set_run_mode(self, run_mode):
         self.run_mode = run_mode
