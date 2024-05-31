@@ -6,20 +6,25 @@ from collections import defaultdict
 import time
 import logging
 import tqdm
-from duplicate_files_in_folders import file_manager
+
+from duplicate_files_in_folders.duplicates_finder import get_file_hash, get_file_key
+from duplicate_files_in_folders.file_manager import FileManager
 from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.logging_config import setup_logging
 from typing import Dict, List, Tuple
 
 from duplicate_files_in_folders.utils import validate_folder, confirm_script_execution, detect_pytest, \
-    any_is_subfolder_of, parse_arguments, output_results
+    parse_arguments, output_results, display_initial_config
 
 logger = logging.getLogger(__name__)
 
 
-def get_file_hash(file_path) -> str:
-    hash_manager = HashManager.get_instance()
-    return hash_manager.get_hash(file_path)
+def setup_hash_manager(args):
+    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None, full_hash=args.full_hash)
+    if args.clear_cache:
+        hash_manager.clear_cache()
+        hash_manager.save_data()
+    return hash_manager
 
 
 def check_and_update_filename(original_filename):
@@ -35,7 +40,7 @@ def check_and_update_filename(original_filename):
 def copy_or_move_file(tgt_filepath: str, move_to: str, src_filepath: str, target: str, test_mode, move=True):
     new_src_path = os.path.join(move_to, os.path.relpath(tgt_filepath, target))
     new_src_dir = os.path.dirname(new_src_path)
-    fm = file_manager.FileManager(not test_mode)
+    fm = FileManager(not test_mode)
     if not os.path.exists(new_src_dir):
         fm.make_dirs(new_src_dir)
     new_filename = check_and_update_filename(new_src_path)
@@ -85,7 +90,7 @@ def clean_source_duplications(args, keys_to_clean=None, given_duplicates: Dict[s
 
         unique_duplicate_files_found += 1
         start_index = 1 if not keys_to_clean else 0
-        fm = file_manager.FileManager(args.run)
+        fm = FileManager.get_instance()
         # Move all the other files to a new folder under the move_to folder
         for src_filepath, _ in group[start_index:]:
             new_src_path = os.path.join(source_dups_move_to, os.path.relpath(src_filepath, source))
@@ -147,10 +152,7 @@ def find_and_process_duplicates(args):
         clean_source_duplications(args, source_duplicates_to_process.keys(), source_duplicates_to_process)) \
         if source_duplicates_to_process else (0, 0)
 
-    fm = file_manager.FileManager(args.run)
-    deleted_source_folders = fm.delete_empty_folders_in_tree(args.src, show_progress=True) \
-        if args.run and args.delete_empty_folders else 0
-    return files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found, duplicate_source_files_moved
+    return files_moved, files_created, unique_source_duplicate_files_found, duplicate_source_files_moved
 
 
 def move_to_target_paths(args, src_filepath, target_paths_to_copy, source_duplicates, files_created, files_moved):
@@ -192,13 +194,6 @@ def collect_target_files(args):
     return target_files
 
 
-def get_file_key(args, file_path) -> str:
-    hash_key: str = get_file_hash(file_path)
-    file_key: str = file_path[file_path.rfind(os.sep) + 1:] if 'filename' not in args.ignore_diff else None
-    mdate_key: str = str(os.path.getmtime(file_path)) if 'mdate' not in args.ignore_diff else None
-    return '_'.join(filter(None, [hash_key, file_key, mdate_key]))
-
-
 def collect_source_files(args) -> Dict[str, List[Tuple[str, int]]]:
     source_files = defaultdict(list)
     source_depth = args.src.count(os.sep)
@@ -214,21 +209,14 @@ def collect_source_files(args) -> Dict[str, List[Tuple[str, int]]]:
 
 def main(args):
     setup_logging()
-    file_manager.FileManager.reset_file_manager([args.target], [args.src, args.move_to], args.run)
+    fm = FileManager.reset_file_manager([args.target], [args.src, args.move_to], args.run)
     validate_folder(args.src, "Source")
     validate_folder(args.target, "Target")
-    any_is_subfolder_of([args.src, args.target, args.move_to])
+    display_initial_config(args)
     confirm_script_execution(args)
-    logger.info(f"Source folder: {args.src}")
-    logger.info(f"Target folder: {args.target}")
-    logger.info(f"Move to folder: {args.move_to}")
-    logger.info(f"Ignoring Settings: mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}")
-    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None, full_hash=args.full_hash)
-    if args.clear_cache:
-        hash_manager.clear_cache()
-        hash_manager.save_data()
-    (files_moved, files_created, deleted_source_folders, unique_source_duplicate_files_found,
-     duplicate_source_files_moved) = find_and_process_duplicates(args)
+    hash_manager = setup_hash_manager(args)
+    (files_moved, files_created, unique_source_duplicate_files_found, duplicate_source_files_moved) = find_and_process_duplicates(args)
+    deleted_source_folders = fm.delete_empty_folders_in_tree(args.src, True) if args.delete_empty_folders else 0
     hash_manager.save_data()
     output_results(args, deleted_source_folders, duplicate_source_files_moved, files_created, files_moved, hash_manager)
 

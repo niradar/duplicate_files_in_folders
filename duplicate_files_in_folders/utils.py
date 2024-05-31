@@ -17,6 +17,13 @@ def validate_folder(folder, name):
     return True
 
 
+def display_initial_config(args):
+    logger.info(f"Source folder: {args.src}")
+    logger.info(f"Target folder: {args.target}")
+    logger.info(f"Move to folder: {args.move_to}")
+    logger.info(f"Ignoring Settings: mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}")
+
+
 def confirm_script_execution(args):
     # if the script is run from command line, and not by pytest, ask for confirmation
     if not detect_pytest():
@@ -91,6 +98,7 @@ def parse_arguments(cust_args=None):
     parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
     args = parser.parse_args(cust_args if cust_args else None)
 
+    any_is_subfolder_of([args.src, args.target, args.move_to])
     if args.extra_logging:
         logger.setLevel(logging.DEBUG)
     args.ignore_diff = set(str(args.ignore_diff).split(','))

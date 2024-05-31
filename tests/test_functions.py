@@ -1,7 +1,8 @@
 import time
 
 from df_finder3 import check_and_update_filename, \
-    clean_source_duplications, compare_files, collect_source_files, get_file_key
+    clean_source_duplications, compare_files, collect_source_files
+from duplicate_files_in_folders.duplicates_finder import get_file_key
 from duplicate_files_in_folders.utils import parse_arguments, any_is_subfolder_of, validate_folder, parse_size
 from duplicate_files_in_folders.file_manager import FileManager
 
