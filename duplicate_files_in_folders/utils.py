@@ -17,11 +17,36 @@ def validate_folder(folder, name):
     return True
 
 
+def log_and_print(message):
+    print(message)
+    logger.info(message)
+
+
 def display_initial_config(args):
-    logger.info(f"Source folder: {args.src}")
-    logger.info(f"Target folder: {args.target}")
-    logger.info(f"Move to folder: {args.move_to}")
-    logger.info(f"Ignoring Settings: mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}")
+    header = "=== Initial Configuration ==="
+    separator = "-" * 40
+    blank_line = ""
+    fixed_width = 20
+
+    config_items = {
+        "Source folder": args.src,
+        "Target folder": args.target,
+        "Move to folder": args.move_to,
+        "Ignoring Settings": f"mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}"
+    }
+
+    # Print header
+    log_and_print(blank_line)
+    log_and_print(header)
+    log_and_print(separator)
+
+    # Print configuration items
+    for key, value in config_items.items():
+        log_and_print(f"{key.ljust(fixed_width)}: {value}")
+
+    # Print footer
+    log_and_print(separator)
+    log_and_print(blank_line)
 
 
 def confirm_script_execution(args):
