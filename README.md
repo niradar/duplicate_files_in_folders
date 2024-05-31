@@ -61,6 +61,9 @@ python df_finder3.py --src /path/to/source --target /path/to/target --move_to /p
 python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/destination --min_size 1MB --max_size 100MB --run
 ```
 
+## Logging
+The script logs its actions and errors for traceability. The log file will be created in the same directory as the script under logs/ folder
+
 
 ## Installation
 
@@ -79,18 +82,6 @@ conda activate duplicate_finder
 pip install -r requirements.txt
 ```
 
-
-## Running Tests
-To run the tests, use pytest:
-
-```sh
-pytest
-```
-
-## Logging
-The script logs its actions and errors for traceability. The log file will be created in the same directory as the script under logs/ folder
-
-
 ## Possible Future Improvements
 - [ ] Improve summary and user interface
     - [ ] Add a better summary of the actions taken
@@ -102,9 +93,7 @@ The script logs its actions and errors for traceability. The log file will be cr
   - [ ] Add an argument to act only if the entire folder is a subfolder of a target folder, recursively (bottom-up)
   - [ ] Option to keep the source folder structure in the move_to folder
   - [ ] Option to send duplicates to recycle bin instead of move_to folder
-- [ ] Add a way to ignore files with specific extensions / process only files with specific extensions
 - [ ] Use bloom filters for faster comparison (https://en.wikipedia.org/wiki/Bloom_filter)
-  - [ ] idea - save also the first part of the hash - when comparing large files - if no match after that part, you don't need to continue the check
   - [ ] Before checking target files also check if there is no chance we need them, for example - filename no match and not ingoring file name, or file size doesn't match
 - [ ] More safeguards
   - [ ] Check any file operation for errors
