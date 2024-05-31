@@ -162,7 +162,7 @@ def test_delete_empty_folders_false(setup_teardown):
     copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
 
     common_args.append("--run")
-    common_args.append("--no-delete_empty_folders")
+    common_args.append("--keep_empty_folders")
     args = parse_arguments(common_args)
     main(args)
 

@@ -27,8 +27,7 @@ python df_finder3.py --src <source_folder> --target <target_folder> --move_to <m
 - `--run`: (Optional) Run without test mode (default is test mode).
 - `--ignore_diff`: (Optional) Comma-separated list of differences to ignore: `mdate`, `filename`, `checkall` (default is `mdate`).
 - `--copy_to_all`: (Optional) Copy file to all folders if found in multiple target folders (default is to move file to the first folder).
-- `--delete_empty_folders`: (Optional) Delete empty folders in the source folder (default is enabled).
-- `--no-delete_empty_folders`: (Optional) Do not delete empty folders in the source folder.
+- `--keep_empty_folders`: (Optional) Do not delete empty folders in the source folder.
 - `--whitelist_ext`: (Optional) Comma-separated list of file extensions to whitelist. Only these will be checked.
 - `--blacklist_ext`: (Optional) Comma-separated list of file extensions to blacklist. These will not be checked.
 - `--min_size`: (Optional) Minimum file size to check. Specify with units (B, KB, MB).

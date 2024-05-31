@@ -83,10 +83,8 @@ def parse_arguments(cust_args=None):
                         '(B, KB, MB). IN WORK, DONT USE YET', default=None)
     parser.add_argument('--max_size', type=str, help='Maximum file size to check. Specify with units '
                         '(B, KB, MB). IN WORK, DONT USE YET', default=None)
-    parser.add_argument('--delete_empty_folders', dest='delete_empty_folders', action='store_true',
-                        help='Delete empty folders in the source folder. Default is enabled.')
-    parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
-                        help='Do not delete empty folders in the source folder.')
+    parser.add_argument('--keep_empty_folders', dest='delete_empty_folders', action='store_false',
+                        help='Do not delete empty folders in the source folder. Default is to delete.')
     parser.add_argument('--full_hash', action='store_true', help='Use full file hash for comparison. Default is partial.')
     parser.set_defaults(delete_empty_folders=True)
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)  # for testing

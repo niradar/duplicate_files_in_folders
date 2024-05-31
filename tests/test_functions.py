@@ -34,8 +34,7 @@ def test_parse_arguments():
 
     # Test case 3: All arguments provided
     args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
-                            '--run', '--extra_logging', '--ignore_diff', 'mdate,filename', '--copy_to_all',
-                            '--delete_empty_folders'])
+                            '--run', '--extra_logging', '--ignore_diff', 'mdate,filename', '--copy_to_all'])
     assert args.src == get_folder_path('source')
     assert args.target == get_folder_path('target')
     assert args.move_to == get_folder_path('move_to')
