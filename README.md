@@ -11,6 +11,57 @@ This script identifies and processes duplicate files between a source and target
 The script compares filename, modification date, size, and hash of the files to identify duplicates. Settings allow ignoring differences in modification dates and filenames. The script can be run in test mode to simulate actions without moving the files. It also logs its actions and errors for traceability.
 
 
+## Usage
+
+To run the script, use the following command:
+
+```sh
+python df_finder3.py --src <source_folder> --target <target_folder> --move_to <move_to_folder> [options]
+```
+
+### Options
+
+- `--src` or `--source`: (Required) Path to the source folder.
+- `--target`: (Required) Path to the target folder.
+- `--move_to` or `--to`: (Required) Path to the folder where duplicate files will be moved.
+- `--run`: (Optional) Run without test mode (default is test mode).
+- `--ignore_diff`: (Optional) Comma-separated list of differences to ignore: `mdate`, `filename`, `checkall` (default is `mdate`).
+- `--copy_to_all`: (Optional) Copy file to all folders if found in multiple target folders (default is to move file to the first folder).
+- `--delete_empty_folders`: (Optional) Delete empty folders in the source folder (default is enabled).
+- `--no-delete_empty_folders`: (Optional) Do not delete empty folders in the source folder.
+- `--whitelist_ext`: (Optional) Comma-separated list of file extensions to whitelist. Only these will be checked.
+- `--blacklist_ext`: (Optional) Comma-separated list of file extensions to blacklist. These will not be checked.
+- `--min_size`: (Optional) Minimum file size to check. Specify with units (B, KB, MB).
+- `--max_size`: (Optional) Maximum file size to check. Specify with units (B, KB, MB).
+- `--full_hash`: (Optional) Use full file hash for comparison. Default is partial.
+
+### Example
+
+#### Simple usage:
+```sh
+python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/move_to --run
+```
+#### Most common usage:
+Ignore differences in modification dates, copy the file to all target folders if found in multiple folders, and run without test mode:
+```sh
+python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/move_to --run --ignore_diff mdate --copy_to_all
+```
+
+#### Using Whitelist and Blacklist
+```sh
+python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/destination --whitelist_ext jpg,png --run
+```
+
+```sh
+python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/destination --blacklist_ext tmp,log --run
+```
+
+#### Filtering by File Size
+```sh
+python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/destination --min_size 1MB --max_size 100MB --run
+```
+
+
 ## Installation
 
 To install the necessary dependencies:
@@ -28,35 +79,6 @@ conda activate duplicate_finder
 pip install -r requirements.txt
 ```
 
-## Usage
-
-To run the script, use the following command:
-
-```sh
-python df_finder3.py --src <source_folder> --target <target_folder> --move_to <move_to_folder> [options]
-```
-
-### Options
-
-- `--run`: Run without test mode (default is test mode).
-- `--ignore_diff`: Comma-separated list of differences to ignore: `mdate`, `filename`, `checkall` (default is `mdate`).
-- `--copy_to_all`: Copy file to all folders if found in multiple target folders (default is to move file to the first folder).
-- `--delete_empty_folders`: Delete empty folders in the source folder (default is enabled).
-- `--no-delete_empty_folders`: Do not delete empty folders in the source folder.
-- `--clear_cache`: Clear the hash manager cache.
-
-### Example
-
-#### Simple usage:
-```sh
-python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/move_to --run
-```
-
-#### Most common usage:
-Ignore differences in modification dates, copy the file to all target folders if found in multiple folders, and run without test mode:
-```sh
-python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/move_to --run --ignore_diff mdate --copy_to_all
-```
 
 ## Running Tests
 To run the tests, use pytest:
