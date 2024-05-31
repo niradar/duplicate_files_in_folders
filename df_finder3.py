@@ -223,7 +223,7 @@ def main(args):
     logger.info(f"Target folder: {args.target}")
     logger.info(f"Move to folder: {args.move_to}")
     logger.info(f"Ignoring Settings: mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}")
-    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None)
+    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None, full_hash=args.full_hash)
     if args.clear_cache:
         hash_manager.clear_cache()
         hash_manager.save_data()

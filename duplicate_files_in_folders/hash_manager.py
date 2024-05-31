@@ -34,13 +34,17 @@ class HashManager:
         with cls._lock:
             cls._instance = None
 
-    def __init__(self, target_folder: str = None, filename='hashes.pkl'):
+    def __init__(self, target_folder: str = None, filename='hashes.pkl', full_hash=False):
         if self.__initialized:
             return
         self.__initialized = True
 
         self.filename = filename
         self.target_folder = target_folder
+        self.full_hash = full_hash
+        if not self.full_hash and self.filename is not None:
+            self.filename = self.filename.replace('.pkl', '_partial.pkl')
+
         self.persistent_data = self.load_data()
         self.temporary_data = pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
         self.unsaved_changes = 0
@@ -181,9 +185,11 @@ class HashManager:
         if expired_files_count > 0:
             logger.info(f"{expired_files_count} expired cache items cleaned.")
 
-    @staticmethod
-    def compute_hash(file_path: str, buffer_size=8*1024*1024) -> str:
+    def compute_hash(self, file_path: str, buffer_size=8*1024*1024) -> str:
         """Method to compute the hash of a file."""
+
+        if not self.full_hash:
+            return HashManager.compute_partial_hash(file_path)
         try:
             hasher = hashlib.sha256()
             with open(file_path, 'rb') as file:
@@ -191,6 +197,20 @@ class HashManager:
                 while buffer:
                     hasher.update(buffer)
                     buffer = file.read(buffer_size)
+            file_hash = hasher.hexdigest()
+            return file_hash
+        except Exception as e:
+            logger.error(f"Error hashing {file_path}: {e}")
+            raise
+
+    @staticmethod
+    def compute_partial_hash(file_path: str, initial_bytes=2 * 1024 * 1024) -> str:
+        """Method to compute the partial hash of a file."""
+        try:
+            hasher = hashlib.sha256()
+            with open(file_path, 'rb') as file:
+                buffer = file.read(initial_bytes)
+                hasher.update(buffer)
             file_hash = hasher.hexdigest()
             return file_hash
         except Exception as e:

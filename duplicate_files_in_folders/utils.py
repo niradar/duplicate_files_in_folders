@@ -87,6 +87,7 @@ def parse_arguments(cust_args=None):
                         help='Delete empty folders in the source folder. Default is enabled.')
     parser.add_argument('--no-delete_empty_folders', dest='delete_empty_folders', action='store_false',
                         help='Do not delete empty folders in the source folder.')
+    parser.add_argument('--full_hash', action='store_true', help='Use full file hash for comparison. Default is partial.')
     parser.set_defaults(delete_empty_folders=True)
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)  # for testing
     parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
