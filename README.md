@@ -109,4 +109,4 @@ If you have suggestions for improving this script, please open an issue or submi
 This script was written by Nir Adar - [niradar@gmail.com](mailto:niradar@gmail.com)
 
 ## License
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the LICENSE file for details.
