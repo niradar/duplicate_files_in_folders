@@ -4,6 +4,7 @@ import os
 import sys
 from typing import List
 
+from duplicate_files_in_folders.hash_manager import HashManager
 
 logger = logging.getLogger(__name__)
 
@@ -23,17 +24,29 @@ def log_and_print(message):
 
 
 def display_initial_config(args):
-    header = "=== Initial Configuration ==="
-    separator = "-" * 40
+    header = "=== Script Configuration ==="
+    separator = "-" * 50
     blank_line = ""
-    fixed_width = 20
+    fixed_width = 25
 
     config_items = {
-        "Source folder": args.src,
-        "Target folder": args.target,
-        "Move to folder": args.move_to,
-        "Ignoring Settings": f"mdate={'mdate' in args.ignore_diff}, filename={'filename' in args.ignore_diff}"
+        "Source Folder": args.src,
+        "Target Folder": args.target,
+        "\"Move to\" Folder": args.move_to,
+        "Ignoring Settings": get_ignore_diff_string(args.ignore_diff),
+        "Files Content": "Full Content Check (Slower)" if args.full_hash else "Partial Content Check (Faster)",
+        "Size Constraints": get_size_constraints_string(args.min_size, args.max_size),
     }
+    # args.whitelist_ext is a set
+    if args.whitelist_ext:
+        config_items["File Types (Whitelist)"] = ', '.join(args.whitelist_ext)
+    elif args.blacklist_ext:
+        config_items["File Types (Blacklist)"] = ', '.join(args.blacklist_ext)
+
+    if not args.delete_empty_folders:
+        config_items["Empty Folders"] = "Do Not Delete Empty Folders in Source Folder"
+
+    config_items["Script Mode"] = "Run Mode" if args.run else "Test Mode"
 
     # Print header
     log_and_print(blank_line)
@@ -47,6 +60,38 @@ def display_initial_config(args):
     # Print footer
     log_and_print(separator)
     log_and_print(blank_line)
+
+
+def get_ignore_diff_string(ignore_diff_set):
+    ignore_options = {
+        'mdate': 'Modification Date',
+        'filename': 'File Name'
+    }
+
+    # Construct the ignored parts string
+    ignored_parts = [ignore_options[item] for item in ignore_diff_set]
+    ignored_str = ', '.join(ignored_parts) if ignored_parts else 'None'
+
+    # Construct the checked parts string
+    all_options = set(ignore_options.keys())
+    checked_parts = all_options - ignore_diff_set
+    checked_parts_str = ', '.join([ignore_options[item] for item in checked_parts])
+
+    result = f"Ignore: {ignored_str}. Check: File Size, {checked_parts_str}."
+    return result
+
+
+def format_number_with_commas(number):
+    return f"{number:,}"
+
+
+def get_size_constraints_string(min_size=None, max_size=None):
+    size_constraints = [
+        f"Minimum Size: {min_size:,} bytes" if min_size is not None else None,
+        f"Maximum Size: {max_size:,} bytes" if max_size is not None else None
+    ]
+    size_constraints = [constraint for constraint in size_constraints if constraint]
+    return f"{', '.join(size_constraints)}." if size_constraints else "No Size Constraints."
 
 
 def confirm_script_execution(args):
@@ -180,3 +225,11 @@ def output_results(args, deleted_source_folders, duplicate_source_files_moved, f
     if deleted_source_folders:
         res_str += f", Deleted: {deleted_source_folders} empty folders in the source folder"
     logger.info(res_str)
+
+
+def setup_hash_manager(args):
+    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None, full_hash=args.full_hash)
+    if args.clear_cache:
+        hash_manager.clear_cache()
+        hash_manager.save_data()
+    return hash_manager

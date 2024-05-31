@@ -9,22 +9,12 @@ import tqdm
 
 from duplicate_files_in_folders.duplicates_finder import get_file_hash, get_file_key
 from duplicate_files_in_folders.file_manager import FileManager
-from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.logging_config import setup_logging
 from typing import Dict, List, Tuple
-
-from duplicate_files_in_folders.utils import validate_folder, confirm_script_execution, detect_pytest, \
-    parse_arguments, output_results, display_initial_config
+from duplicate_files_in_folders.utils import (validate_folder, confirm_script_execution, parse_arguments,
+                                              output_results, display_initial_config, setup_hash_manager)
 
 logger = logging.getLogger(__name__)
-
-
-def setup_hash_manager(args):
-    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None, full_hash=args.full_hash)
-    if args.clear_cache:
-        hash_manager.clear_cache()
-        hash_manager.save_data()
-    return hash_manager
 
 
 def check_and_update_filename(original_filename):
