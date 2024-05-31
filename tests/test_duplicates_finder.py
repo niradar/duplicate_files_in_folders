@@ -1,7 +1,12 @@
-from duplicate_files_in_folders.duplicates_finder import get_file_key
+import logging
+import time
+
+from duplicate_files_in_folders.duplicates_finder import get_file_key, find_duplicates_files_v3
 from duplicate_files_in_folders.file_manager import FileManager
 from duplicate_files_in_folders.utils import parse_arguments
 from tests.helpers_testing import *
+
+logger = logging.getLogger(__name__)
 
 
 def test_get_file_key(setup_teardown):
@@ -45,3 +50,124 @@ def test_get_file_key(setup_teardown):
     assert key_parts[0] == 'edb36987f4e3526039ff5c174bcebb9513d95dbc235fb093806c8387dc9ffa91'
     assert key_parts[1] == file_info['name']
     assert key_parts[2] == str(os.path.getmtime(file_info['path']))
+
+
+def test_find_duplicate_files_v3_same_source_and_target(setup_teardown):
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    setup_test_files(range(1, 6), [])
+    time.sleep(0.1)  # sleep to make sure the modified date is different
+    setup_test_files([], range(1, 6))
+
+    # default args are to ignore mdate
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 5
+    assert len(source_stats) == 5
+    assert len(target_stats) == 5
+
+    # ignore filename
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "filename"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 0
+    assert len(source_stats) == 5
+    assert len(target_stats) == 5
+
+    # ignore mdate, filename
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "filename,mdate"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 5
+    assert len(source_stats) == 5
+    assert len(target_stats) == 5
+
+    # ignore none
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "checkall"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 0
+    assert len(source_stats) == 5
+    assert len(target_stats) == 5
+
+
+def test_find_duplicate_files_v3_different_source_and_target(setup_teardown):
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    setup_test_files(range(1, 4), range(4, 7))
+
+    # default args are to ignore mdate
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 0
+    assert len(source_stats) == 3
+    assert len(target_stats) == 3
+
+    # ignore filename
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "filename"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 0
+    assert len(source_stats) == 3
+    assert len(target_stats) == 3
+
+    # ignore mdate, filename
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "filename,mdate"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 0
+    assert len(source_stats) == 3
+    assert len(target_stats) == 3
+
+    # ignore none
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "checkall"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 0
+    assert len(source_stats) == 3
+    assert len(target_stats) == 3
+
+
+def test_find_duplicate_files_v3_unique_and_duplicate_files(setup_teardown):
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    setup_test_files(range(1, 6), [])
+    time.sleep(0.1)  # sleep to make sure the modified date is different
+    setup_test_files([], range(4, 9))
+
+    # default args are to ignore mdate
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 2
+    assert len(source_stats) == 5
+    assert len(target_stats) == 5
+
+    # ignore filename
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "filename"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 0
+    assert len(source_stats) == 5
+    assert len(target_stats) == 5
+
+    # ignore mdate, filename
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "filename,mdate"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 2
+    assert len(source_stats) == 5
+    assert len(target_stats) == 5
+
+    # ignore none
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "checkall"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    assert len(duplicates) == 0
+    assert len(source_stats) == 5
+    assert len(target_stats) == 5
