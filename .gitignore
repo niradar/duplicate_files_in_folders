@@ -5,3 +5,4 @@
 *.bak
 .coverage
 conda.bat
+profile.*
