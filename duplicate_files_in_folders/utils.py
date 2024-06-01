@@ -11,15 +11,6 @@ from duplicate_files_in_folders.hash_manager import HashManager
 logger = logging.getLogger(__name__)
 
 
-def validate_folder(folder, name):
-    """ Validate if a folder exists and is not empty. """
-    if not os.path.isdir(folder) or not os.path.exists(folder):
-        print_error(f"{name} folder does not exist.")
-    if not os.listdir(folder):
-        print_error(f"{name} folder is empty.")
-    return True
-
-
 def log_and_print(message):
     print(message)
     logger.info(message)
@@ -114,8 +105,8 @@ def any_is_subfolder_of(folders: List[str]) -> bool:
     for i in range(len(folders)):
         for j in range(len(folders)):
             if i != j and folders[i].startswith(folders[j]):
-                print_error(f"{folders[i]} is a subfolder of {folders[j]}")
-                return True
+                logger.error(f"{folders[i]} is a subfolder of {folders[j]}")
+                sys.exit(1)
     return False
 
 
@@ -221,12 +212,8 @@ def parse_arguments(cust_args=None, check_folders=True):
     return args
 
 
-def print_error(message):
-    print(f"Error: {message}")
-    logger.critical(f"{message}")
-    sys.exit(1)
-
-def output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved):
+def output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved,
+                   source_stats, target_stats):
     summary_header = "Summary (Test Mode):" if not args.run else "Summary:"
     separator = "-" * max(len(summary_header), 40)
     blank_line = ""
@@ -244,8 +231,10 @@ def output_results(args, files_moved, files_created, deleted_source_folders, dup
 
     # Detailed summary
     summary_lines = {
-        'Files Moved': f"{files_moved}",
-        'Files Created': f"{files_created} copies",
+        'Source Files': f"{format_number_with_commas(len(source_stats))} files",
+        'Target Files': f"{format_number_with_commas(len(target_stats))} files",
+        'Files Moved': f"{format_number_with_commas(files_moved)}",
+        'Files Created': f"{format_number_with_commas(files_created)} copies",
     }
 
     if duplicate_source_files_moved:
@@ -269,7 +258,8 @@ def setup_hash_manager(args):
     return hash_manager
 
 
-def copy_or_move_file(target_file_path: str, destination_base_path: str, source_file_path: str, base_target_path: str, is_test_mode: bool, move: bool = True) -> str:
+def copy_or_move_file(target_file_path: str, destination_base_path: str, source_file_path: str, base_target_path: str,
+                      move: bool = True) -> str:
     destination_path = os.path.join(destination_base_path, os.path.relpath(target_file_path, base_target_path))
     destination_dir = os.path.dirname(destination_path)
     file_manager = FileManager.get_instance()
@@ -281,7 +271,6 @@ def copy_or_move_file(target_file_path: str, destination_base_path: str, source_
     else:
         file_manager.copy_file(source_file_path, final_destination_path)
     return final_destination_path
-
 
 
 def check_and_update_filename(original_filename):

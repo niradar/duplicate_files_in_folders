@@ -129,16 +129,16 @@ def process_duplicates(combined: Dict, args) -> (int, int):
 
         # Copy or move files to target locations
         if not args.copy_to_all:
-            copy_or_move_file(target_files[0]['path'], args.move_to, src_filepath, args.target, not args.run, move=True)
+            copy_or_move_file(target_files[0]['path'], args.move_to, src_filepath, args.target, move=True)
             files_moved += 1
         else:
             num_to_copy = max(0, len(target_files) - len(srcs_to_move))
             for i in range(num_to_copy):
-                copy_or_move_file(target_files[i]['path'], args.move_to, src_filepath, args.target, not args.run, False)
+                copy_or_move_file(target_files[i]['path'], args.move_to, src_filepath, args.target, False)
                 files_created += 1
 
             for (src, _), tgt in zip(srcs_to_move, target_files[num_to_copy:]):
-                copy_or_move_file(tgt['path'], args.move_to, src, args.target, not args.run, move=True)
+                copy_or_move_file(tgt['path'], args.move_to, src, args.target, move=True)
                 files_moved += 1
 
     return files_moved, files_created
@@ -153,5 +153,5 @@ def clean_source_duplications(args, combined):
                     locations['source'] if os.path.exists(file_info['path'])]
     source_dups_move_to: str = str(os.path.join(args.move_to, os.path.basename(args.src) + "_dups"))
     for src_path in source_paths:
-        copy_or_move_file(src_path, source_dups_move_to, src_path, args.src, not args.run, move=True)
+        copy_or_move_file(src_path, source_dups_move_to, src_path, args.src, move=True)
     return len(source_paths)

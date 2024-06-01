@@ -321,3 +321,40 @@ def test_delete_empty_folders_in_tree(setup_teardown):
 
     # check that source folder was not deleted
     assert os.path.exists(source_dir), "source folder does not exist"
+
+
+# def test_validate_folder(setup_teardown):
+#     source_dir, _, _, _ = setup_teardown
+#
+#     # test case 1: folder not existing
+#     with pytest.raises(SystemExit) as excinfo:
+#         validate_folder(os.path.join(source_dir, "sub1"), "sub1")
+#     assert excinfo.type == SystemExit
+#     assert excinfo.value.code == 1
+#
+#     # test case 2: folder existing but empty
+#     os.makedirs(os.path.join(source_dir, "sub1"))
+#     with pytest.raises(SystemExit) as excinfo:
+#         validate_folder(os.path.join(source_dir, "sub1"), "sub1")
+#     assert excinfo.type == SystemExit
+#     assert excinfo.value.code == 1
+#
+#     # test case 3: folder existing and not empty
+#     copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
+#     assert validate_folder(os.path.join(source_dir, "sub1"), "sub1") is True
+#
+#
+#
+# def print_error(message):
+#     print(f"Error: {message}")
+#     logger.critical(f"{message}")
+#     sys.exit(1)
+#
+#
+# def validate_folder(folder, name):
+#     """ Validate if a folder exists and is not empty. """
+#     if not os.path.isdir(folder) or not os.path.exists(folder):
+#         print_error(f"{name} folder does not exist.")
+#     if not os.listdir(folder):
+#         print_error(f"{name} folder is empty.")
+#     return True

@@ -123,18 +123,18 @@ def move_to_target_paths(args, src_filepath, target_paths_to_copy, source_duplic
     source_duplicates.sort(key=lambda x: x[0], reverse=True)  # sort by path name reverse for easier testing
 
     if not args.copy_to_all:
-        copy_or_move_file(target_paths_to_copy[0], args.move_to, src_filepath, args.target, not args.run)
+        copy_or_move_file(target_paths_to_copy[0], args.move_to, src_filepath, args.target)
         return files_created, files_moved + 1
 
     num_to_copy = max(0, len(target_paths_to_copy) - len(source_duplicates))
     if num_to_copy:  # Copy first source to make up for fewer source duplicates
         for i in range(num_to_copy):
-            copy_or_move_file(target_paths_to_copy[i], args.move_to, src_filepath, args.target, not args.run, False)
+            copy_or_move_file(target_paths_to_copy[i], args.move_to, src_filepath, args.target, False)
             files_created += 1
 
     # Move each source duplicate to the corresponding target path
     for (src, _), tgt in zip(source_duplicates, target_paths_to_copy[num_to_copy:]):
-        copy_or_move_file(tgt, args.move_to, src, args.target, not args.run, move=True)
+        copy_or_move_file(tgt, args.move_to, src, args.target, move=True)
         files_moved += 1
 
     return files_created, files_moved

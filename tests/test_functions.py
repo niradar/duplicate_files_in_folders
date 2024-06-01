@@ -1,9 +1,7 @@
-import logging
-
 from duplicate_files_in_folders.duplicates_finder import clean_source_duplications, find_duplicates_files_v3, \
     process_duplicates
 from duplicate_files_in_folders.file_manager import FileManager
-from duplicate_files_in_folders.utils import parse_arguments, any_is_subfolder_of, validate_folder, parse_size, \
+from duplicate_files_in_folders.utils import parse_arguments, any_is_subfolder_of, parse_size, \
     check_and_update_filename
 
 from tests.helpers_testing import *
@@ -85,27 +83,6 @@ def test_check_and_update_filename():
     # Test case 2: Test for a file that exists
     exist_file = 'tests/imgs/5.jpg'
     assert check_and_update_filename(exist_file) != exist_file
-
-
-def test_validate_folder(setup_teardown):
-    source_dir, _, _, _ = setup_teardown
-
-    # test case 1: folder not existing
-    with pytest.raises(SystemExit) as excinfo:
-        validate_folder(os.path.join(source_dir, "sub1"), "sub1")
-    assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
-
-    # test case 2: folder existing but empty
-    os.makedirs(os.path.join(source_dir, "sub1"))
-    with pytest.raises(SystemExit) as excinfo:
-        validate_folder(os.path.join(source_dir, "sub1"), "sub1")
-    assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
-
-    # test case 3: folder existing and not empty
-    copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
-    assert validate_folder(os.path.join(source_dir, "sub1"), "sub1") is True
 
 
 def test_any_is_subfolder_of():

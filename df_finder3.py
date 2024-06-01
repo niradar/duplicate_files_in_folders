@@ -20,13 +20,13 @@ def main(args):
         (files_moved, files_created, unique_source_duplicate_files_found, duplicate_source_files_moved) = (
             find_and_process_duplicates(args))
     else:
-        duplicates, _, _ = find_duplicates_files_v3(args, args.src, args.target)
+        duplicates, source_stats, target_stats = find_duplicates_files_v3(args, args.src, args.target)
         files_moved, files_created = process_duplicates(duplicates, args)
         duplicate_source_files_moved = clean_source_duplications(args, duplicates)
 
     deleted_source_folders = fm.delete_empty_folders_in_tree(args.src, True) if args.delete_empty_folders else 0
     hash_manager.save_data()
-    output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved)
+    output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved, source_stats, target_stats)
 
 
 if __name__ == "__main__":
