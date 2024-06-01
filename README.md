@@ -12,10 +12,11 @@ The script compares filename, modification date, size, and hash of the files to 
 
 ## Features
 
-- **Bloom Filters:** Efficiently identify potential duplicates using Bloom filters (https://en.wikipedia.org/wiki/Bloom_filter) for file size, name, and modified time, reducing unnecessary comparisons.
-- **Parallel Processing:** Automatically selects and utilizes parallel processing for file key generation, improving performance for large datasets.
+- **Bloom Filters:** Efficiently identify potential duplicates using [Bloom filters](https://en.wikipedia.org/wiki/Bloom_filter) for file size, name, and modified time, reducing unnecessary comparisons.
+- **Parallel Processing:** Automatically selects and utilizes parallel processing, improving performance for large datasets.
 - **Flexible Filtering:** Supports filtering of files based on size and extensions, with options for whitelisting and blacklisting extensions.
-- **Comprehensive Logging:** Provides detailed logging to track the script's operations and outcomes, including a summary of actions taken.
+- **Comprehensive Logging:** Detailed logs track operations and outcomes, including a summary of actions taken.
+
 
 
 ## Usage
@@ -87,9 +88,6 @@ pip install -r requirements.txt
 ## Possible Future Improvements
 - [ ] Better handling of folders with saved html files
   - [ ] Deal with `_files` folders in the source folder - Move it only if all files are duplicates
-- [ ] More ways to influence how the script works
-  - [ ] Add an argument to act only if the entire folder is a subfolder of a target folder, recursively (bottom-up)
-  - [ ] Option to send duplicates to recycle bin instead of move_to folder
 ## Known Issues
 - [ ] Even if argument --copy_to_all is not present, still need to move the duplicates to the move_to folder without copying them to other folders
 - [ ] Issue with files with non-standard characters in the filename - no reproducible yet

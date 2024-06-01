@@ -6,10 +6,10 @@ from probables import BloomFilter
 from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.file_manager import FileManager
 from typing import Dict, List, Set
-
 from duplicate_files_in_folders.utils import copy_or_move_file, get_file_key
 
 logger = logging.getLogger(__name__)
+
 
 def get_files_keys(args, file_infos: List[Dict]) -> Dict[str, List[Dict]]:
     """Generate keys for a list of files."""
@@ -113,11 +113,6 @@ def find_duplicates_files_v3(args, source: str, target: str) -> (Dict, List[Dict
         value['source'] = sorted(value['source'], key=lambda x: x['path'])
         value['target'] = sorted(value['target'], key=lambda x: x['path'])
 
-    # Sort the lists for both 'source' and 'target' first by depth and then lexicographically by their path
-    # for value in combined.values():
-    #     value['source'] = sorted(value['source'], key=lambda x: (-x['path'].count('/'), x['path']))
-    #     value['target'] = sorted(value['target'], key=lambda x: (-x['path'].count('/'), x['path']))
-
     return combined, source_stats, target_stats
 
 
@@ -156,7 +151,7 @@ def clean_source_duplications(args, combined):
     """
     source_paths = [file_info['path'] for key, locations in combined.items() if 'source' in locations for file_info in
                     locations['source'] if os.path.exists(file_info['path'])]
-    source_dups_move_to:str = str(os.path.join(args.move_to, os.path.basename(args.src) + "_dups"))
+    source_dups_move_to: str = str(os.path.join(args.move_to, os.path.basename(args.src) + "_dups"))
     for src_path in source_paths:
         copy_or_move_file(src_path, source_dups_move_to, src_path, args.src, not args.run, move=True)
     return len(source_paths)
