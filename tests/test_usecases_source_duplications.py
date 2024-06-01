@@ -1,10 +1,16 @@
+import logging
+import os
+
 from df_finder3 import main
 from duplicate_files_in_folders.utils import parse_arguments
 from tests.helpers_testing import *
 
+logger = logging.getLogger(__name__)
 
-# Test 12 - files 1 to 6 in source subfolder sub1, files 1 to 2 and also 6 in source subfolder sub2, files 1 to 3 in target base folder, files 3 and 5 in target subfolder sub1
+
+# Test 12 - files 1 to 6 in source subfolder sub1, files 1 to 2 and also 6 in source subfolder sub2,
 # sub3 in source will contain files 1, 2, 3
+# files 1 to 3 in target base folder, files 3 and 5 in target subfolder sub1
 def test12(setup_teardown):
     source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
@@ -17,19 +23,37 @@ def test12(setup_teardown):
     # Setup the files in the source subdirectories and target directory
     copy_files(range(1, 7), os.path.join(source_dir, "sub1"))
     copy_files([1, 2, 6], os.path.join(source_dir, "sub2"))
-    copy_files(range(1, 4), target_dir)
-    copy_files([3, 5], os.path.join(target_dir, "sub1"))
     copy_files(range(1, 4), os.path.join(source_dir, "sub3"))
 
+    copy_files(range(1, 4), target_dir)
+    copy_files([3, 5], os.path.join(target_dir, "sub1"))
+
     # source content:
-    # sub1: 1.jpg, 2.jpg, 3.jpg, 4.jpg, 5.jpg, 6.jpg
-    # sub2: 1.jpg, 2.jpg, 6.jpg
-    # sub3: 1.jpg, 2.jpg, 3.jpg
+    #   sub1: 1.jpg, 2.jpg, 3.jpg, 4.jpg, 5.jpg, 6.jpg
+    #   sub2: 1.jpg, 2.jpg, 6.jpg
+    #   sub3: 1.jpg, 2.jpg, 3.jpg
 
     # target content:
-    # 1.jpg, 2.jpg, 3.jpg
-    # sub1: 3.jpg, 5.jpg
-    # sub3: 1.jpg, 2.jpg, 3.jpg
+    #   1.jpg, 2.jpg, 3.jpg
+    #   sub1: 3.jpg, 5.jpg
+
+    # after running the script:
+    # source should contain:
+    #   sub1: 4.jpg, 6.jpg
+    #   sub2: 6.jpg
+    # target should contain:
+    #   1.jpg, 2.jpg, 3.jpg
+    #   sub1: 3.jpg, 5.jpg
+    # move_to should contain:
+    #   1.jpg, 2.jpg, 3.jpg
+    #   sub1: 3.jpg, 5.jpg
+    #   source_dups: sub2, sub3
+    #       sub2: 1.jpg, 2.jpg
+    #       sub3: 1.jpg, 2.jpg
+
+
+
+
 
     common_args.append("--copy_to_all")
 
@@ -56,9 +80,32 @@ def test12(setup_teardown):
     move_to_files = set(os.listdir(move_to_dir))
     assert move_to_files == {'source_dups', 'sub1'} | {f"{i}.jpg" for i in range(1, 4)}, "Move_to directory files not correct"
 
-    # move_to/source_dups should contain sub2
-    move_to_source_dups_files = set(os.listdir(os.path.join(move_to_dir, "source_dups")))
-    assert move_to_source_dups_files == {'sub1', 'sub2'}, "Move_to source_dups directory files not correct"
+    conditions = [
+        {
+            'type': 'subdirs_count',
+            'parent_folder': 'source_dups',
+            'required_subdirs': {'sub1', 'sub2', 'sub3'},
+            'expected_count': 2
+        },
+        # move_to/source_dups/sub1, move_to/source_dups/sub2, move_to/source_dups/sub3 should contain files 1.jpg, 2.jpg exactly 2 times
+        {
+            'type': 'file_count',
+            'folders': {'source_dups' + os.sep + 'sub1', 'source_dups' + os.sep + 'sub2', 'source_dups' + os.sep + 'sub3'},
+            'file': '1.jpg',
+            'count': 2,
+            'include_subfolders': False
+        },
+        {
+            'type': 'file_count',
+            'folders': {'source_dups' + os.sep + 'sub1', 'source_dups' + os.sep + 'sub2', 'source_dups' + os.sep + 'sub3'},
+            'file': '2.jpg',
+            'count': 2,
+            'include_subfolders': False
+        },
+
+    ]
+    check_folder_conditions(move_to_dir, conditions)
+    # move_to/source_dups/sub1, move_to/source_dups/sub2, move_to/source_dups/sub3 should contain files 1.jpg, 2.jpg exactly 2 times
 
     # move_to/source_dups/sub2 should contain files 1, 2
     move_to_sub2_files = set(os.listdir(os.path.join(move_to_dir, "source_dups", "sub2")))
@@ -307,7 +354,7 @@ def setup_for_many_sources_few_targets_tests(source_dir, target_dir):
     # source content:
     # sub1: main.jpg
     # main.jpg
-    # hw2.jpg - hw10.jpg
+    # hw2.jpg, hw3.jpg, hw4.jpg, hw5.jpg, hw6.jpg, hw7.jpg, hw8.jpg, hw9.jpg, hw10.jpg
 
     # target content:
     # main.jpg
@@ -369,6 +416,7 @@ def test_many_sources_few_targets_ignore_diff_mdate_filename(setup_teardown):
     source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
     setup_for_many_sources_few_targets_tests(source_dir, target_dir)
+    print_all_folders(source_dir, target_dir, move_to_dir)
 
     common_args.append("--ignore_diff")
     common_args.append("mdate,filename")
@@ -381,10 +429,18 @@ def test_many_sources_few_targets_ignore_diff_mdate_filename(setup_teardown):
     source_files = set(os.listdir(source_dir))
     assert not source_files, "Source directory is not empty"
 
-    # check that move_to has files main.jpg, sub1 and hw2.jpg to hw10.jpg
-    move_to_files = set(os.listdir(move_to_dir))
-    assert move_to_files == {"main.jpg", "sub1", "source_dups"}, "wrong files in move_to"
+    # sources_dups should contain 9 files, in root and maybe in sub1 (if exists)
+    conditions = [
+        {
+            'type': 'files_count_including_subfolders',
+            'folder': 'source_dups',
+            'expected_count': 9
+        },
+        {
+            'type': 'items_in_folder',
+            'folder': '',
+            'items': {"main.jpg", "sub1", "source_dups"}
+        }
+    ]
+    check_folder_conditions(move_to_dir, conditions)
 
-    # check that source_dups has files hw2.jpg to hw10.jpg
-    source_dups_files = set(os.listdir(os.path.join(move_to_dir, "source_dups")))
-    assert source_dups_files == {f"hw{i}.jpg" for i in range(2, 11)}, "wrong files in source_dups"

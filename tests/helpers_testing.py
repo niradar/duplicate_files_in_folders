@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 import os
 import shutil
@@ -5,6 +7,8 @@ import shutil
 from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.logging_config import setup_logging
 from duplicate_files_in_folders import file_manager
+
+logger = logging.getLogger(__name__)
 
 # Define the base directory for the tests
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -103,6 +107,12 @@ def get_folder_structure_include_subfolders(folder):
     return "\n" + "\n".join(tree)
 
 
+def print_all_folders(source_dir, target_dir, move_to_dir):
+    logger.info(f"Source directory structure: {get_folder_structure_include_subfolders(source_dir)}")
+    logger.info(f"Target directory structure: {get_folder_structure_include_subfolders(target_dir)}")
+    logger.info(f"Move_to directory structure: {get_folder_structure_include_subfolders(move_to_dir)}")
+
+
 def simple_usecase_test(source_dir, target_dir, move_to_dir, max_files=3):
     # Check if all files from source are now in base folder of move_to
     source_files = set(os.listdir(source_dir))
@@ -114,3 +124,165 @@ def simple_usecase_test(source_dir, target_dir, move_to_dir, max_files=3):
     # Check no change to target
     target_files = set(os.listdir(target_dir))
     assert target_files == set([f"{i}.jpg" for i in range(1, max_files+1)]), "Target directory files have changed"
+
+
+def check_folder_conditions(base_dir, conditions):
+    def get_all_files_and_dirs(directory):
+        """ Get all files and directories in a directory, including subdirectories """
+        all_files = []
+        all_dirs = []
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                all_files.append(os.path.relpath(str(os.path.join(root, file)), base_dir))
+            for dir in dirs:
+                all_dirs.append(os.path.relpath(str(os.path.join(root, dir)), base_dir))
+        return all_files, all_dirs
+
+    def count_occurrences(file_list, name):
+        """ Count the occurrences of a file or directory in a list """
+        return sum(1 for item in file_list if os.path.basename(item) == name)
+
+    def check_required_subdirs(parent_folder, required_subdirs, expected_count):
+        """ Check that exactly expected_count of required_subdirs exist in parent_folder """
+        actual_subdirs = [d for d in os.listdir(str(os.path.join(base_dir, parent_folder))) if os.path.isdir(os.path.join(base_dir, parent_folder, d))]
+        actual_count = sum(1 for subdir in required_subdirs if subdir in actual_subdirs)
+        return actual_count == expected_count
+
+    def check_items_in_folder(folder, items):
+        """ Check that all items in the list exist in the specified folder """
+        actual_items = set(os.listdir(str(os.path.join(base_dir, folder))))
+        return set(items).issubset(actual_items)
+
+    def count_files_including_subfolders(folder):
+        """ Count all files in a folder including its subdirectories """
+        total_files = 0
+        for root, dirs, files in os.walk(os.path.join(base_dir, folder)):
+            total_files += len(files)
+        return total_files
+
+    all_files, all_dirs = get_all_files_and_dirs(base_dir)
+
+    for condition in conditions:
+        if condition['type'] == 'file_count':
+            folder_set = condition['folders']
+            file_name = condition['file']
+            expected_count = condition['count']
+            include_subfolders = condition.get('include_subfolders', True)
+
+            # Filter files based on the folder condition
+            if include_subfolders:
+                filtered_files = [file for file in all_files if any(file.startswith(folder) for folder in folder_set)]
+            else:
+                filtered_files = [file for file in all_files if
+                                  any(os.path.dirname(file) == folder for folder in folder_set)]
+
+            # Count occurrences of the file
+            actual_count = count_occurrences(filtered_files, file_name)
+
+            assert actual_count == expected_count, f"{file_name} appears {actual_count} times, expected {expected_count} times in {folder_set}"
+
+        elif condition['type'] == 'dir_structure':
+            parent_folder = condition['parent_folder']
+            expected_subdirs = condition['subdirs']
+
+            # Get actual subdirectories in the parent folder
+            actual_subdirs = [os.path.relpath(os.path.join(parent_folder, d), base_dir) for d in
+                              os.listdir(str(os.path.join(base_dir, parent_folder))) if
+                              os.path.isdir(os.path.join(base_dir, parent_folder, d))]
+
+            # Check if the actual subdirectories match the expected ones
+            assert set(actual_subdirs) == set(
+                expected_subdirs), f"Subdirectories in {parent_folder} are {actual_subdirs}, expected {expected_subdirs}"
+
+        elif condition['type'] == 'count_files_dirs':
+            folder = condition['folder']
+            expected_file_count = condition['file_count']
+            expected_dir_count = condition['dir_count']
+
+            # Count files and directories in the specified folder
+            actual_files = [file for file in all_files if file.startswith(folder)]
+            actual_dirs = [dir for dir in all_dirs if dir.startswith(folder)]
+
+            actual_file_count = len(actual_files)
+            actual_dir_count = len(actual_dirs)
+
+            assert actual_file_count == expected_file_count, f"File count in {folder} is {actual_file_count}, expected {expected_file_count}"
+            assert actual_dir_count == expected_dir_count, f"Directory count in {folder} is {actual_dir_count}, expected {expected_dir_count}"
+
+        elif condition['type'] == 'subdirs_count':
+            parent_folder = condition['parent_folder']
+            required_subdirs = condition['required_subdirs']
+            expected_count = condition['expected_count']
+
+            assert check_required_subdirs(parent_folder, required_subdirs, expected_count), f"{expected_count} out of {required_subdirs} should exist in {parent_folder}"
+
+        elif condition['type'] == 'items_in_folder':
+            folder = condition['folder']
+            items = condition['items']
+
+            assert check_items_in_folder(folder, items), f"Items {items} should exist in {folder}"
+
+        elif condition['type'] == 'files_count_including_subfolders':
+            folder = condition['folder']
+            expected_count = condition['expected_count']
+
+            actual_count = count_files_including_subfolders(folder)
+            assert actual_count == expected_count, f"Total file count in {folder} including subdirectories is {actual_count}, expected {expected_count}"
+
+    return True
+
+
+def check_folder_conditions_example():
+    move_to_dir = "/path/to/move_to_dir"
+    conditions = [
+        {
+            'type': 'file_count',
+            'folders': {'source_dups/sub1', 'source_dups/sub2', 'source_dups/sub3'},
+            'file': 'file1.jpg',
+            'count': 2,
+            'include_subfolders': True
+        },
+        {
+            'type': 'file_count',
+            'folders': {'source_dups/sub1', 'source_dups/sub3'},
+            'file': 'file4.jpg',
+            'count': 2,
+            'include_subfolders': False
+        },
+        {
+            'type': 'file_count',
+            'folders': {'Y'},
+            'file': 'specific_file.jpg',
+            'count': 1,
+            'include_subfolders': True
+        },
+        {
+            'type': 'dir_structure',
+            'parent_folder': 'source_dups',
+            'subdirs': {'sub1', 'sub2', 'sub3'}
+        },
+        {
+            'type': 'count_files_dirs',
+            'folder': 'some_folder',
+            'file_count': 10,
+            'dir_count': 2
+        },
+        {
+            'type': 'subdirs_count',
+            'parent_folder': 'source_dups',
+            'required_subdirs': {'sub1', 'sub2', 'sub3', 'sub4'},
+            'expected_count': 2
+        },
+        {
+            'type': 'items_in_folder',
+            'folder': 'some_folder',
+            'items': {'file1.txt', 'file2.txt', 'subfolder1'}
+        },
+        {
+            'type': 'files_count_including_subfolders',
+            'folder': 'some_folder',
+            'expected_count': 10
+        }
+    ]
+
+    check_folder_conditions(os.path.join(move_to_dir, "source_dups"), conditions)
