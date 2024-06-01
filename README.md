@@ -10,6 +10,13 @@ This script identifies and processes duplicate files between a source and target
 
 The script compares filename, modification date, size, and hash of the files to identify duplicates. Settings allow ignoring differences in modification dates and filenames. The script can be run in test mode to simulate actions without moving the files. It also logs its actions and errors for traceability.
 
+## Features
+
+- **Bloom Filters:** Efficiently identify potential duplicates using Bloom filters (https://en.wikipedia.org/wiki/Bloom_filter) for file size, name, and modified time, reducing unnecessary comparisons.
+- **Parallel Processing:** Automatically selects and utilizes parallel processing for file key generation, improving performance for large datasets.
+- **Flexible Filtering:** Supports filtering of files based on size and extensions, with options for whitelisting and blacklisting extensions.
+- **Comprehensive Logging:** Provides detailed logging to track the script's operations and outcomes, including a summary of actions taken.
+
 
 ## Usage
 
@@ -60,10 +67,6 @@ python df_finder3.py --src /path/to/source --target /path/to/target --move_to /p
 python df_finder3.py --src /path/to/source --target /path/to/target --move_to /path/to/destination --min_size 1MB --max_size 100MB --run
 ```
 
-## Logging
-The script logs its actions and errors for traceability. The log file will be created in the same directory as the script under logs/ folder
-
-
 ## Installation
 
 To install the necessary dependencies:
@@ -92,8 +95,6 @@ pip install -r requirements.txt
   - [ ] Add an argument to act only if the entire folder is a subfolder of a target folder, recursively (bottom-up)
   - [ ] Option to keep the source folder structure in the move_to folder
   - [ ] Option to send duplicates to recycle bin instead of move_to folder
-- [ ] Use bloom filters for faster comparison (https://en.wikipedia.org/wiki/Bloom_filter)
-  - [ ] Before checking target files also check if there is no chance we need them, for example - filename no match and not ingoring file name, or file size doesn't match
 - [ ] More safeguards
   - [ ] Check any file operation for errors
 ## Known Issues
