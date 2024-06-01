@@ -146,7 +146,7 @@ def process_duplicates(combined: Dict, args) -> (int, int):
                 copy_or_move_file(tgt['path'], args.move_to, src, args.target, not args.run, move=True)
                 files_moved += 1
 
-    return files_created, files_moved
+    return files_moved, files_created
 
 
 def clean_source_duplications(args, combined):

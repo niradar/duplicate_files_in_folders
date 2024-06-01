@@ -181,7 +181,7 @@ def test_process_duplicates(setup_teardown):
 
     args = parse_arguments(common_args)
     duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
-    files_created, files_moved = process_duplicates(duplicates, args)
+    files_moved, files_created = process_duplicates(duplicates, args)
     assert files_created == 0
     assert files_moved == 5
 
@@ -195,7 +195,7 @@ def test_process_duplicates(setup_teardown):
                    "--ignore_diff", "filename"]
     args = parse_arguments(common_args)
     duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
-    files_created, files_moved = process_duplicates(duplicates, args)
+    files_moved, files_created = process_duplicates(duplicates, args)
     assert files_created == 0
     assert files_moved == 0
 
@@ -205,7 +205,7 @@ def test_process_duplicates(setup_teardown):
                    "--ignore_diff", "checkall"]
     args = parse_arguments(common_args)
     duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
-    files_created, files_moved = process_duplicates(duplicates, args)
+    files_moved, files_created = process_duplicates(duplicates, args)
     assert files_created == 0
     assert files_moved == 0
 
@@ -215,7 +215,7 @@ def test_process_duplicates(setup_teardown):
                    "--ignore_diff", "filename,mdate"]
     args = parse_arguments(common_args)
     duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
-    files_created, files_moved = process_duplicates(duplicates, args)
+    files_moved, files_created = process_duplicates(duplicates, args)
     assert files_created == 0
     assert files_moved == 5
 
@@ -229,7 +229,7 @@ def test_process_duplicates(setup_teardown):
     common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run", "--copy_to_all"]
     args = parse_arguments(common_args)
     duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
-    files_created, files_moved = process_duplicates(duplicates, args)
+    files_moved, files_created = process_duplicates(duplicates, args)
     assert files_created == 5
     assert files_moved == 5
     assert os.path.exists(os.path.join(move_to_dir, "subfolder"))
@@ -244,7 +244,7 @@ def test_process_duplicates(setup_teardown):
     common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run"]
     args = parse_arguments(common_args)
     duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
-    files_created, files_moved = process_duplicates(duplicates, args)
+    files_moved, files_created = process_duplicates(duplicates, args)
     assert files_created == 0
     assert files_moved == 5
 

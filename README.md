@@ -85,18 +85,11 @@ pip install -r requirements.txt
 ```
 
 ## Possible Future Improvements
-- [ ] Improve summary and user interface
-    - [ ] Add a better summary of the actions taken
-    - [ ] Add summary also to the console output
 - [ ] Better handling of folders with saved html files
-  - [ ] Deal with `_files` folders in the source folder
-  - [ ] Move it only if all files are duplicates
+  - [ ] Deal with `_files` folders in the source folder - Move it only if all files are duplicates
 - [ ] More ways to influence how the script works
   - [ ] Add an argument to act only if the entire folder is a subfolder of a target folder, recursively (bottom-up)
-  - [ ] Option to keep the source folder structure in the move_to folder
   - [ ] Option to send duplicates to recycle bin instead of move_to folder
-- [ ] More safeguards
-  - [ ] Check any file operation for errors
 ## Known Issues
 - [ ] Even if argument --copy_to_all is not present, still need to move the duplicates to the move_to folder without copying them to other folders
 - [ ] Issue with files with non-standard characters in the filename - no reproducible yet

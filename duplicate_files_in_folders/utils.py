@@ -226,22 +226,39 @@ def print_error(message):
     logger.critical(f"{message}")
     sys.exit(1)
 
-
-def output_results(args, deleted_source_folders, duplicate_source_files_moved, files_created, files_moved, hash_manager):
+def output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved):
     summary_header = "Summary (Test Mode):" if not args.run else "Summary:"
     separator = "-" * max(len(summary_header), 40)
-    cache_hits = f"Hash requests: {hash_manager.persistent_cache_requests + hash_manager.temporary_cache_requests}," + \
-                 f" Cache hits: {hash_manager.persistent_cache_hits + hash_manager.temporary_cache_hits}"
-    logger.info(summary_header)
-    logger.info(separator)
+    blank_line = ""
+    fixed_width = 25
 
+    # Header
+    log_and_print("")
+    log_and_print(summary_header)
+    log_and_print(separator)
+    hash_manager = HashManager.get_instance()
+    # Cache hits information
+    cache_hits = f"Hash requests: {hash_manager.persistent_cache_requests + hash_manager.temporary_cache_requests}, " \
+                 f"Cache hits: {hash_manager.persistent_cache_hits + hash_manager.temporary_cache_hits}"
     logger.debug(cache_hits)
-    res_str = f'Move: {files_moved} files, Create: {files_created} copies'
+
+    # Detailed summary
+    summary_lines = {
+        'Files Moved': f"{files_moved}",
+        'Files Created': f"{files_created} copies",
+    }
+
     if duplicate_source_files_moved:
-        res_str += f", Moved {duplicate_source_files_moved} duplicate files from the source folder"
+        summary_lines['Duplicate Files Moved'] = f"{duplicate_source_files_moved} duplicate files from the source folder"
     if deleted_source_folders:
-        res_str += f", Deleted: {deleted_source_folders} empty folders in the source folder"
-    logger.info(res_str)
+        summary_lines['Empty Folders Deleted'] = f"{deleted_source_folders} empty folders in the source folder"
+
+    for key, value in summary_lines.items():
+        log_and_print(f"{key.ljust(fixed_width)}: {value}")
+
+    # Footer
+    log_and_print(separator)
+    log_and_print("")
 
 
 def setup_hash_manager(args):
@@ -251,19 +268,6 @@ def setup_hash_manager(args):
         hash_manager.save_data()
     return hash_manager
 
-
-# def copy_or_move_file(tgt_filepath: str, move_to: str, src_filepath: str, target: str, test_mode, move=True):
-#     new_src_path = os.path.join(move_to, os.path.relpath(tgt_filepath, target))
-#     new_src_dir = os.path.dirname(new_src_path)
-#     fm = FileManager(not test_mode)
-#     if not os.path.exists(new_src_dir):
-#         fm.make_dirs(new_src_dir)
-#     new_filename = check_and_update_filename(new_src_path)
-#     if move:
-#         fm.move_file(src_filepath, new_filename)
-#     else:
-#         fm.copy_file(src_filepath, new_filename)
-#     return new_filename
 
 def copy_or_move_file(target_file_path: str, destination_base_path: str, source_file_path: str, base_target_path: str, is_test_mode: bool, move: bool = True) -> str:
     destination_path = os.path.join(destination_base_path, os.path.relpath(target_file_path, base_target_path))
