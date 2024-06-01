@@ -6,22 +6,7 @@ from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.file_manager import FileManager
 from typing import Dict, List, Set
 
-
-def get_file_hash(file_path: str) -> str:
-    """Retrieve the hash of the given file."""
-    hash_manager = HashManager.get_instance()
-    return hash_manager.get_hash(file_path)
-
-
-def get_file_key(args, file_path: str) -> str:
-    """
-    Generate a unique key for the file based on hash, filename, and modified date.
-    Ignores components based on args.
-    """
-    hash_key: str = get_file_hash(file_path)
-    file_key: str = file_path[file_path.rfind(os.sep) + 1:] if 'filename' not in args.ignore_diff else None
-    mdate_key: str = str(os.path.getmtime(file_path)) if 'mdate' not in args.ignore_diff else None
-    return '_'.join(filter(None, [hash_key, file_key, mdate_key]))
+from duplicate_files_in_folders.utils import copy_or_move_file, get_file_key
 
 
 def get_files_keys(args, file_infos: List[Dict]) -> Dict[str, List[Dict]]:
@@ -120,4 +105,51 @@ def find_duplicates_files_v3(args, source: str, target: str) -> (Dict, List[Dict
 
     # Filter out combined items that don't have both source and target - ie size = 2
     combined = {k: v for k, v in combined.items() if len(v) == 2}
+
+    # Sort the lists for both 'source' and 'target' lexicographically by their path
+    for value in combined.values():
+        value['source'] = sorted(value['source'], key=lambda x: x['path'])
+        value['target'] = sorted(value['target'], key=lambda x: x['path'])
+
     return combined, source_stats, target_stats
+
+
+def process_duplicates(combined: Dict, args) -> (int, int):
+    """Process the duplicates found by find_duplicates_files_v3 and move/copy it."""
+    files_created = files_moved = 0
+
+    for file_key, locations in combined.items():
+        source_files = locations.get('source', [])
+        target_files = locations.get('target', [])
+
+        src_filepath = source_files[0]['path']
+        srcs_to_move = [(file['path'], 0) for file in source_files]
+
+        # Copy or move files to target locations
+        if not args.copy_to_all:
+            copy_or_move_file(target_files[0]['path'], args.move_to, src_filepath, args.target, not args.run, move=True)
+            files_moved += 1
+        else:
+            num_to_copy = max(0, len(target_files) - len(srcs_to_move))
+            for i in range(num_to_copy):
+                copy_or_move_file(target_files[i]['path'], args.move_to, src_filepath, args.target, not args.run, False)
+                files_created += 1
+
+            for (src, _), tgt in zip(srcs_to_move, target_files[num_to_copy:]):
+                copy_or_move_file(tgt['path'], args.move_to, src, args.target, not args.run, move=True)
+                files_moved += 1
+
+    return files_created, files_moved
+
+
+def clean_source_duplications(args, combined):
+    """
+    Clean up the source duplications after moving files to the move_to folder.
+    Assuming all existing files in the combined dictionary at 'source' key needs to be moved.
+    """
+    source_paths = [file_info['path'] for key, locations in combined.items() if 'source' in locations for file_info in
+                    locations['source'] if os.path.exists(file_info['path'])]
+    source_dups_move_to:str = str(os.path.join(args.move_to, os.path.basename(args.src) + "_dups"))
+    for src_path in source_paths:
+        copy_or_move_file(src_path, source_dups_move_to, src_path, args.src, not args.run, move=True)
+    return len(source_paths)

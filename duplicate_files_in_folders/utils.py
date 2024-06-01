@@ -2,8 +2,10 @@ import argparse
 import logging
 import os
 import sys
+import time
 from typing import List
 
+from duplicate_files_in_folders.file_manager import FileManager
 from duplicate_files_in_folders.hash_manager import HashManager
 
 logger = logging.getLogger(__name__)
@@ -233,3 +235,51 @@ def setup_hash_manager(args):
         hash_manager.clear_cache()
         hash_manager.save_data()
     return hash_manager
+
+
+# def copy_or_move_file(tgt_filepath: str, move_to: str, src_filepath: str, target: str, test_mode, move=True):
+#     new_src_path = os.path.join(move_to, os.path.relpath(tgt_filepath, target))
+#     new_src_dir = os.path.dirname(new_src_path)
+#     fm = FileManager(not test_mode)
+#     if not os.path.exists(new_src_dir):
+#         fm.make_dirs(new_src_dir)
+#     new_filename = check_and_update_filename(new_src_path)
+#     if move:
+#         fm.move_file(src_filepath, new_filename)
+#     else:
+#         fm.copy_file(src_filepath, new_filename)
+#     return new_filename
+
+def copy_or_move_file(target_file_path: str, destination_base_path: str, source_file_path: str, base_target_path: str, is_test_mode: bool, move: bool = True) -> str:
+    destination_path = os.path.join(destination_base_path, os.path.relpath(target_file_path, base_target_path))
+    destination_dir = os.path.dirname(destination_path)
+    file_manager = FileManager.get_instance()
+    if not os.path.exists(destination_dir):
+        file_manager.make_dirs(destination_dir)
+    final_destination_path = check_and_update_filename(destination_path)
+    if move:
+        file_manager.move_file(source_file_path, final_destination_path)
+    else:
+        file_manager.copy_file(source_file_path, final_destination_path)
+    return final_destination_path
+
+
+
+def check_and_update_filename(original_filename):
+    new_filename = original_filename
+    if os.path.exists(original_filename):
+        timestamp = int(time.time())  # Get current Unix timestamp
+        base, ext = os.path.splitext(original_filename)
+        new_filename = f"{base}_{timestamp}{ext}"  # Append timestamp to the filename
+        logger.info(f"Renaming of {original_filename} to {new_filename} is needed to avoid overwrite.")
+    return new_filename
+
+
+def get_file_key(args, file_path: str) -> str:
+    """
+    Generate a unique key for the file based on hash, filename, and modified date. Ignores components based on args.
+    """
+    hash_key: str = HashManager.get_instance().get_hash(file_path)
+    file_key: str = file_path[file_path.rfind(os.sep) + 1:] if 'filename' not in args.ignore_diff else None
+    mdate_key: str = str(os.path.getmtime(file_path)) if 'mdate' not in args.ignore_diff else None
+    return '_'.join(filter(None, [hash_key, file_key, mdate_key]))

@@ -1,9 +1,9 @@
 import logging
 import time
 
-from duplicate_files_in_folders.duplicates_finder import get_file_key, find_duplicates_files_v3
+from duplicate_files_in_folders.duplicates_finder import find_duplicates_files_v3, process_duplicates
 from duplicate_files_in_folders.file_manager import FileManager
-from duplicate_files_in_folders.utils import parse_arguments
+from duplicate_files_in_folders.utils import parse_arguments, get_file_key
 from tests.helpers_testing import *
 
 logger = logging.getLogger(__name__)
@@ -171,3 +171,80 @@ def test_find_duplicate_files_v3_unique_and_duplicate_files(setup_teardown):
     assert len(duplicates) == 0
     assert len(source_stats) == 5
     assert len(target_stats) == 5
+
+
+def test_process_duplicates(setup_teardown):
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    setup_test_files(range(1, 6), [])
+    time.sleep(0.1)  # sleep to make sure the modified date is different
+    setup_test_files([], range(1, 6))
+
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    files_created, files_moved = process_duplicates(duplicates, args)
+    assert files_created == 0
+    assert files_moved == 5
+
+    # reset the files
+    setup_test_files(range(1, 6), [])
+    shutil.rmtree(move_to_dir)
+    os.makedirs(move_to_dir)
+
+    # ignore filename
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "filename"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    files_created, files_moved = process_duplicates(duplicates, args)
+    assert files_created == 0
+    assert files_moved == 0
+
+    # ignore none
+    # no need to reset the files
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "checkall"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    files_created, files_moved = process_duplicates(duplicates, args)
+    assert files_created == 0
+    assert files_moved == 0
+
+    # ignore mdate, filename
+    # no need to reset the files
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run",
+                   "--ignore_diff", "filename,mdate"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    files_created, files_moved = process_duplicates(duplicates, args)
+    assert files_created == 0
+    assert files_moved == 5
+
+    # reset the files
+    setup_test_files(range(1, 6), [])  # reset the files
+    shutil.rmtree(move_to_dir)
+    os.makedirs(move_to_dir)
+
+    os.makedirs(os.path.join(target_dir, "subfolder"))
+    copy_files(range(1, 6), os.path.join(target_dir, "subfolder"))
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run", "--copy_to_all"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    files_created, files_moved = process_duplicates(duplicates, args)
+    assert files_created == 5
+    assert files_moved == 5
+    assert os.path.exists(os.path.join(move_to_dir, "subfolder"))
+
+
+
+    # reset the files
+    setup_test_files(range(1, 6), [])  # reset the files
+    shutil.rmtree(move_to_dir)
+    os.makedirs(move_to_dir)
+
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run"]
+    args = parse_arguments(common_args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    files_created, files_moved = process_duplicates(duplicates, args)
+    assert files_created == 0
+    assert files_moved == 5
+

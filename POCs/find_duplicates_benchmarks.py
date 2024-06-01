@@ -5,10 +5,9 @@ from pprint import pprint
 
 from probables import BloomFilter
 
-from duplicate_files_in_folders.duplicates_finder import get_file_key
 from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.file_manager import FileManager
-from duplicate_files_in_folders.utils import parse_arguments
+from duplicate_files_in_folders.utils import parse_arguments, get_file_key
 from typing import Dict, List
 import pandas as pd
 
