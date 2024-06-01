@@ -1,29 +1,16 @@
-# todo
-# check all new script arguments
-# more checks to hash manager when in partial mode
-# make sure empty folders not deleted in test mode
-
-
 # Identifies and processes duplicate files between a source and target directory.
 # https://github.com/niradar/duplicate_files_in_folders
 
-import logging
-
 from duplicate_files_in_folders.file_manager import FileManager
 from duplicate_files_in_folders.logging_config import setup_logging
-
 from duplicate_files_in_folders.old_duplicates_finder import find_and_process_duplicates
 from duplicate_files_in_folders.utils import (validate_folder, confirm_script_execution, parse_arguments,
                                               output_results, display_initial_config, setup_hash_manager)
-
-logger = logging.getLogger(__name__)
 
 
 def main(args):
     setup_logging()
     fm = FileManager.reset_file_manager([args.target], [args.src, args.move_to], args.run)
-    validate_folder(args.src, "Source")
-    validate_folder(args.target, "Target")
     display_initial_config(args)
     confirm_script_execution(args)
     hash_manager = setup_hash_manager(args)

@@ -13,7 +13,7 @@ def test_empty_source_folder(setup_teardown):
         args = parse_arguments(common_args)
         main(args)
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
 
 def test_empty_target_folder(setup_teardown):
@@ -24,7 +24,7 @@ def test_empty_target_folder(setup_teardown):
         args = parse_arguments(common_args)
         main(args)
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
 
 def test_non_existing_source_folder(setup_teardown):
@@ -59,7 +59,7 @@ def test_source_folder_inside_target_folder_or_move_to_folder(setup_teardown):
         args = parse_arguments(common_args)
         main(args)
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
     common_args = ["--src", os.path.join(move_to_dir, "source"), "--target", target_dir, "--move_to",
                       move_to_dir, "--run"]
@@ -67,7 +67,7 @@ def test_source_folder_inside_target_folder_or_move_to_folder(setup_teardown):
         args = parse_arguments(common_args)
         main(args)
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
 
 def test_target_folder_inside_source_folder_or_move_to_folder(setup_teardown):
@@ -78,7 +78,7 @@ def test_target_folder_inside_source_folder_or_move_to_folder(setup_teardown):
         args = parse_arguments(common_args)
         main(args)
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
     common_args = ["--src", source_dir, "--target", os.path.join(move_to_dir, "target"), "--move_to",
                       move_to_dir, "--run"]
@@ -86,7 +86,7 @@ def test_target_folder_inside_source_folder_or_move_to_folder(setup_teardown):
         args = parse_arguments(common_args)
         main(args)
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
 
 def test_move_to_folder_inside_source_folder_or_target_folder(setup_teardown):
@@ -97,7 +97,7 @@ def test_move_to_folder_inside_source_folder_or_target_folder(setup_teardown):
         args = parse_arguments(common_args)
         main(args)
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
     common_args = ["--src", source_dir, "--target", target_dir, "--move_to",
                       os.path.join(target_dir, "move_to"), "--run"]
@@ -105,7 +105,7 @@ def test_move_to_folder_inside_source_folder_or_target_folder(setup_teardown):
         args = parse_arguments(common_args)
         main(args)
     assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
+    assert excinfo.value.code == 2
 
 
 # run the script from the command line to test main block

@@ -10,6 +10,7 @@ from tests.helpers_testing import *
 
 logger = logging.getLogger(__name__)
 
+
 # Pytest test cases for parse_arguments function
 def test_parse_arguments():
     # Test case 1: No arguments provided - will fail as src and target are required
@@ -24,7 +25,7 @@ def test_parse_arguments():
     target_folder = get_folder_path('target')
     move_to_folder = get_folder_path('move_to')
 
-    args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder])
+    args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder], False)
     assert args.src == get_folder_path('source')
     assert args.target == get_folder_path('target')
     assert args.move_to == get_folder_path('move_to')
@@ -41,7 +42,7 @@ def test_parse_arguments():
 
     # Test case 3: Many arguments provided
     args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
-                            '--run', '--extra_logging', '--ignore_diff', 'mdate,filename', '--copy_to_all'])
+                            '--run', '--extra_logging', '--ignore_diff', 'mdate,filename', '--copy_to_all'], False)
     assert args.src == get_folder_path('source')
     assert args.target == get_folder_path('target')
     assert args.move_to == get_folder_path('move_to')
@@ -53,25 +54,25 @@ def test_parse_arguments():
 
     # Test case 4: --ignore_diff argument with invalid values
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder, '--ignore_diff',
-                         'invalid'])
+        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+                         '--ignore_diff', 'invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
     with pytest.raises(SystemExit) as excinfo:
         parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
-                         '--ignore_diff', 'mdate,invalid'])
+                         '--ignore_diff', 'mdate,invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
     with pytest.raises(SystemExit) as excinfo:
         parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
-                         '--ignore_diff', 'mdate,checkall'])
+                         '--ignore_diff', 'mdate,checkall'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
     args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
-                            '--ignore_diff', 'checkall'])
+                            '--ignore_diff', 'checkall'], False)
     assert args.ignore_diff == set()
 
 
@@ -137,12 +138,14 @@ def test_any_is_subfolder_of():
 
     # Test case 7: 3 folders, one is subfolder of another
     with pytest.raises(SystemExit) as excinfo:
-        any_is_subfolder_of(["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2", "C:\\Users\\user\\Desktop\\folder2\\subfolder"])
+        any_is_subfolder_of(["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2",
+                             "C:\\Users\\user\\Desktop\\folder2\\subfolder"])
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 1
 
     # Test case 8: 3 folders, no folder is subfolder of another
-    assert any_is_subfolder_of(["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2", "C:\\Users\\user\\Desktop\\folder3"]) is False
+    assert any_is_subfolder_of(["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2",
+                                "C:\\Users\\user\\Desktop\\folder3"]) is False
 
 
 def test_parse_size():
@@ -225,5 +228,5 @@ def test_delete_empty_folders_in_tree(setup_teardown):
 
     # check if all empty folders have been deleted
     assert not os.path.exists(os.path.join(source_dir, "sub1")), "sub1 folder is not empty"
-    assert not os.path.exists(os.path.join(source_dir, "sub2")), "sub2 folder is not empty" # no need to check sub2_2
+    assert not os.path.exists(os.path.join(source_dir, "sub2")), "sub2 folder is not empty"  # no need to check sub2_2
     assert os.path.exists(os.path.join(target_dir, "sub1")), "target sub1 folder is empty"

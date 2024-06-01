@@ -140,7 +140,13 @@ def parse_size(size_str) -> int:
     return int_value
 
 
-def parse_arguments(cust_args=None):
+def parse_arguments(cust_args=None, check_folders=True):
+    """
+    Parse command line arguments and validate them.
+    :param cust_args: if not None, use these arguments instead of command line arguments
+    :param check_folders: for testing - if False, skip folder validation
+    :return: the parsed arguments
+    """
     parser = argparse.ArgumentParser(
         description="Identify duplicate files between source and target folders, move duplicates to a separate folder.")
     parser.add_argument('--src', '--source', required=True, help='Source folder')
@@ -169,6 +175,14 @@ def parse_arguments(cust_args=None):
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)  # for testing
     parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
     args = parser.parse_args(cust_args if cust_args else None)
+
+    if check_folders:
+        folders = [(args.src, "Source"), (args.target, "Target")]
+        for folder, name in folders:
+            if not os.path.exists(folder) or not os.path.isdir(folder):
+                parser.error(f"{name} folder does not exist.")
+            if not os.listdir(folder):
+                parser.error(f"{name} folder is empty.")
 
     any_is_subfolder_of([args.src, args.target, args.move_to])
     if args.extra_logging:

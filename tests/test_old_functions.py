@@ -57,7 +57,7 @@ def test_compare_files(setup_teardown):
 
 
 def test_clean_source_duplications(setup_teardown):
-    source_dir, _, move_to_dir, common_args = setup_teardown
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
     # Create the necessary subdirectories in the source and target directories
     os.makedirs(os.path.join(source_dir, "sub1"))
@@ -65,6 +65,7 @@ def test_clean_source_duplications(setup_teardown):
     # Setup the files in the source directory
     copy_files(range(1, 6), source_dir)
     copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
+    copy_files([7], target_dir)  # copy one file to target folder to avoid argument error
 
     args = parse_arguments(common_args)
     unique_duplicate_files_found, duplicate_files_moved = clean_source_duplications(args)
@@ -86,7 +87,7 @@ def test_clean_source_duplications(setup_teardown):
 
 
 def test_clean_source_duplications_several_subfolders(setup_teardown):
-    source_dir, _, move_to_dir, common_args = setup_teardown
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
     # Create the necessary subdirectories in the source and target directories
     os.makedirs(os.path.join(source_dir, "sub1"))
@@ -96,6 +97,8 @@ def test_clean_source_duplications_several_subfolders(setup_teardown):
     copy_files(range(1, 6), source_dir)
     copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
     copy_files(range(1, 6), os.path.join(source_dir, "sub2"))
+
+    copy_files([7], target_dir)  # copy one file to target folder to avoid argument error
 
     args = parse_arguments(common_args)
     unique_duplicate_files_found, duplicate_files_moved = clean_source_duplications(args)
@@ -121,7 +124,7 @@ def test_clean_source_duplications_several_subfolders(setup_teardown):
 
 
 def test_clean_source_duplications_test_mode(setup_teardown):
-    source_dir, _, move_to_dir, common_args = setup_teardown
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
     # Create the necessary subdirectories in the source and target directories
     os.makedirs(os.path.join(source_dir, "sub1"))
@@ -129,6 +132,8 @@ def test_clean_source_duplications_test_mode(setup_teardown):
     # Setup the files in the source directory
     copy_files(range(1, 6), source_dir)
     copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
+
+    copy_files([7], target_dir)  # copy one file to target folder to avoid argument error
 
     common_args.remove("--run")
     FileManager._instance = None # reset the singleton instance to make sure it is not used
@@ -157,7 +162,7 @@ def test_clean_source_duplications_test_mode(setup_teardown):
 
 
 def test_clean_source_duplications_same_name_different_files(setup_teardown):
-    source_dir, _, move_to_dir, common_args = setup_teardown
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
     os.makedirs(os.path.join(source_dir, "sub1"))
     os.makedirs(os.path.join(source_dir, "sub2"))
@@ -175,6 +180,8 @@ def test_clean_source_duplications_same_name_different_files(setup_teardown):
     src_file = os.path.join(IMG_DIR, "5.jpg")
     shutil.copy(src_file, os.path.join(source_dir, "sub1", "5.jpg"))
     shutil.copy(src_file, os.path.join(source_dir, "sub2", "5.jpg"))
+
+    copy_files([7], target_dir)  # copy one file to target folder to avoid argument error
 
     common_args.append("--extra_logging")
 
@@ -194,7 +201,7 @@ def test_clean_source_duplications_same_name_different_files(setup_teardown):
 
 
 def test_clean_source_duplications_same_name_different_files_ignore_filename(setup_teardown):
-    source_dir, _, move_to_dir, common_args = setup_teardown
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
     os.makedirs(os.path.join(source_dir, "sub1"))
     os.makedirs(os.path.join(source_dir, "sub2"))
@@ -212,6 +219,8 @@ def test_clean_source_duplications_same_name_different_files_ignore_filename(set
     src_file = os.path.join(IMG_DIR, "5.jpg")
     shutil.copy(src_file, os.path.join(source_dir, "sub1", "5.jpg"))
     shutil.copy(src_file, os.path.join(source_dir, "sub2", "5.jpg"))
+
+    copy_files([7], target_dir)  # copy one file to target folder to avoid argument error
 
     common_args.append("--extra_logging")
     common_args.append("--ignore_diff")
@@ -243,6 +252,8 @@ def test_collect_source_files_simple(setup_teardown):
     os.makedirs(os.path.join(source_dir, "sub1"))
     copy_files(range(1, 5), source_dir)
     copy_files(range(3, 7), os.path.join(source_dir, "sub1"))
+
+    copy_files([7], target_dir)  # copy one file to target folder to avoid argument error
 
     args = parse_arguments(common_args)
     source_files = collect_source_files(args)
@@ -282,7 +293,7 @@ def test_collect_source_files_simple(setup_teardown):
 
 
 def test_delete_empty_folders_in_tree(setup_teardown):
-    source_dir, _, move_to_dir, common_args = setup_teardown
+    source_dir, target_dir, move_to_dir, common_args = setup_teardown
 
     # Create the necessary subdirectories in the source and target directories
     os.makedirs(os.path.join(source_dir, "sub1"))
@@ -294,6 +305,8 @@ def test_delete_empty_folders_in_tree(setup_teardown):
     copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
     copy_files(range(1, 6), os.path.join(source_dir, "sub2"))
     copy_files(range(1, 6), os.path.join(source_dir, "sub2", "sub2_2"))
+
+    copy_files([7], target_dir)  # copy one file to target folder to avoid argument error
 
     args = parse_arguments(common_args)
     unique_duplicate_files_found, duplicate_files_moved = clean_source_duplications(args)
