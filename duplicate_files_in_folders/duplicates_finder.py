@@ -1,3 +1,4 @@
+import logging
 import os
 import concurrent.futures
 from collections import defaultdict
@@ -8,6 +9,7 @@ from typing import Dict, List, Set
 
 from duplicate_files_in_folders.utils import copy_or_move_file, get_file_key
 
+logger = logging.getLogger(__name__)
 
 def get_files_keys(args, file_infos: List[Dict]) -> Dict[str, List[Dict]]:
     """Generate keys for a list of files."""
@@ -54,7 +56,7 @@ def find_potential_duplicates(dir1_stats: List[Dict], dir2_stats: List[Dict], ig
     size_bloom = BloomFilter(est_elements=len(dir1_stats), false_positive_rate=0.05)
     name_bloom = BloomFilter(est_elements=len(dir1_stats), false_positive_rate=0.05)
     modified_time_bloom = BloomFilter(est_elements=len(dir1_stats), false_positive_rate=0.05)
-    check_name = 'name' not in ignore_diff
+    check_name = 'filename' not in ignore_diff
     check_mdate = 'mdate' not in ignore_diff
 
     for file_info in dir1_stats:
@@ -110,6 +112,11 @@ def find_duplicates_files_v3(args, source: str, target: str) -> (Dict, List[Dict
     for value in combined.values():
         value['source'] = sorted(value['source'], key=lambda x: x['path'])
         value['target'] = sorted(value['target'], key=lambda x: x['path'])
+
+    # Sort the lists for both 'source' and 'target' first by depth and then lexicographically by their path
+    # for value in combined.values():
+    #     value['source'] = sorted(value['source'], key=lambda x: (-x['path'].count('/'), x['path']))
+    #     value['target'] = sorted(value['target'], key=lambda x: (-x['path'].count('/'), x['path']))
 
     return combined, source_stats, target_stats
 
