@@ -2,7 +2,7 @@ from duplicate_files_in_folders.duplicates_finder import clean_source_duplicatio
     process_duplicates
 from duplicate_files_in_folders.file_manager import FileManager
 from duplicate_files_in_folders.utils import parse_arguments, any_is_subfolder_of, parse_size, \
-    check_and_update_filename
+    check_and_update_filename, setup_file_manager
 
 from tests.helpers_testing import *
 
@@ -209,7 +209,7 @@ def test_parse_size():
 
 
 def test_delete_empty_folders_in_tree(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    source_dir, target_dir, move_to_dir, _ = setup_teardown
 
     # Create the necessary subdirectories in the source and target directories
     os.makedirs(os.path.join(source_dir, "sub1"))
@@ -227,8 +227,27 @@ def test_delete_empty_folders_in_tree(setup_teardown):
     copy_files(range(1, 6), target_dir)
     copy_files(range(1, 6), os.path.join(target_dir, "sub1"))
 
-    common_args.append("--copy_to_all")
-    args = parse_arguments(common_args)
+    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--copy_to_all"]
+    test_args = common_args.copy()
+
+    args = parse_arguments(test_args)
+    setup_file_manager(args)
+    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    process_duplicates(duplicates, args)
+    clean_source_duplications(args, duplicates)
+    fm = FileManager.get_instance()
+    fm.delete_empty_folders_in_tree(source_dir)
+
+    assert os.path.exists(os.path.join(source_dir, "sub1")), "sub1 folder is empty"
+    assert os.path.exists(os.path.join(source_dir, "sub2")), "sub2 folder is empty"
+    assert os.path.exists(os.path.join(source_dir, "sub2", "sub2_2")), "sub2_2 folder is empty"
+    assert os.path.exists(os.path.join(target_dir, "sub1")), "target sub1 folder is empty"
+
+    run_args = common_args.copy()
+    run_args.append("--run")
+
+    args = parse_arguments(run_args)
+    setup_file_manager(args)
     duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
     process_duplicates(duplicates, args)
     clean_source_duplications(args, duplicates)

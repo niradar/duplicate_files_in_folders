@@ -258,6 +258,11 @@ def setup_hash_manager(args):
     return hash_manager
 
 
+def setup_file_manager(args):
+    fm = FileManager.reset_file_manager([args.target], [args.src, args.move_to], args.run)
+    return fm
+
+
 def copy_or_move_file(target_file_path: str, destination_base_path: str, source_file_path: str, base_target_path: str,
                       move: bool = True) -> str:
     destination_path = os.path.join(destination_base_path, os.path.relpath(target_file_path, base_target_path))

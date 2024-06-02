@@ -3,16 +3,15 @@
 
 from duplicate_files_in_folders.duplicates_finder import find_duplicates_files_v3, process_duplicates, \
     clean_source_duplications
-from duplicate_files_in_folders.file_manager import FileManager
 from duplicate_files_in_folders.logging_config import setup_logging
 from duplicate_files_in_folders.old_duplicates_finder import find_and_process_duplicates
 from duplicate_files_in_folders.utils import (confirm_script_execution, parse_arguments, output_results,
-                                              display_initial_config, setup_hash_manager)
+                                              display_initial_config, setup_hash_manager, setup_file_manager)
 
 
 def main(args):
     setup_logging()
-    fm = FileManager.reset_file_manager([args.target], [args.src, args.move_to], args.run)
+    fm = setup_file_manager(args)
     display_initial_config(args)
     confirm_script_execution(args)
     hash_manager = setup_hash_manager(args)
