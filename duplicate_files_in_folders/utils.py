@@ -161,7 +161,8 @@ def parse_arguments(cust_args=None, check_folders=True):
                         '(B, KB, MB). IN WORK, DONT USE YET', default=None)
     parser.add_argument('--keep_empty_folders', dest='delete_empty_folders', action='store_false',
                         help='Do not delete empty folders in the source folder. Default is to delete.')
-    parser.add_argument('--full_hash', action='store_true', help='Use full file hash for comparison. Default is partial.')
+    parser.add_argument('--full_hash', action='store_true',
+                        help='Use full file hash for comparison. Default is partial.')
     parser.set_defaults(delete_empty_folders=True)
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)  # for testing
     parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
@@ -213,10 +214,9 @@ def parse_arguments(cust_args=None, check_folders=True):
 
 
 def output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved,
-                   source_stats = None, target_stats = None):
+                   source_stats=None, target_stats=None):
     summary_header = "Summary (Test Mode):" if not args.run else "Summary:"
     separator = "-" * max(len(summary_header), 40)
-    blank_line = ""
     fixed_width = 25
 
     # Header
@@ -238,7 +238,8 @@ def output_results(args, files_moved, files_created, deleted_source_folders, dup
     }
 
     if duplicate_source_files_moved:
-        summary_lines['Duplicate Files Moved'] = f"{duplicate_source_files_moved} duplicate files from the source folder"
+        summary_lines['Duplicate Files Moved'] = \
+            f"{duplicate_source_files_moved} duplicate files from the source folder"
     if deleted_source_folders:
         summary_lines['Empty Folders Deleted'] = f"{deleted_source_folders} empty folders in the source folder"
 

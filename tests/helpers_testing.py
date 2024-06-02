@@ -1,23 +1,16 @@
 import logging
-
 import pytest
 import os
 import shutil
-
 from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.logging_config import setup_logging
 from duplicate_files_in_folders import file_manager
 
 logger = logging.getLogger(__name__)
 
-# Define the base directory for the tests
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Define the directory containing the image files
-IMG_DIR = os.path.join(BASE_DIR, "imgs")
-
-# Define a temporary directory for the tests
-TEMP_DIR = os.path.join(BASE_DIR, "temp")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Define the base directory for the tests
+IMG_DIR = os.path.join(BASE_DIR, "imgs")  # Define the directory containing the image files
+TEMP_DIR = os.path.join(BASE_DIR, "temp")  # Define a temporary directory for the tests
 
 img_files = {1: {'extension': 'jpg', 'original_name': '20220517_155135.jpg'},
              2: {'extension': 'jpg', 'original_name': '20220517_210649.jpg'},
@@ -126,32 +119,33 @@ def simple_usecase_test(source_dir, target_dir, move_to_dir, max_files=3):
     assert target_files == set([f"{i}.jpg" for i in range(1, max_files+1)]), "Target directory files have changed"
 
 
-def check_folder_conditions(base_dir, conditions):
+def check_folder_conditions(base_dir: str, conditions):
     def get_all_files_and_dirs(directory):
         """ Get all files and directories in a directory, including subdirectories """
-        all_files = []
-        all_dirs = []
+        local_all_files = []
+        local_all_dirs = []
         for root, dirs, files in os.walk(directory):
             for file in files:
-                all_files.append(os.path.relpath(str(os.path.join(root, file)), base_dir))
-            for dir in dirs:
-                all_dirs.append(os.path.relpath(str(os.path.join(root, dir)), base_dir))
-        return all_files, all_dirs
+                local_all_files.append(os.path.relpath(str(os.path.join(root, file)), base_dir))
+            for local_dir in dirs:
+                local_all_dirs.append(os.path.relpath(str(os.path.join(root, local_dir)), base_dir))
+        return local_all_files, local_all_dirs
 
     def count_occurrences(file_list, name):
         """ Count the occurrences of a file or directory in a list """
         return sum(1 for item in file_list if os.path.basename(item) == name)
 
-    def check_required_subdirs(parent_folder, required_subdirs, expected_count):
+    def check_required_subdirs(local_parent_folder, local_required_subdirs, local_expected_count):
         """ Check that exactly expected_count of required_subdirs exist in parent_folder """
-        actual_subdirs = [d for d in os.listdir(str(os.path.join(base_dir, parent_folder))) if os.path.isdir(os.path.join(base_dir, parent_folder, d))]
-        actual_count = sum(1 for subdir in required_subdirs if subdir in actual_subdirs)
-        return actual_count == expected_count
+        local_actual_subdirs = [d for d in os.listdir(str(os.path.join(base_dir, local_parent_folder)))
+                                if os.path.isdir(os.path.join(base_dir, local_parent_folder, d))]
+        local_actual_count = sum(1 for subdir in local_required_subdirs if subdir in local_actual_subdirs)
+        return local_actual_count == local_expected_count
 
-    def check_items_in_folder(folder, items):
+    def check_items_in_folder(folder, local_items):
         """ Check that all items in the list exist in the specified folder """
         actual_items = set(os.listdir(str(os.path.join(base_dir, folder))))
-        return set(items).issubset(actual_items)
+        return set(local_items).issubset(actual_items)
 
     def count_files_including_subfolders(folder):
         """ Count all files in a folder including its subdirectories """
@@ -179,7 +173,8 @@ def check_folder_conditions(base_dir, conditions):
             # Count occurrences of the file
             actual_count = count_occurrences(filtered_files, file_name)
 
-            assert actual_count == expected_count, f"{file_name} appears {actual_count} times, expected {expected_count} times in {folder_set}"
+            assert actual_count == expected_count, \
+                "{file_name} appears {actual_count} times, expected {expected_count} times in {folder_set}"
 
         elif condition['type'] == 'dir_structure':
             parent_folder = condition['parent_folder']
@@ -191,8 +186,8 @@ def check_folder_conditions(base_dir, conditions):
                               os.path.isdir(os.path.join(base_dir, parent_folder, d))]
 
             # Check if the actual subdirectories match the expected ones
-            assert set(actual_subdirs) == set(
-                expected_subdirs), f"Subdirectories in {parent_folder} are {actual_subdirs}, expected {expected_subdirs}"
+            assert set(actual_subdirs) == set(expected_subdirs), \
+                f"Subdirectories in {parent_folder} are {actual_subdirs}, expected {expected_subdirs}"
 
         elif condition['type'] == 'count_files_dirs':
             folder = condition['folder']
@@ -201,20 +196,23 @@ def check_folder_conditions(base_dir, conditions):
 
             # Count files and directories in the specified folder
             actual_files = [file for file in all_files if file.startswith(folder)]
-            actual_dirs = [dir for dir in all_dirs if dir.startswith(folder)]
+            actual_dirs = [local_dir for local_dir in all_dirs if local_dir.startswith(folder)]
 
             actual_file_count = len(actual_files)
             actual_dir_count = len(actual_dirs)
 
-            assert actual_file_count == expected_file_count, f"File count in {folder} is {actual_file_count}, expected {expected_file_count}"
-            assert actual_dir_count == expected_dir_count, f"Directory count in {folder} is {actual_dir_count}, expected {expected_dir_count}"
+            assert actual_file_count == expected_file_count, \
+                f"File count in {folder} is {actual_file_count}, expected {expected_file_count}"
+            assert actual_dir_count == expected_dir_count, \
+                f"Directory count in {folder} is {actual_dir_count}, expected {expected_dir_count}"
 
         elif condition['type'] == 'subdirs_count':
             parent_folder = condition['parent_folder']
             required_subdirs = condition['required_subdirs']
             expected_count = condition['expected_count']
 
-            assert check_required_subdirs(parent_folder, required_subdirs, expected_count), f"{expected_count} out of {required_subdirs} should exist in {parent_folder}"
+            assert check_required_subdirs(parent_folder, required_subdirs, expected_count), \
+                f"{expected_count} out of {required_subdirs} should exist in {parent_folder}"
 
         elif condition['type'] == 'items_in_folder':
             folder = condition['folder']
@@ -227,7 +225,8 @@ def check_folder_conditions(base_dir, conditions):
             expected_count = condition['expected_count']
 
             actual_count = count_files_including_subfolders(folder)
-            assert actual_count == expected_count, f"Total file count in {folder} including subdirectories is {actual_count}, expected {expected_count}"
+            assert actual_count == expected_count, \
+                f"Total file count in {folder} including subdirectories is {actual_count}, expected {expected_count}"
 
     return True
 

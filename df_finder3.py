@@ -26,7 +26,8 @@ def main(args):
 
     deleted_source_folders = fm.delete_empty_folders_in_tree(args.src, True) if args.delete_empty_folders else 0
     hash_manager.save_data()
-    output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved, source_stats, target_stats)
+    output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved,
+                   source_stats, target_stats)
 
 
 if __name__ == "__main__":

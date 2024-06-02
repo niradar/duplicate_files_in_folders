@@ -1,5 +1,3 @@
-import os
-
 from df_finder3 import main
 from duplicate_files_in_folders.utils import parse_arguments
 from tests.helpers_testing import *
@@ -62,7 +60,7 @@ def test_source_folder_inside_target_folder_or_move_to_folder(setup_teardown):
     assert excinfo.value.code == 2
 
     common_args = ["--src", os.path.join(move_to_dir, "source"), "--target", target_dir, "--move_to",
-                      move_to_dir, "--run"]
+                   move_to_dir, "--run"]
     with pytest.raises(SystemExit) as excinfo:
         args = parse_arguments(common_args)
         main(args)
@@ -81,7 +79,7 @@ def test_target_folder_inside_source_folder_or_move_to_folder(setup_teardown):
     assert excinfo.value.code == 2
 
     common_args = ["--src", source_dir, "--target", os.path.join(move_to_dir, "target"), "--move_to",
-                      move_to_dir, "--run"]
+                   move_to_dir, "--run"]
     with pytest.raises(SystemExit) as excinfo:
         args = parse_arguments(common_args)
         main(args)
@@ -100,7 +98,7 @@ def test_move_to_folder_inside_source_folder_or_target_folder(setup_teardown):
     assert excinfo.value.code == 2
 
     common_args = ["--src", source_dir, "--target", target_dir, "--move_to",
-                      os.path.join(target_dir, "move_to"), "--run"]
+                   os.path.join(target_dir, "move_to"), "--run"]
     with pytest.raises(SystemExit) as excinfo:
         args = parse_arguments(common_args)
         main(args)

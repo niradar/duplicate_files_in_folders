@@ -102,7 +102,8 @@ def find_duplicates_files_v3(args, source: str, target: str) -> (Dict, List[Dict
 
     combined = defaultdict(defaultdict)
     combined = process_potential_duplicates(potential_source_duplicates, combined, 'source', args)
-    get_keys_function = get_files_keys_parallel if (len(hash_manager.get_hashes_by_folder(target)) > len(target_stats) / 2) else get_files_keys
+    get_keys_function = get_files_keys_parallel \
+        if (len(hash_manager.get_hashes_by_folder(target)) > len(target_stats) / 2) else get_files_keys
     combined = process_potential_duplicates(potential_target_duplicates, combined, 'target', args, get_keys_function)
 
     # Filter out combined items that don't have both source and target - ie size = 2

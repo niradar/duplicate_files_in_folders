@@ -1,11 +1,6 @@
-import logging
-import os
-
 from df_finder3 import main
 from duplicate_files_in_folders.utils import parse_arguments
 from tests.helpers_testing import *
-
-logger = logging.getLogger(__name__)
 
 
 # Test 12 - files 1 to 6 in source subfolder sub1, files 1 to 2 and also 6 in source subfolder sub2,
@@ -51,12 +46,7 @@ def test12(setup_teardown):
     #       sub2: 1.jpg, 2.jpg
     #       sub3: 1.jpg, 2.jpg
 
-
-
-
-
     common_args.append("--copy_to_all")
-
     args = parse_arguments(common_args)
     main(args)
 
@@ -78,7 +68,8 @@ def test12(setup_teardown):
 
     # move_to should contain sub2, source_dups should contain files 1, 2, 3
     move_to_files = set(os.listdir(move_to_dir))
-    assert move_to_files == {'source_dups', 'sub1'} | {f"{i}.jpg" for i in range(1, 4)}, "Move_to directory files not correct"
+    assert move_to_files == {'source_dups', 'sub1'} | {f"{i}.jpg" for i in range(1, 4)}, \
+        "Move_to directory files not correct"
 
     conditions = [
         {
@@ -87,7 +78,6 @@ def test12(setup_teardown):
             'required_subdirs': {'sub1', 'sub2', 'sub3'},
             'expected_count': 2
         },
-        # move_to/source_dups/sub1, move_to/source_dups/sub2, move_to/source_dups/sub3 should contain files 1.jpg, 2.jpg exactly 2 times
         {
             'type': 'file_count',
             'folders': {'source_dups' + os.sep + 'sub1', 'source_dups' + os.sep + 'sub2', 'source_dups' + os.sep + 'sub3'},
@@ -105,7 +95,8 @@ def test12(setup_teardown):
 
     ]
     check_folder_conditions(move_to_dir, conditions)
-    # move_to/source_dups/sub1, move_to/source_dups/sub2, move_to/source_dups/sub3 should contain files 1.jpg, 2.jpg exactly 2 times
+    # move_to/source_dups/sub1, move_to/source_dups/sub2, move_to/source_dups/sub3 should contain files:
+    #   1.jpg, 2.jpg exactly 2 times
 
     # move_to/source_dups/sub2 should contain files 1, 2
     move_to_sub2_files = set(os.listdir(os.path.join(move_to_dir, "source_dups", "sub2")))
@@ -443,4 +434,3 @@ def test_many_sources_few_targets_ignore_diff_mdate_filename(setup_teardown):
         }
     ]
     check_folder_conditions(move_to_dir, conditions)
-
