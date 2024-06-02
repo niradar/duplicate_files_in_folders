@@ -213,7 +213,7 @@ def parse_arguments(cust_args=None, check_folders=True):
 
 
 def output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved,
-                   source_stats, target_stats):
+                   source_stats = None, target_stats = None):
     summary_header = "Summary (Test Mode):" if not args.run else "Summary:"
     separator = "-" * max(len(summary_header), 40)
     blank_line = ""
@@ -231,8 +231,8 @@ def output_results(args, files_moved, files_created, deleted_source_folders, dup
 
     # Detailed summary
     summary_lines = {
-        'Source Files': f"{format_number_with_commas(len(source_stats))} files",
-        'Target Files': f"{format_number_with_commas(len(target_stats))} files",
+        'Source Files': f"{format_number_with_commas(len(source_stats)) if source_stats else 'N/A'} files",
+        'Target Files': f"{format_number_with_commas(len(target_stats)) if target_stats else 'N/A'} files",
         'Files Moved': f"{format_number_with_commas(files_moved)}",
         'Files Created': f"{format_number_with_commas(files_created)} copies",
     }
