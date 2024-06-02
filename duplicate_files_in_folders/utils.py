@@ -84,7 +84,7 @@ def get_size_constraints_string(min_size=None, max_size=None):
         f"Maximum Size: {max_size:,} bytes" if max_size is not None else None
     ]
     size_constraints = [constraint for constraint in size_constraints if constraint]
-    return f"{', '.join(size_constraints)}." if size_constraints else "No Size Constraints."
+    return f"{', '.join(size_constraints)}." if size_constraints else "No Size Constraints"
 
 
 def confirm_script_execution(args):
@@ -233,7 +233,7 @@ def output_results(args, files_moved, files_created, deleted_source_folders, dup
     summary_lines = {
         'Source Files': f"{format_number_with_commas(len(source_stats)) if source_stats else 'N/A'} files",
         'Target Files': f"{format_number_with_commas(len(target_stats)) if target_stats else 'N/A'} files",
-        'Files Moved': f"{format_number_with_commas(files_moved)}",
+        'Files Moved': f"{format_number_with_commas(files_moved)} files",
         'Files Created': f"{format_number_with_commas(files_created)} copies",
     }
 
