@@ -161,7 +161,8 @@ def find_duplicates_files_v3(args, source, target, no_reset=False):
 
     combined = defaultdict(defaultdict)
     combined = process_potential_duplicates_v3(potential_source_duplicates, combined, 'source', args)
-    get_keys_function = get_file_key_parallel if (len(hash_manager.get_hashes_by_folder(target)) > len(target_stats) / 2) else get_files_keys
+    get_keys_function = get_file_key_parallel \
+        if (len(hash_manager.get_hashes_by_folder(target)) > len(target_stats) / 2) else get_files_keys
     combined = process_potential_duplicates_v3(potential_target_duplicates, combined, 'target', args, get_keys_function)
 
     # Filter out combined items that don't have both source and target - ie size = 2
@@ -216,7 +217,7 @@ if __name__ == "__main__":
         # '--max_size', '20KB',
         '--ignore_diff', 'mdate,filename',
         # '--whitelist_ext', 'txt,docx,pdf,doc',
-        #'--blacklist_ext', 'gif,jpg,png,jpe'
+        # '--blacklist_ext', 'gif,jpg,png,jpe'
     ]
     final_args = parse_arguments(custom_args)
     pprint(final_args)
@@ -229,13 +230,16 @@ if __name__ == "__main__":
     time2_2 = timeit.timeit(lambda: find_duplicates_files_v2(final_args, source_directory, target_directory, True),
                             number=num)
     time1 = timeit.timeit(lambda: find_duplicates_files(final_args, source_directory, target_directory), number=num)
-    time1_2 = timeit.timeit(lambda: find_duplicates_files(final_args, source_directory, target_directory,True), number=num)
+    time1_2 = timeit.timeit(lambda: find_duplicates_files(final_args, source_directory, target_directory, True),
+                            number=num)
 
     time3 = timeit.timeit(lambda: find_duplicates_files_v3(final_args, source_directory, target_directory), number=num)
-    time3_2 = timeit.timeit(lambda: find_duplicates_files_v3(final_args, source_directory, target_directory,True), number=num)
+    time3_2 = timeit.timeit(lambda: find_duplicates_files_v3(final_args, source_directory, target_directory, True),
+                            number=num)
 
     time4 = timeit.timeit(lambda: find_duplicates_files_v4(final_args, source_directory, target_directory), number=num)
-    time4_2 = timeit.timeit(lambda: find_duplicates_files_v4(final_args, source_directory, target_directory,True), number=num)
+    time4_2 = timeit.timeit(lambda: find_duplicates_files_v4(final_args, source_directory, target_directory, True),
+                            number=num)
 
     print(f"find_duplicates_files: {time1:.6f} seconds")
     print(f"find_duplicates_files_v2: {time2:.6f} seconds")
@@ -271,4 +275,3 @@ if __name__ == "__main__":
     # print(f"V2 found {len(verified_duplicates2)} unique duplicates files in {source_directory}")
     # print(f"Total of {count_source} files from source are duplicates of files in {target_directory}")
     # print(f"Those files are {count_target} files in {target_directory}")
-

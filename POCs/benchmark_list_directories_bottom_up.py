@@ -39,10 +39,11 @@ def list_directories_bottom_up_walk(base_path):
         folders_by_depth[depth].append(root)
     return folders_by_depth
 
-dir = 'c:\\temp'
+
+test_directory = 'path/to/directory'
 num = 1000
-scan_time = timeit.timeit(lambda: list_directories_bottom_up(dir), number=num)
-walk_time = timeit.timeit(lambda: list_directories_bottom_up_walk(dir), number=num)
+scan_time = timeit.timeit(lambda: list_directories_bottom_up(test_directory), number=num)
+walk_time = timeit.timeit(lambda: list_directories_bottom_up_walk(test_directory), number=num)
 
 print(f"list_directories_bottom_up: {scan_time:.6f} seconds")
 print(f"list_directories_bottom_up_walk: {walk_time:.6f} seconds")

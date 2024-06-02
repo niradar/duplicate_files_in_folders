@@ -1,6 +1,7 @@
 import os
 import timeit
 
+
 def fast_basename(path):
     return path[path.rfind(os.sep) + 1:]
 

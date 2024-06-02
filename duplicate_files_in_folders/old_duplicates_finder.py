@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 def compare_files(src_filepath, tgt_filepath, ignore_diffs):
     ignore_diffs = ignore_diffs if ignore_diffs else set('mdate')
-    if 'filename' not in ignore_diffs and src_filepath[src_filepath.rfind(os.sep) + 1:] != tgt_filepath[tgt_filepath.rfind(os.sep) + 1:]:
+    if ('filename' not in ignore_diffs and
+            src_filepath[src_filepath.rfind(os.sep) + 1:] != tgt_filepath[tgt_filepath.rfind(os.sep) + 1:]):
         return False
     if 'mdate' not in ignore_diffs and not os.path.getmtime(src_filepath) == os.path.getmtime(tgt_filepath):
         return False
@@ -88,7 +89,8 @@ def find_and_process_duplicates(args):
 
     for src_key, src_filepaths in tqdm.tqdm(source_files.items(), desc="Finding duplicate files"):
         src_filepath, _ = src_filepaths[0]
-        target_key = get_file_hash(src_filepath) if 'filename' in args.ignore_diff else src_filepath[src_filepath.rfind(os.sep) + 1:]
+        target_key = get_file_hash(src_filepath) \
+            if 'filename' in args.ignore_diff else src_filepath[src_filepath.rfind(os.sep) + 1:]
         if target_key not in target_files:  # if the file is not found in the target folder, no need to process it
             continue
         target_paths = target_files[target_key]  # all possible target paths for the source file
@@ -146,7 +148,7 @@ def collect_target_files(args):
     walk = list(os.walk(args.target))
     for root, dirs, files in tqdm.tqdm(walk, desc="Scanning target folders"):
         for f in files:
-            full_path = os.path.join(root, f)
+            full_path = str(os.path.join(root, f))
             key = f if 'filename' not in args.ignore_diff else get_file_hash(full_path)
             target_files[key].append(full_path)
     if args.extra_logging:
@@ -161,7 +163,7 @@ def collect_source_files(args) -> Dict[str, List[Tuple[str, int]]]:
     walk = list(os.walk(args.src))
     for root, dirs, files in tqdm.tqdm(walk, desc="Scanning source folders"):
         for f in files:
-            full_path = os.path.join(root, f)
+            full_path = str(os.path.join(root, f))
             if os.path.isfile(full_path):
                 depth = full_path.count(os.sep) - source_depth
                 source_files[get_file_key(args, full_path)].append((full_path, depth))

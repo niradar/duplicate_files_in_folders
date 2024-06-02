@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 import timeit
 
 
@@ -51,13 +51,13 @@ def list_tree_concurrent(directory):
 
 
 # Define the directory to be scanned - change to a directory with many files
-directory = 'c:\\temp'
+test_directory = 'c:\\temp'
 runs = 2
 # Measure performance
-time_os_walk = timeit.timeit(lambda: list_tree_os_walk(directory), number=runs)
-time_os_scandir = timeit.timeit(lambda: list_tree_os_scandir(directory), number=runs)
-time_pathlib = timeit.timeit(lambda: list_tree_pathlib(directory), number=runs)
-time_concurrent = timeit.timeit(lambda: list_tree_concurrent(directory), number=runs)
+time_os_walk = timeit.timeit(lambda: list_tree_os_walk(test_directory), number=runs)
+time_os_scandir = timeit.timeit(lambda: list_tree_os_scandir(test_directory), number=runs)
+time_pathlib = timeit.timeit(lambda: list_tree_pathlib(test_directory), number=runs)
+time_concurrent = timeit.timeit(lambda: list_tree_concurrent(test_directory), number=runs)
 
 # Print results
 print(f"os.walk: {time_os_walk} seconds")
