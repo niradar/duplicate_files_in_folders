@@ -37,6 +37,7 @@ def test_parse_arguments():
     assert args.whitelist_ext is None
     assert args.blacklist_ext is None
     assert args.full_hash is False
+    assert args.old_script is False
 
     # Test case 3: Many arguments provided
     args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
@@ -50,7 +51,23 @@ def test_parse_arguments():
     assert args.copy_to_all is True
     assert args.delete_empty_folders is True
 
-    # Test case 4: --ignore_diff argument with invalid values
+    # Test case 4: Many arguments provided
+    args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+                            '--run', '--ignore_diff', 'mdate,filename', '--min_size', '1KB', '--max_size', '1MB',
+                            '--whitelist_ext', 'jpg'], False)
+    assert args.src == get_folder_path('source')
+    assert args.target == get_folder_path('target')
+    assert args.move_to == get_folder_path('move_to')
+    assert args.run is True
+    assert args.extra_logging is False
+    assert args.ignore_diff == {'mdate', 'filename'}
+    assert args.copy_to_all is False
+    assert args.delete_empty_folders is True
+    assert args.min_size == 1024
+    assert args.max_size == 1048576
+    assert args.whitelist_ext == {'jpg'}
+
+    # Test case 5: --ignore_diff argument with invalid values
     with pytest.raises(SystemExit) as excinfo:
         parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
                          '--ignore_diff', 'invalid'], False)
@@ -72,6 +89,24 @@ def test_parse_arguments():
     args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
                             '--ignore_diff', 'checkall'], False)
     assert args.ignore_diff == set()
+
+    with pytest.raises(SystemExit) as excinfo:
+        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+                         '--min_size', 'invalid'], False)
+    assert excinfo.type == SystemExit
+    assert excinfo.value.code == 2
+
+    with pytest.raises(SystemExit) as excinfo:
+        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+                         '--max_size', 'invalid'], False)
+    assert excinfo.type == SystemExit
+    assert excinfo.value.code == 2
+
+    with pytest.raises(SystemExit) as excinfo:
+        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+                         '--min_size', '-10'], False)
+    assert excinfo.type == SystemExit
+    assert excinfo.value.code == 2
 
 
 # Pytest test cases for check_and_update_filename function
