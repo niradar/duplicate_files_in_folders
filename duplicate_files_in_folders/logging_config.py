@@ -4,6 +4,11 @@ from datetime import datetime
 
 
 def setup_logging():
+    """
+    Setup logging for the script. Logs are saved in the logs folder. The log file is named log_<current_date_time>.txt
+    Only errors (and above) are logged to the console.
+    :return: None
+    """
     is_test = 'PYTEST_CURRENT_TEST' in os.environ
     formatter = logging.Formatter('[%(levelname)s]\t%(asctime)s:\t%(message)s')
     logger = logging.getLogger()
