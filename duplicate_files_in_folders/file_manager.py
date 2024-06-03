@@ -37,7 +37,13 @@ class FileManager:
             cls._instance = cls(False)
         return cls._instance
 
-    def add_protected_dir(self, dir_path):
+    def add_protected_dir(self, dir_path: str | Path):
+        """
+        Add a directory to the protected directories list
+        :param dir_path: path to the directory
+        :return: None
+        :raises: FileManagerError if the directory is already in the allowed_dirs
+        """
         protected_dir = Path(dir_path).resolve()
 
         # raise an error if the directory is already in the allowed_dirs
@@ -47,7 +53,13 @@ class FileManager:
         if protected_dir not in self.protected_dirs:
             self.protected_dirs.add(protected_dir)
 
-    def add_allowed_dir(self, dir_path):
+    def add_allowed_dir(self, dir_path: str | Path):
+        """
+        Add a directory to the allowed directories list
+        :param dir_path: path to the directory
+        :return: None
+        :raises: FileManagerError if the directory is already in the protected_dirs
+        """
         allowed_dir = Path(dir_path).resolve()
 
         # raise an error if the directory is already in the protected_dirs
@@ -57,7 +69,12 @@ class FileManager:
         if allowed_dir not in self.allowed_dirs:
             self.allowed_dirs.add(allowed_dir)
 
-    def is_protected_path(self, path):
+    def is_protected_path(self, path: str | Path) -> bool:
+        """
+        Check if a path is in a protected directory or in a subdirectory of a protected directory
+        :param path: path to check
+        :return: True if the path is in a protected directory or in a subdirectory of a protected directory
+        """
         path = Path(path).resolve()
         if self.protected_dirs is None:  # This should never happen in real life
             raise FileManagerError("Protected directories not set")
@@ -67,7 +84,14 @@ class FileManager:
                   (self.allowed_dirs and not any(path == allowed_dir or allowed_dir in path.parents for allowed_dir
                                                  in self.allowed_dirs))
 
-    def move_file(self, src, dst):
+    def move_file(self, src: str, dst: str) -> bool:
+        """
+        Move a file from src to dst
+        :param src: path to the source file
+        :param dst: path to the destination file
+        :return: True if the file was moved successfully
+        :raises: ProtectedPathError if the source or destination path is in a protected directory
+        """
         src_path = Path(src).resolve()
         dst_path = Path(dst).resolve()
 
@@ -84,7 +108,14 @@ class FileManager:
 
         return True
 
-    def copy_file(self, src, dst):
+    def copy_file(self, src: str, dst: str) -> bool:
+        """
+        Copy a file from src to dst
+        :param src: path to the source file
+        :param dst: path to the destination file
+        :return: True if the file was copied successfully
+        :raises: ProtectedPathError if the source or destination path is in a protected directory
+        """
         src_path = Path(src).resolve()
         dst_path = Path(dst).resolve()
 
@@ -100,7 +131,13 @@ class FileManager:
             logger.info(f"Would have copied {src_to_dst}")
         return True
 
-    def delete_file(self, file_path):
+    def delete_file(self, file_path: str) -> bool:
+        """
+        Delete a file
+        :param file_path: path to the file
+        :return: True if the file was deleted successfully
+        :raises: ProtectedPathError if the file path is in a protected directory
+        """
         file_path = Path(file_path).resolve()
 
         if self.is_protected_path(file_path):
@@ -113,7 +150,13 @@ class FileManager:
             logger.info(f"Would have deleted {file_path}")
         return True
 
-    def make_dirs(self, dir_path):
+    def make_dirs(self, dir_path: str) -> bool:
+        """
+        Create a directory
+        :param dir_path: path to the directory(s) to create
+        :return: True if the directory was created successfully
+        :raises: ProtectedPathError if the directory path is in a protected directory
+        """
         dir_path = Path(dir_path).resolve()
 
         if self.is_protected_path(dir_path):
@@ -126,7 +169,13 @@ class FileManager:
             logger.info(f"Would have created directory {dir_path}")
         return True
 
-    def rmdir(self, dir_path):
+    def rmdir(self, dir_path: str) -> bool:
+        """
+        Delete a directory
+        :param dir_path: path to the directory(s) to delete
+        :return: True if the directory was deleted successfully
+        :raises: ProtectedPathError if the directory path is in a protected directory
+        """
         dir_path = Path(dir_path).resolve()
 
         if self.is_protected_path(dir_path):
@@ -140,7 +189,12 @@ class FileManager:
         return True
 
     @staticmethod
-    def get_file_info(file_path):
+    def get_file_info(file_path: str) -> Dict:
+        """
+        Get file information
+        :param file_path: path to the file
+        :return: dictionary with file information
+        """
         stats = os.stat(file_path)
         return {
             'path': file_path,
@@ -151,7 +205,13 @@ class FileManager:
         }
 
     @staticmethod
-    def list_tree_os_scandir_bfs(directory, raise_on_permission_error=False):
+    def list_tree_os_scandir_bfs(directory: str | Path, raise_on_permission_error=False):
+        """
+        List all files in a directory and its subdirectories using os.scandir and a breadth-first search algorithm.
+        :param directory: path to the directory
+        :param raise_on_permission_error: if True, raise a PermissionError if a directory cannot be accessed
+        :return: generator of file paths
+        """
         queue = deque([directory])
         while queue:
             current_dir = queue.popleft()
@@ -169,7 +229,14 @@ class FileManager:
                     continue
 
     @staticmethod
-    def get_files_and_stats(directory, raise_on_permission_error=False) -> List[Dict]:
+    def get_files_and_stats(directory: str | Path, raise_on_permission_error: bool = False) -> List[Dict]:
+        """
+        Get file information for all files in a directory and its subdirectories. Optimized for speed.
+        :param directory: path to the directory
+        :param raise_on_permission_error: if True, raise a PermissionError if a directory cannot be accessed
+        :return: list of dictionaries with file information
+        :raises: PermissionError if a directory cannot be accessed and raise_on_permission_error is True
+        """
         files_stats = []
         queue = deque([directory])
         while queue:
@@ -190,7 +257,16 @@ class FileManager:
                 continue
         return files_stats
 
-    def delete_empty_folders_in_tree(self, base_path, show_progress=False, progress_desc="Deleting empty folders"):
+    def delete_empty_folders_in_tree(self, base_path: str, show_progress: bool = False,
+                                     progress_desc: str = "Deleting empty folders") -> int:
+        """
+        Delete empty folders in a directory tree
+        :param base_path: path to the directory
+        :param show_progress: if True, display a progress bar
+        :param progress_desc: description for the progress bar
+        :return: number of deleted folders
+        :raises: ProtectedPathError if the base_path is in a protected directory
+        """
         if self.is_protected_path(base_path):
             raise ProtectedPathError(f"Operation not allowed: Attempt to delete empty folders in protected path: "
                                      f"{base_path}")
@@ -231,12 +307,20 @@ class FileManager:
         return deleted_folders
 
     def reset_all(self):
+        """Reset the protected_dirs and allowed_dirs to empty sets."""
         self.protected_dirs = set()
         self.allowed_dirs = set()
         return self
 
     @staticmethod
-    def reset_file_manager(protected_dirs, allowed_dirs, run_mode):
+    def reset_file_manager(protected_dirs: List[str], allowed_dirs: List[str], run_mode: bool = False):
+        """
+        Reset the file manager with the given protected and allowed directories and run mode.
+        :param protected_dirs: List of protected directories
+        :param allowed_dirs: List of allowed directories
+        :param run_mode: if True, the file operations will be executed, otherwise they will be logged
+        :return: FileManager instance
+        """
         FileManager._instance = None
         fm = FileManager(run_mode).reset_all()
         for dir_path in protected_dirs:
@@ -244,7 +328,3 @@ class FileManager:
         for dir_path in allowed_dirs:
             fm.add_allowed_dir(dir_path)
         return fm
-
-    def set_run_mode(self, run_mode):
-        self.run_mode = run_mode
-        return self
