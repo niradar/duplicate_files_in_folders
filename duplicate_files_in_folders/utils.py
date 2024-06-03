@@ -4,6 +4,7 @@ import os
 import sys
 import time
 from typing import List
+from argparse import Namespace
 
 from duplicate_files_in_folders.file_manager import FileManager
 from duplicate_files_in_folders.hash_manager import HashManager
@@ -11,20 +12,20 @@ from duplicate_files_in_folders.hash_manager import HashManager
 logger = logging.getLogger(__name__)
 
 
-def log_and_print(message):
+def log_and_print(message: str):
     print(message)
     logger.info(message)
 
 
-def display_initial_config(args):
+def display_initial_config(args: Namespace):
     header = "=== Script Configuration ==="
     separator = "-" * 50
     blank_line = ""
     fixed_width = 25
 
     config_items = {
-        "Source Folder": args.src,
-        "Target Folder": args.target,
+        "Scan Folder": args.scan_dir,
+        "Reference Folder": args.reference_dir,
         "\"Move to\" Folder": args.move_to,
         "Ignoring Settings": get_ignore_diff_string(args.ignore_diff),
         "Files Content": "Full Content Check (Slower)" if args.full_hash else "Partial Content Check (Faster)",
@@ -37,7 +38,7 @@ def display_initial_config(args):
         config_items["File Types (Blacklist)"] = ', '.join(args.blacklist_ext)
 
     if not args.delete_empty_folders:
-        config_items["Empty Folders"] = "Do Not Delete Empty Folders in Source Folder"
+        config_items["Empty Folders"] = "Do Not Delete Empty Folders in Scan Folder"
 
     config_items["Script Mode"] = "Run Mode" if args.run else "Test Mode"
 
@@ -78,7 +79,8 @@ def format_number_with_commas(number):
     return f"{number:,}"
 
 
-def get_size_constraints_string(min_size=None, max_size=None):
+def get_size_constraints_string(min_size=None, max_size=None) -> str:
+    """ Get the size constraints string."""
     size_constraints = [
         f"Minimum Size: {min_size:,} bytes" if min_size is not None else None,
         f"Maximum Size: {max_size:,} bytes" if max_size is not None else None
@@ -87,10 +89,10 @@ def get_size_constraints_string(min_size=None, max_size=None):
     return f"{', '.join(size_constraints)}." if size_constraints else "No Size Constraints"
 
 
-def confirm_script_execution(args):
-    # if the script is run from command line, and not by pytest, ask for confirmation
+def confirm_script_execution(args: Namespace):
+    """ Confirm the script execution if not run by pytest. """
     if not detect_pytest():
-        print(f"This script will move duplicate files from {args.src}. No additional confirmation will be asked.")
+        print(f"This script will move duplicate files from {args.scan_dir}. No additional confirmation will be asked.")
         print("Do you want to continue? (y/n): ")
         if input().lower() != 'y':
             print("Exiting the script.")
@@ -98,10 +100,16 @@ def confirm_script_execution(args):
 
 
 def detect_pytest():
+    """ Detect if the script is run by pytest. """
     return 'PYTEST_CURRENT_TEST' in os.environ
 
 
 def any_is_subfolder_of(folders: List[str]) -> bool:
+    """
+    Check if any folder is a subfolder of another folder.
+    :param folders: list of folder paths
+    :return: False if no folder is a subfolder of another folder, otherwise exit the script
+    """
     for i in range(len(folders)):
         for j in range(len(folders)):
             if i != j and folders[i].startswith(folders[j]):
@@ -139,28 +147,31 @@ def parse_arguments(cust_args=None, check_folders=True):
     :return: the parsed arguments
     """
     parser = argparse.ArgumentParser(
-        description="Identify duplicate files between source and target folders, move duplicates to a separate folder.")
-    parser.add_argument('--src', '--source', required=True, help='Source folder')
-    parser.add_argument('--target',  required=True, help='Target folder')
-    parser.add_argument('--move_to', '--to', required=True, type=str, help='Folder where the duplicates '
-                                                                           'will be moved.')
+        description="Identify duplicate files between scan and reference folders, "
+                    "move duplicates from scan folder to a separate folder.")
+    parser.add_argument('--scan_dir', '--scan', '--s', dest='scan_dir', required=True,
+                        help='Path - folder to scan for duplicates.')
+    parser.add_argument('--reference_dir', '--reference', '--r', required=True,
+                        help='Path - folder to compare with scan_dir.')
+    parser.add_argument('--move_to', '--to', required=True, type=str,
+                        help='Path - duplicate files from scan_dir will be moved to this folder.')
     parser.add_argument('--run', action='store_true', help='Run without test mode. Default is test mode.')
     parser.add_argument('--ignore_diff', type=str, help='Comma-separated list of differences to ignore: '
                                                         'mdate, filename, checkall. Default is ignore mdate.',
                         default='mdate')
     parser.add_argument('--copy_to_all', action='store_true',
-                        help='Copy file to all folders if found in multiple target folders. Default is move file to the'
+                        help='Copy file to all folders if found in multiple ref folders. Default is move file to the'
                              ' first folder.', default=False)
     parser.add_argument('--whitelist_ext', type=str, help='Comma-separated list of file extensions to '
-                        'whitelist (only these will be checked). IN WORK, DONT USE YET')
+                        'whitelist (only these will be checked).')
     parser.add_argument('--blacklist_ext', type=str, help='Comma-separated list of file extensions to '
-                        'blacklist (these will not be checked). IN WORK, DONT USE YET')
+                        'blacklist (these will not be checked).')
     parser.add_argument('--min_size', type=str, help='Minimum file size to check. Specify with units '
-                        '(B, KB, MB). IN WORK, DONT USE YET', default=None)
+                        '(B, KB, MB).', default=None)
     parser.add_argument('--max_size', type=str, help='Maximum file size to check. Specify with units '
-                        '(B, KB, MB). IN WORK, DONT USE YET', default=None)
+                        '(B, KB, MB).', default=None)
     parser.add_argument('--keep_empty_folders', dest='delete_empty_folders', action='store_false',
-                        help='Do not delete empty folders in the source folder. Default is to delete.')
+                        help='Do not delete empty folders in the scan_dir folder. Default is to delete.')
     parser.add_argument('--full_hash', action='store_true',
                         help='Use full file hash for comparison. Default is partial.')
     parser.set_defaults(delete_empty_folders=True)
@@ -170,14 +181,15 @@ def parse_arguments(cust_args=None, check_folders=True):
     args = parser.parse_args(cust_args if cust_args else None)
 
     if check_folders:
-        folders = [(args.src, "Source"), (args.target, "Target")]
+        folders = [(args.scan_dir, "Scan Folder"), (args.reference_dir, "Reference Folder")]
         for folder, name in folders:
             if not os.path.exists(folder) or not os.path.isdir(folder):
                 parser.error(f"{name} folder does not exist.")
             if not os.listdir(folder):
                 parser.error(f"{name} folder is empty.")
 
-    any_is_subfolder_of([args.src, args.target, args.move_to])
+    any_is_subfolder_of([args.scan_dir, args.reference_dir, args.move_to])
+
     if args.extra_logging:
         logger.setLevel(logging.DEBUG)
     args.ignore_diff = set(str(args.ignore_diff).split(','))
@@ -213,8 +225,8 @@ def parse_arguments(cust_args=None, check_folders=True):
     return args
 
 
-def output_results(args, files_moved, files_created, deleted_source_folders, duplicate_source_files_moved,
-                   source_stats=None, target_stats=None):
+def output_results(args: Namespace, files_moved: int, files_created: int, deleted_scan_folders: int,
+                   duplicate_scan_files_moved: int, scan_stats=None, ref_stats=None):
     summary_header = "Summary (Test Mode):" if not args.run else "Summary:"
     separator = "-" * max(len(summary_header), 40)
     fixed_width = 25
@@ -231,17 +243,17 @@ def output_results(args, files_moved, files_created, deleted_source_folders, dup
 
     # Detailed summary
     summary_lines = {
-        'Source Files': f"{format_number_with_commas(len(source_stats)) if source_stats else 'N/A'} files",
-        'Target Files': f"{format_number_with_commas(len(target_stats)) if target_stats else 'N/A'} files",
+        'Scan Folder Files': f"{format_number_with_commas(len(scan_stats)) if scan_stats else 'N/A'} files",
+        'Reference Folder Files': f"{format_number_with_commas(len(ref_stats)) if ref_stats else 'N/A'} files",
         'Files Moved': f"{format_number_with_commas(files_moved)} files",
         'Files Created': f"{format_number_with_commas(files_created)} copies",
     }
 
-    if duplicate_source_files_moved:
+    if duplicate_scan_files_moved:
         summary_lines['Duplicate Files Moved'] = \
-            f"{duplicate_source_files_moved} duplicate files from the source folder"
-    if deleted_source_folders:
-        summary_lines['Empty Folders Deleted'] = f"{deleted_source_folders} empty folders in the source folder"
+            f"{duplicate_scan_files_moved} duplicate files from the scan folder"
+    if deleted_scan_folders:
+        summary_lines['Empty Folders Deleted'] = f"{deleted_scan_folders} empty folders in the scan folder"
 
     for key, value in summary_lines.items():
         log_and_print(f"{key.ljust(fixed_width)}: {value}")
@@ -251,35 +263,60 @@ def output_results(args, files_moved, files_created, deleted_source_folders, dup
     log_and_print("")
 
 
-def setup_hash_manager(args):
-    hash_manager = HashManager(target_folder=args.target if not detect_pytest() else None, full_hash=args.full_hash)
+def setup_hash_manager(args: Namespace):
+    """
+    Setup the hash manager with the reference directory and full hash setting from the arguments.
+    :param args: the parsed arguments
+    :return: the hash manager instance
+    """
+    hash_manager = HashManager(reference_dir=args.reference_dir if not detect_pytest() else None,
+                               full_hash=args.full_hash)
     if args.clear_cache:
         hash_manager.clear_cache()
         hash_manager.save_data()
     return hash_manager
 
 
-def setup_file_manager(args):
-    fm = FileManager.reset_file_manager([args.target], [args.src, args.move_to], args.run)
+def setup_file_manager(args: Namespace):
+    """
+    Setup the file manager with the reference and scan directories and the move to directory from the arguments.
+    :param args: the parsed arguments
+    :return: the file manager instance
+    """
+    fm = FileManager.reset_file_manager([args.reference_dir], [args.scan_dir, args.move_to], args.run)
     return fm
 
 
-def copy_or_move_file(target_file_path: str, destination_base_path: str, source_file_path: str, base_target_path: str,
+def copy_or_move_file(ref_file_path: str, destination_base_path: str, scan_file_path: str, base_ref_path: str,
                       move: bool = True) -> str:
-    destination_path = os.path.join(destination_base_path, os.path.relpath(target_file_path, base_target_path))
+    """
+    Copy or move a file from the source to the reference directory.
+    :param ref_file_path:
+    :param destination_base_path:
+    :param scan_file_path:
+    :param base_ref_path:
+    :param move: True to move the file, False to copy it
+    :return: the final destination path
+    """
+    destination_path = os.path.join(destination_base_path, os.path.relpath(ref_file_path, base_ref_path))
     destination_dir = os.path.dirname(destination_path)
     file_manager = FileManager.get_instance()
     if not os.path.exists(destination_dir):
         file_manager.make_dirs(destination_dir)
     final_destination_path = check_and_update_filename(destination_path)
     if move:
-        file_manager.move_file(source_file_path, final_destination_path)
+        file_manager.move_file(scan_file_path, final_destination_path)
     else:
-        file_manager.copy_file(source_file_path, final_destination_path)
+        file_manager.copy_file(scan_file_path, final_destination_path)
     return final_destination_path
 
 
-def check_and_update_filename(original_filename):
+def check_and_update_filename(original_filename: str) -> str:
+    """
+    Check if the filename already exists and rename it to avoid overwriting.
+    :param original_filename:
+    :return:
+    """
     new_filename = original_filename
     if os.path.exists(original_filename):
         timestamp = int(time.time())  # Get current Unix timestamp
@@ -289,9 +326,10 @@ def check_and_update_filename(original_filename):
     return new_filename
 
 
-def get_file_key(args, file_path: str) -> str:
+def get_file_key(args: Namespace, file_path: str) -> str:
     """
     Generate a unique key for the file based on hash, filename, and modified date. Ignores components based on args.
+    Example: 'hash_key_filename_mdate' or 'hash_key_mdate' or 'hash_key_filename' or 'hash_key'
     """
     hash_key: str = HashManager.get_instance().get_hash(file_path)
     file_key: str = file_path[file_path.rfind(os.sep) + 1:] if 'filename' not in args.ignore_diff else None

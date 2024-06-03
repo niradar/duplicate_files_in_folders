@@ -16,11 +16,11 @@ def setup_teardown_hash_manager():
     HashManager.reset_instance()
 
     # Setup: Create the temporary directories
-    target_dir = os.path.join(TEMP_DIR, "target")
+    reference_dir = os.path.join(TEMP_DIR, "target")
     hash_file = os.path.join(TEMP_DIR, "hashes.pkl")
-    os.makedirs(target_dir, exist_ok=True)
-    hm = HashManager(target_folder=target_dir, filename=hash_file, full_hash=True)
-    yield hm, target_dir, hash_file
+    os.makedirs(reference_dir, exist_ok=True)
+    hm = HashManager(reference_dir=reference_dir, filename=hash_file, full_hash=True)
+    yield hm, reference_dir, hash_file
 
     # Teardown: Delete the temporary directories
     shutil.rmtree(TEMP_DIR)
@@ -28,7 +28,7 @@ def setup_teardown_hash_manager():
 
 def test_add_and_get_hash(setup_teardown_hash_manager):
     hash_manager, _, _ = setup_teardown_hash_manager
-    file_path = os.path.join(hash_manager.target_folder, "file1.txt")
+    file_path = os.path.join(hash_manager.reference_dir, "file1.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_value = hash_manager.compute_hash(file_path)
@@ -37,8 +37,8 @@ def test_add_and_get_hash(setup_teardown_hash_manager):
 
 
 def test_get_hash_computes_if_missing(setup_teardown_hash_manager):
-    hash_manager, target_dir, _ = setup_teardown_hash_manager
-    file_path = os.path.join(target_dir, "file2.txt")
+    hash_manager, reference_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(reference_dir, "file2.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     computed_hash_value = hash_manager.compute_hash(file_path)
@@ -46,11 +46,11 @@ def test_get_hash_computes_if_missing(setup_teardown_hash_manager):
 
 
 def test_auto_save_threshold(setup_teardown_hash_manager):
-    hash_manager, target_dir, hash_file = setup_teardown_hash_manager
+    hash_manager, reference_dir, hash_file = setup_teardown_hash_manager
     prev_threshold = hash_manager.AUTO_SAVE_THRESHOLD
     hash_manager.AUTO_SAVE_THRESHOLD = 5
     for i in range(hash_manager.AUTO_SAVE_THRESHOLD):
-        file_path = os.path.join(target_dir, f"file{i}.txt")
+        file_path = os.path.join(reference_dir, f"file{i}.txt")
         with open(file_path, 'w') as f:
             f.write(f"test content {i}")
         hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
@@ -64,8 +64,8 @@ def test_auto_save_threshold(setup_teardown_hash_manager):
 
 
 def test_clean_cache(setup_teardown_hash_manager):
-    hash_manager, target_dir, _ = setup_teardown_hash_manager
-    file_path = os.path.join(target_dir, "file1.txt")
+    hash_manager, reference_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(reference_dir, "file1.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
@@ -75,8 +75,8 @@ def test_clean_cache(setup_teardown_hash_manager):
 
 
 def test_clean_expired_cache(setup_teardown_hash_manager):
-    hash_manager, target_dir, _ = setup_teardown_hash_manager
-    file_path = os.path.join(target_dir, "file1.txt")
+    hash_manager, reference_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(reference_dir, "file1.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
@@ -87,9 +87,9 @@ def test_clean_expired_cache(setup_teardown_hash_manager):
 
 
 def test_clean_expired_cache_mixed_data(setup_teardown_hash_manager):
-    hash_manager, target_dir, _ = setup_teardown_hash_manager
-    file_path1 = os.path.join(target_dir, "file1.txt")
-    file_path2 = os.path.join(target_dir, "file2.txt")
+    hash_manager, reference_dir, _ = setup_teardown_hash_manager
+    file_path1 = os.path.join(reference_dir, "file1.txt")
+    file_path2 = os.path.join(reference_dir, "file2.txt")
     with open(file_path1, 'w') as f:
         f.write("test content")
     with open(file_path2, 'w') as f:
@@ -104,16 +104,16 @@ def test_clean_expired_cache_mixed_data(setup_teardown_hash_manager):
     assert hash_manager.persistent_data.at[1, 'file_path'] == file_path2
 
 
-# when saving to file, the script should clear expired data but only in the target folder.
-# run once with target folder. put 2 files there. run second time with target2 folder, put 2 files there -
+# when saving to file, the script should clear expired data but only in the ref folder.
+# run once with ref folder. put 2 files there. run second time with target2 folder, put 2 files there -
 # one expired and one not. Save to file. Load from file. Make sure only the non-expired file is in the data and
-# also that target folder is in the file
+# also that ref folder is in the file
 def test_clean_expired_cache_mixed_data_2_targets(setup_teardown_hash_manager):
 
-    # create target content
-    hash_manager, target_dir, _ = setup_teardown_hash_manager
-    file_path1 = os.path.join(target_dir, "file1.txt")
-    file_path2 = os.path.join(target_dir, "file2.txt")
+    # create reference content
+    hash_manager, reference_dir, _ = setup_teardown_hash_manager
+    file_path1 = os.path.join(reference_dir, "file1.txt")
+    file_path2 = os.path.join(reference_dir, "file2.txt")
     with open(file_path1, 'w') as f:
         f.write("test content1")
     with open(file_path2, 'w') as f:
@@ -129,7 +129,7 @@ def test_clean_expired_cache_mixed_data_2_targets(setup_teardown_hash_manager):
     with open(file_path4, 'w') as f:
         f.write("test content4")
 
-    # save target to file using default hash_manager
+    # save ref to file using default hash_manager
     hash_manager.add_hash(file_path1, hash_manager.compute_hash(file_path1))
     hash_manager.add_hash(file_path2, hash_manager.compute_hash(file_path2))
     hash_manager.save_data()
@@ -137,18 +137,18 @@ def test_clean_expired_cache_mixed_data_2_targets(setup_teardown_hash_manager):
     # new hash_manager with target2
     HashManager.reset_instance()
     hash_file = os.path.join(TEMP_DIR, "hashes.pkl")
-    hash_manager2 = HashManager(target_folder=target2_dir, filename=hash_file, full_hash=True)
+    hash_manager2 = HashManager(reference_dir=target2_dir, filename=hash_file, full_hash=True)
     assert len(hash_manager2.persistent_data) == 0, "Should not have any data - target2 is empty"
 
-    # test loading target again
+    # test loading ref again
     HashManager.reset_instance()
-    hash_manager = HashManager(target_folder=target_dir, filename=hash_file, full_hash=True)
+    hash_manager = HashManager(reference_dir=reference_dir, filename=hash_file, full_hash=True)
     assert len(hash_manager.persistent_data) == 2, f"hm.persistent_data: {hash_manager.persistent_data}"
 
     # back to new hash_manager with target2
     HashManager.reset_instance()
     hash_file = os.path.join(TEMP_DIR, "hashes.pkl")
-    hash_manager2 = HashManager(target_folder=target2_dir, filename=hash_file, full_hash=True)
+    hash_manager2 = HashManager(reference_dir=target2_dir, filename=hash_file, full_hash=True)
     assert len(hash_manager2.persistent_data) == 0, "Should not have any data - target2 is empty"
 
     hash_manager2.add_hash(file_path3, hash_manager2.compute_hash(file_path3))
@@ -163,20 +163,20 @@ def test_clean_expired_cache_mixed_data_2_targets(setup_teardown_hash_manager):
     assert len(hash_manager2.persistent_data) == 1, f"hm.persistent_data: {hash_manager.persistent_data}"
 
     HashManager.reset_instance()
-    hash_manager2 = HashManager(target_folder=target2_dir, filename=hash_file, full_hash=True)
+    hash_manager2 = HashManager(reference_dir=target2_dir, filename=hash_file, full_hash=True)
     assert len(hash_manager2.persistent_data) == 1
     assert file_path4 in hash_manager2.persistent_data['file_path'].values
 
-    # make sure the target folder is in the file
+    # make sure the ref folder is in the file
     HashManager.reset_instance()
-    hash_manager = HashManager(target_folder=target_dir, filename=hash_file, full_hash=True)
+    hash_manager = HashManager(reference_dir=reference_dir, filename=hash_file, full_hash=True)
     assert len(hash_manager.persistent_data) == 2
 
 
 def test_get_hashes_by_folder(setup_teardown_hash_manager):
-    hash_manager, target_dir, _ = setup_teardown_hash_manager
-    file_path1 = os.path.join(target_dir, "file1.txt")
-    file_path2 = os.path.join(target_dir, "file2.txt")
+    hash_manager, reference_dir, _ = setup_teardown_hash_manager
+    file_path1 = os.path.join(reference_dir, "file1.txt")
+    file_path2 = os.path.join(reference_dir, "file2.txt")
     file_path3 = os.path.join(TEMP_DIR, "file3.txt")
     with open(file_path1, 'w') as f:
         f.write("test content 1")
@@ -187,14 +187,14 @@ def test_get_hashes_by_folder(setup_teardown_hash_manager):
     hash_manager.add_hash(file_path1, hash_manager.compute_hash(file_path1))
     hash_manager.add_hash(file_path2, hash_manager.compute_hash(file_path2))
     hash_manager.add_hash(file_path3, hash_manager.compute_hash(file_path3))
-    hashes = hash_manager.get_hashes_by_folder(hash_manager.target_folder)
+    hashes = hash_manager.get_hashes_by_folder(hash_manager.reference_dir)
     assert len(hashes) == 2
 
 
 def test_several_files_same_hash(setup_teardown_hash_manager):
     hash_manager, _, _ = setup_teardown_hash_manager
-    file_path1 = os.path.join(hash_manager.target_folder, "file1.txt")
-    file_path2 = os.path.join(hash_manager.target_folder, "file2.txt")
+    file_path1 = os.path.join(hash_manager.reference_dir, "file1.txt")
+    file_path2 = os.path.join(hash_manager.reference_dir, "file2.txt")
     with open(file_path1, 'w') as f:
         f.write("test content")
     with open(file_path2, 'w') as f:
@@ -213,8 +213,8 @@ def test_file_not_found(setup_teardown_hash_manager):
 
 
 def test_clean_cache_with_data(setup_teardown_hash_manager):
-    hash_manager, target_dir, _ = setup_teardown_hash_manager
-    file_path = os.path.join(target_dir, "file1.txt")
+    hash_manager, reference_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(reference_dir, "file1.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_manager.add_hash(file_path, hash_manager.compute_hash(file_path))
@@ -225,8 +225,8 @@ def test_clean_cache_with_data(setup_teardown_hash_manager):
 
 # make sure the script don't use expired cache
 def test_clean_expired_cache_with_data(setup_teardown_hash_manager):
-    hash_manager, target_dir, _ = setup_teardown_hash_manager
-    file_path = os.path.join(target_dir, "file1.txt")
+    hash_manager, reference_dir, _ = setup_teardown_hash_manager
+    file_path = os.path.join(reference_dir, "file1.txt")
     with open(file_path, 'w') as f:
         f.write("test content")
     hash_manager.add_hash(file_path, 'fake_hash_value')
@@ -241,11 +241,11 @@ def test_clean_expired_cache_with_data(setup_teardown_hash_manager):
 # save 4 data items in pd, save to file. second time load from file, then touch 2 items, save to file, load from file
 # make sure 4 items are in the file
 def test_save_load_data(setup_teardown_hash_manager):
-    hash_manager, target_dir, hash_file = setup_teardown_hash_manager
-    file_path1 = os.path.join(target_dir, "file1.txt")
-    file_path2 = os.path.join(target_dir, "file2.txt")
-    file_path3 = os.path.join(target_dir, "file3.txt")
-    file_path4 = os.path.join(target_dir, "file4.txt")
+    hash_manager, reference_dir, hash_file = setup_teardown_hash_manager
+    file_path1 = os.path.join(reference_dir, "file1.txt")
+    file_path2 = os.path.join(reference_dir, "file2.txt")
+    file_path3 = os.path.join(reference_dir, "file3.txt")
+    file_path4 = os.path.join(reference_dir, "file4.txt")
     with open(file_path1, 'w') as f:
         f.write("test content")
     with open(file_path2, 'w') as f:
@@ -262,7 +262,7 @@ def test_save_load_data(setup_teardown_hash_manager):
 
     # load from file
     HashManager.reset_instance()
-    hash_manager = HashManager(target_folder=target_dir, filename=hash_file, full_hash=True)
+    hash_manager = HashManager(reference_dir=reference_dir, filename=hash_file, full_hash=True)
     assert len(hash_manager.persistent_data) == 4
 
     # touch 2 items
@@ -272,7 +272,7 @@ def test_save_load_data(setup_teardown_hash_manager):
 
     # load from file
     HashManager.reset_instance()
-    hash_manager = HashManager(target_folder=target_dir, filename=hash_file, full_hash=True)
+    hash_manager = HashManager(reference_dir=reference_dir, filename=hash_file, full_hash=True)
     assert len(hash_manager.persistent_data) == 4
 
 

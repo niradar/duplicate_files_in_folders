@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Define the base directory for the tests
 IMG_DIR = os.path.join(BASE_DIR, "imgs")  # Define the directory containing the image files
 TEMP_DIR = os.path.join(BASE_DIR, "temp")  # Define a temporary directory for the tests
+SCAN_DIR_NAME = "scan"  # Define the name of the scan directory
+REF_DIR_NAME = "reference"  # Define the name of the reference directory
 
 img_files = {1: {'extension': 'jpg', 'original_name': '20220517_155135.jpg'},
              2: {'extension': 'jpg', 'original_name': '20220517_210649.jpg'},
@@ -55,31 +57,31 @@ def copy_files(file_numbers, src_dir):
 def setup_teardown():
     setup_logging()
     # Setup: Create the temporary directories
-    source_dir = os.path.join(TEMP_DIR, "source")
-    target_dir = os.path.join(TEMP_DIR, "target")
-    move_to_dir = os.path.join(TEMP_DIR, "move_to")
-    hash_file = os.path.join(TEMP_DIR, "hashes.pkl")
-    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--run"]
+    scan_dir: str = os.path.join(TEMP_DIR, SCAN_DIR_NAME)
+    reference_dir: str = os.path.join(TEMP_DIR, REF_DIR_NAME)
+    move_to_dir: str = os.path.join(TEMP_DIR, "move_to")
+    hash_file: str = os.path.join(TEMP_DIR, "hashes.pkl")
+    common_args = ["--scan", scan_dir, "--reference_dir", reference_dir, "--move_to", move_to_dir, "--run"]
     # Reset the singleton instance
     HashManager.reset_instance()
-    HashManager(target_folder=target_dir, filename=hash_file)
+    HashManager(reference_dir=reference_dir, filename=hash_file)
 
     # change file_manager.FileManager.reset_file_manager() to the new arguments
-    file_manager.FileManager.reset_file_manager([target_dir], [source_dir, move_to_dir], True)
+    file_manager.FileManager.reset_file_manager([reference_dir], [scan_dir, move_to_dir], True)
 
-    os.makedirs(source_dir)
-    os.makedirs(target_dir)
+    os.makedirs(scan_dir)
+    os.makedirs(reference_dir)
     os.makedirs(move_to_dir)
 
-    yield source_dir, target_dir, move_to_dir, common_args
+    yield scan_dir, reference_dir, move_to_dir, common_args
 
     # Teardown: Delete the temporary directories
     shutil.rmtree(TEMP_DIR)
 
 
-def setup_test_files(source_files, target_files):
-    copy_files(source_files, os.path.join(TEMP_DIR, "source"))
-    copy_files(target_files, os.path.join(TEMP_DIR, "target"))
+def setup_test_files(scan_files, ref_files):
+    copy_files(scan_files, os.path.join(TEMP_DIR, SCAN_DIR_NAME))
+    copy_files(ref_files, os.path.join(TEMP_DIR, REF_DIR_NAME))
 
 
 def get_folder_structure_include_subfolders(folder):
@@ -100,23 +102,23 @@ def get_folder_structure_include_subfolders(folder):
     return "\n" + "\n".join(tree)
 
 
-def print_all_folders(source_dir, target_dir, move_to_dir):
-    logger.info(f"Source directory structure: {get_folder_structure_include_subfolders(source_dir)}")
-    logger.info(f"Target directory structure: {get_folder_structure_include_subfolders(target_dir)}")
+def print_all_folders(scan_dir, reference_dir, move_to_dir):
+    logger.info(f"Scan directory structure: {get_folder_structure_include_subfolders(scan_dir)}")
+    logger.info(f"Reference directory structure: {get_folder_structure_include_subfolders(reference_dir)}")
     logger.info(f"Move_to directory structure: {get_folder_structure_include_subfolders(move_to_dir)}")
 
 
-def simple_usecase_test(source_dir, target_dir, move_to_dir, max_files=3):
-    # Check if all files from source are now in base folder of move_to
-    source_files = set(os.listdir(source_dir))
-    assert not source_files, "Source directory is not empty"
+def simple_usecase_test(scan_dir, reference_dir, move_to_dir, max_files=3):
+    # Check if all files from scan_dir are now in base folder of move_to
+    scan_files = set(os.listdir(scan_dir))
+    assert not scan_files, "Scan directory is not empty"
     move_to_files = set(os.listdir(move_to_dir))
     assert move_to_files == set(
         [f"{i}.jpg" for i in range(1, max_files+1)]), "Not all files have been moved to move_to directory"
 
-    # Check no change to target
-    target_files = set(os.listdir(target_dir))
-    assert target_files == set([f"{i}.jpg" for i in range(1, max_files+1)]), "Target directory files have changed"
+    # Check no change to reference
+    ref_files = set(os.listdir(reference_dir))
+    assert ref_files == set([f"{i}.jpg" for i in range(1, max_files+1)]), "Reference directory files have changed"
 
 
 def check_folder_conditions(base_dir: str, conditions):
@@ -236,14 +238,14 @@ def check_folder_conditions_example():
     conditions = [
         {
             'type': 'file_count',
-            'folders': {'source_dups/sub1', 'source_dups/sub2', 'source_dups/sub3'},
+            'folders': {'scan_dups/sub1', 'scan_dups/sub2', 'scan_dups/sub3'},
             'file': 'file1.jpg',
             'count': 2,
             'include_subfolders': True
         },
         {
             'type': 'file_count',
-            'folders': {'source_dups/sub1', 'source_dups/sub3'},
+            'folders': {'scan_dups/sub1', 'scan_dups/sub3'},
             'file': 'file4.jpg',
             'count': 2,
             'include_subfolders': False
@@ -257,7 +259,7 @@ def check_folder_conditions_example():
         },
         {
             'type': 'dir_structure',
-            'parent_folder': 'source_dups',
+            'parent_folder': 'scan_dups',
             'subdirs': {'sub1', 'sub2', 'sub3'}
         },
         {
@@ -268,7 +270,7 @@ def check_folder_conditions_example():
         },
         {
             'type': 'subdirs_count',
-            'parent_folder': 'source_dups',
+            'parent_folder': 'scan_dups',
             'required_subdirs': {'sub1', 'sub2', 'sub3', 'sub4'},
             'expected_count': 2
         },
@@ -284,4 +286,4 @@ def check_folder_conditions_example():
         }
     ]
 
-    check_folder_conditions(os.path.join(move_to_dir, "source_dups"), conditions)
+    check_folder_conditions(os.path.join(move_to_dir, "scan_dups"), conditions)

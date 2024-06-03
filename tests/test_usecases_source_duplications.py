@@ -3,46 +3,46 @@ from duplicate_files_in_folders.utils import parse_arguments
 from tests.helpers_testing import *
 
 
-# Test 12 - files 1 to 6 in source subfolder sub1, files 1 to 2 and also 6 in source subfolder sub2,
-# sub3 in source will contain files 1, 2, 3
-# files 1 to 3 in target base folder, files 3 and 5 in target subfolder sub1
+# Test 12 - files 1 to 6 in scan_dir subfolder sub1, files 1 to 2 and also 6 in scan_dir subfolder sub2,
+# sub3 in scan_dir will contain files 1, 2, 3
+# files 1 to 3 in reference base folder, files 3 and 5 in reference subfolder sub1
 def test12(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
 
-    # Create the necessary subdirectories in the source and target directories
-    os.makedirs(os.path.join(source_dir, "sub1"))
-    os.makedirs(os.path.join(source_dir, "sub2"))
-    os.makedirs(os.path.join(source_dir, "sub3"))
-    os.makedirs(os.path.join(target_dir, "sub1"))
+    # Create the necessary subdirectories in the scan_dir and ref directories
+    os.makedirs(os.path.join(scan_dir, "sub1"))
+    os.makedirs(os.path.join(scan_dir, "sub2"))
+    os.makedirs(os.path.join(scan_dir, "sub3"))
+    os.makedirs(os.path.join(reference_dir, "sub1"))
 
-    # Setup the files in the source subdirectories and target directory
-    copy_files(range(1, 7), os.path.join(source_dir, "sub1"))
-    copy_files([1, 2, 6], os.path.join(source_dir, "sub2"))
-    copy_files(range(1, 4), os.path.join(source_dir, "sub3"))
+    # Setup the files in the scan_dir subdirectories and reference directory
+    copy_files(range(1, 7), os.path.join(scan_dir, "sub1"))
+    copy_files([1, 2, 6], os.path.join(scan_dir, "sub2"))
+    copy_files(range(1, 4), os.path.join(scan_dir, "sub3"))
 
-    copy_files(range(1, 4), target_dir)
-    copy_files([3, 5], os.path.join(target_dir, "sub1"))
+    copy_files(range(1, 4), reference_dir)
+    copy_files([3, 5], os.path.join(reference_dir, "sub1"))
 
-    # source content:
+    # scan_dir content:
     #   sub1: 1.jpg, 2.jpg, 3.jpg, 4.jpg, 5.jpg, 6.jpg
     #   sub2: 1.jpg, 2.jpg, 6.jpg
     #   sub3: 1.jpg, 2.jpg, 3.jpg
 
-    # target content:
+    # reference content:
     #   1.jpg, 2.jpg, 3.jpg
     #   sub1: 3.jpg, 5.jpg
 
     # after running the script:
-    # source should contain:
+    # scan_dir should contain:
     #   sub1: 4.jpg, 6.jpg
     #   sub2: 6.jpg
-    # target should contain:
+    # reference should contain:
     #   1.jpg, 2.jpg, 3.jpg
     #   sub1: 3.jpg, 5.jpg
     # move_to should contain:
     #   1.jpg, 2.jpg, 3.jpg
     #   sub1: 3.jpg, 5.jpg
-    #   source_dups: sub2, sub3
+    #   scan_dups: sub2, sub3
     #       sub2: 1.jpg, 2.jpg
     #       sub3: 1.jpg, 2.jpg
 
@@ -50,44 +50,46 @@ def test12(setup_teardown):
     args = parse_arguments(common_args)
     main(args)
 
-    # source should contain only sub1
-    source_files = set(os.listdir(source_dir))
-    assert source_files == {"sub1", "sub2"}, "Source directory files not correct"
+    # scan_dir should contain only sub1
+    scan_files = set(os.listdir(scan_dir))
+    assert scan_files == {"sub1", "sub2"}, "Scan directory files not correct"
 
-    # source sub1 should contain files 4, 6 only
-    source_sub1_files = set(os.listdir(os.path.join(source_dir, "sub1")))
-    assert source_sub1_files == {f"{i}.jpg" for i in [4, 6]}, "Source sub1 directory files not correct"
+    # scan_dir sub1 should contain files 4, 6 only
+    scan_sub1_files = set(os.listdir(os.path.join(scan_dir, "sub1")))
+    assert scan_sub1_files == {f"{i}.jpg" for i in [4, 6]}, "Source sub1 directory files not correct"
 
-    # target should contain files 1-3 and sub1
-    target_files = set(os.listdir(target_dir))
-    assert target_files == {f"{i}.jpg" for i in range(1, 4)} | {'sub1'}, "Target directory files not correct"
+    # ref should contain files 1-3 and sub1
+    ref_files = set(os.listdir(reference_dir))
+    assert ref_files == {f"{i}.jpg" for i in range(1, 4)} | {'sub1'}, "Reference directory files not correct"
 
-    # target/sub1 should contain file 3 and 5
-    target_sub1_files = set(os.listdir(os.path.join(target_dir, "sub1")))
-    assert target_sub1_files == {'3.jpg', '5.jpg'}, "Target sub1 directory files not correct"
+    # ref/sub1 should contain file 3 and 5
+    ref_sub1_files = set(os.listdir(os.path.join(reference_dir, "sub1")))
+    assert ref_sub1_files == {'3.jpg', '5.jpg'}, "ref sub1 directory files not correct"
 
-    # move_to should contain sub2, source_dups should contain files 1, 2, 3
+    # move_to should contain sub2, scan_dups should contain files 1, 2, 3
     move_to_files = set(os.listdir(move_to_dir))
-    assert move_to_files == {'source_dups', 'sub1'} | {f"{i}.jpg" for i in range(1, 4)}, \
+    assert move_to_files == {f'{SCAN_DIR_NAME}_dups', 'sub1'} | {f"{i}.jpg" for i in range(1, 4)}, \
         "Move_to directory files not correct"
 
     conditions = [
         {
             'type': 'subdirs_count',
-            'parent_folder': 'source_dups',
+            'parent_folder': f'{SCAN_DIR_NAME}_dups',
             'required_subdirs': {'sub1', 'sub2', 'sub3'},
             'expected_count': 2
         },
         {
             'type': 'file_count',
-            'folders': {'source_dups' + os.sep + 'sub1', 'source_dups' + os.sep + 'sub2', 'source_dups' + os.sep + 'sub3'},
+            'folders': {f'{SCAN_DIR_NAME}_dups' + os.sep + 'sub1', f'{SCAN_DIR_NAME}_dups' + os.sep + 'sub2',
+                        f'{SCAN_DIR_NAME}_dups' + os.sep + 'sub3'},
             'file': '1.jpg',
             'count': 2,
             'include_subfolders': False
         },
         {
             'type': 'file_count',
-            'folders': {'source_dups' + os.sep + 'sub1', 'source_dups' + os.sep + 'sub2', 'source_dups' + os.sep + 'sub3'},
+            'folders': {f'{SCAN_DIR_NAME}_dups' + os.sep + 'sub1', f'{SCAN_DIR_NAME}_dups' + os.sep + 'sub2',
+                        f'{SCAN_DIR_NAME}_dups' + os.sep + 'sub3'},
             'file': '2.jpg',
             'count': 2,
             'include_subfolders': False
@@ -95,11 +97,11 @@ def test12(setup_teardown):
 
     ]
     check_folder_conditions(move_to_dir, conditions)
-    # move_to/source_dups/sub1, move_to/source_dups/sub2, move_to/source_dups/sub3 should contain files:
+    # move_to/scan_dups/sub1, move_to/scan_dups/sub2, move_to/scan_dups/sub3 should contain files:
     #   1.jpg, 2.jpg exactly 2 times
 
-    # move_to/source_dups/sub2 should contain files 1, 2
-    move_to_sub2_files = set(os.listdir(os.path.join(move_to_dir, "source_dups", "sub2")))
+    # move_to/scan_dups/sub2 should contain files 1, 2
+    move_to_sub2_files = set(os.listdir(os.path.join(move_to_dir, f"{SCAN_DIR_NAME}_dups", "sub2")))
     assert move_to_sub2_files == {f"{i}.jpg" for i in [1, 2]}, "Move_to sub2 directory files not correct"
 
     # move_to/sub1 should contain file 3, 5
@@ -107,118 +109,125 @@ def test12(setup_teardown):
     assert move_to_sub1_files == {'3.jpg', '5.jpg'}, "Move_to sub1 directory files not correct"
 
 
-# test 15 - both source and target have 1.jpg in the main folder, and also in subfolder sub1
+# test 15 - both scan_dir and ref have 1.jpg in the main folder, and also in subfolder sub1
 def test15(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
 
-    # Create the necessary subdirectories in the source and target directories
-    os.makedirs(os.path.join(source_dir, "sub1"))
-    os.makedirs(os.path.join(target_dir, "sub1"))
+    # Create the necessary subdirectories in the scan_dir and ref directories
+    os.makedirs(os.path.join(scan_dir, "sub1"))
+    os.makedirs(os.path.join(reference_dir, "sub1"))
 
-    # Setup the files in the source subdirectories and target directory
-    copy_files([1], source_dir)
-    copy_files([1], target_dir)
-    copy_files([1], os.path.join(source_dir, "sub1"))
-    copy_files([1], os.path.join(target_dir, "sub1"))
+    # Setup the files in the scan_dir subdirectories and reference directory
+    copy_files([1], scan_dir)
+    copy_files([1], reference_dir)
+    copy_files([1], os.path.join(scan_dir, "sub1"))
+    copy_files([1], os.path.join(reference_dir, "sub1"))
 
     common_args.append("--copy_to_all")
 
     args = parse_arguments(common_args)
     main(args)
 
-    # Check if all files from source are now in base folder of move_to
-    source_files = set(os.listdir(source_dir))
-    assert not source_files, "Source directory is not empty"
+    # Check if all files from scan_dir are now in base folder of move_to
+    scan_files = set(os.listdir(scan_dir))
+    assert not scan_files, "Scan directory is not empty"
 
-    # Check move_to folder has files 1
-    move_to_files = set(os.listdir(move_to_dir))
-    assert move_to_files == {"1.jpg", "sub1"}, "Not all files have been moved to move_to directory"
+    # Check no change to reference
+    ref_files = set(os.listdir(reference_dir))
+    assert ref_files == {"1.jpg", "sub1"}, "Reference directory files have changed"
 
-    # check that sub1 has file 1
-    move_to_sub_files = set(os.listdir(os.path.join(move_to_dir, "sub1")))
-    assert move_to_sub_files == {"1.jpg"}, "Not all files have been moved to move_to subdirectory"
+    # Check no change to reference subfolder
+    ref_sub_files = set(os.listdir(os.path.join(reference_dir, "sub1")))
+    assert ref_sub_files == {"1.jpg"}, "Reference sub directory files have changed"
 
-    # Check no change to target
-    target_files = set(os.listdir(target_dir))
-    assert target_files == {"1.jpg", "sub1"}, "Target directory files have changed"
+    # Move all function to use Conditions
+    conditions = [  # Check move_to folder
+        {
+            'type': 'items_in_folder',
+            'folder': '',
+            'items': {"1.jpg", "sub1"}
+        },
+        {
+            'type': 'items_in_folder',
+            'folder': 'sub1',
+            'items': {"1.jpg"}
+        }
+    ]
+    check_folder_conditions(move_to_dir, conditions)
 
-    # Check no change to target subfolder
-    target_sub_files = set(os.listdir(os.path.join(target_dir, "sub1")))
-    assert target_sub_files == {"1.jpg"}, "Target sub directory files have changed"
 
-
-# test 16 - both source and target have 1.jpg in the main folder, and also in subfolder sub1, no copy_to_all
+# test 16 - both scan_dir and ref have 1.jpg in the main folder, and also in subfolder sub1, no copy_to_all
 def test16(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
 
-    # Create the necessary subdirectories in the source and target directories
-    os.makedirs(os.path.join(source_dir, "sub1"))
-    os.makedirs(os.path.join(target_dir, "sub1"))
+    # Create the necessary subdirectories in the scan_dir and ref directories
+    os.makedirs(os.path.join(scan_dir, "sub1"))
+    os.makedirs(os.path.join(reference_dir, "sub1"))
 
-    # Setup the files in the source subdirectories and target directory
-    copy_files([1], source_dir)
-    copy_files([1], target_dir)
-    copy_files([1], os.path.join(source_dir, "sub1"))
-    copy_files([1], os.path.join(target_dir, "sub1"))
+    # Setup the files in the scan_dir subdirectories and reference directory
+    copy_files([1], scan_dir)
+    copy_files([1], reference_dir)
+    copy_files([1], os.path.join(scan_dir, "sub1"))
+    copy_files([1], os.path.join(reference_dir, "sub1"))
 
     args = parse_arguments(common_args)
     main(args)
 
-    # Check if all files from source are now in base folder of move_to
-    source_files = set(os.listdir(source_dir))
-    assert not source_files, "Source directory is not empty"
+    # Check if all files from scan_dir are now in base folder of move_to
+    scan_files = set(os.listdir(scan_dir))
+    assert not scan_files, "Scan directory is not empty"
 
     # Check move_to folder has files 1 or sub1
     move_to_files = set(os.listdir(move_to_dir))
     move_to_has_1 = "1.jpg" in move_to_files
     move_to_has_sub1 = "sub1" in move_to_files
     assert move_to_has_1 or move_to_has_sub1, "Not all files have been moved to move_to directory"
-    assert "source_dups" in move_to_files, "source_dups not in move_to directory"
+    assert "scan_dups" in move_to_files, "scan_dups not in move_to directory"
 
     # check that sub1 has file 1
     if move_to_has_sub1:
         move_to_sub_files = set(os.listdir(os.path.join(move_to_dir, "sub1")))
         assert move_to_sub_files == {"1.jpg"}, "Not all files have been moved to move_to subdirectory"
 
-    source_dup_sub_files = set(os.listdir(os.path.join(move_to_dir, "source_dups")))
+    scan_dup_sub_files = set(os.listdir(os.path.join(move_to_dir, "scan_dups")))
 
-    # source_dups should have sub1 or 1.jpg
-    source_dups_has_sub1 = "sub1" in source_dup_sub_files
-    source_dups_has_1 = "1.jpg" in source_dup_sub_files
+    # scan_dups should have sub1 or 1.jpg
+    scan_dups_has_sub1 = "sub1" in scan_dup_sub_files
+    scan_dups_has_1 = "1.jpg" in scan_dup_sub_files
 
-    assert source_dups_has_sub1 or source_dups_has_1, "Not all files have been moved to move_to subdirectory"
+    assert scan_dups_has_sub1 or scan_dups_has_1, "Not all files have been moved to move_to subdirectory"
 
-    if source_dups_has_sub1:
-        assert len(source_dup_sub_files) == 1, "wrong number of files in source_dups"
+    if scan_dups_has_sub1:
+        assert len(scan_dup_sub_files) == 1, "wrong number of files in scan_dups"
         # check that sub1 has file 1
-        source_dup_sub1_files = set(os.listdir(os.path.join(move_to_dir, "source_dups", "sub1")))
-        assert source_dup_sub1_files == {"1.jpg"}, "Not all files have been moved to move_to subdirectory"
+        scan_dup_sub1_files = set(os.listdir(os.path.join(move_to_dir, "scan_dups", "sub1")))
+        assert scan_dup_sub1_files == {"1.jpg"}, "Not all files have been moved to move_to subdirectory"
 
-    # Check no change to target
-    target_files = set(os.listdir(target_dir))
-    assert target_files == {"1.jpg", "sub1"}, "Target directory files have changed"
+    # Check no change to reference
+    ref_files = set(os.listdir(reference_dir))
+    assert ref_files == {"1.jpg", "sub1"}, "Reference directory files have changed"
 
-    # Check no change to target subfolder
-    target_sub_files = set(os.listdir(os.path.join(target_dir, "sub1")))
-    assert target_sub_files == {"1.jpg"}, "Target sub directory files have changed"
+    # Check no change to reference subfolder
+    ref_sub_files = set(os.listdir(os.path.join(reference_dir, "sub1")))
+    assert ref_sub_files == {"1.jpg"}, "Reference sub directory files have changed"
 
 
-# different names, same content, copy_to_all, different folders in source and target, duplicates in source and target
+# different names, same content, copy_to_all, different folders in scan_dir and ref, duplicates in scan_dir and ref
 def test17(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
 
-    # Create the necessary subdirectories in the source and target directories
-    os.makedirs(os.path.join(source_dir, "sub1"))
-    os.makedirs(os.path.join(source_dir, "sub2"))
-    os.makedirs(os.path.join(target_dir, "sub1"))
+    # Create the necessary subdirectories in the scan_dir and ref directories
+    os.makedirs(os.path.join(scan_dir, "sub1"))
+    os.makedirs(os.path.join(scan_dir, "sub2"))
+    os.makedirs(os.path.join(reference_dir, "sub1"))
 
     src_file = os.path.join(IMG_DIR, "1.jpg")
-    dst1_file = os.path.join(target_dir, "hw10.jpg")
-    dst2_file = os.path.join(target_dir, "hw11.jpg")
-    dst3_file = os.path.join(target_dir, "sub1", "HW10.jpg")
-    dst4_file = os.path.join(target_dir, "sub1", "Hw11.jpg")
+    dst1_file = os.path.join(reference_dir, "hw10.jpg")
+    dst2_file = os.path.join(reference_dir, "hw11.jpg")
+    dst3_file = os.path.join(reference_dir, "sub1", "HW10.jpg")
+    dst4_file = os.path.join(reference_dir, "sub1", "Hw11.jpg")
 
-    # target content:
+    # reference content:
     # hw10.jpg, hw11.jpg
     # sub1: HW10.jpg, Hw11.jpg
 
@@ -227,11 +236,11 @@ def test17(setup_teardown):
     shutil.copy(src_file, dst3_file)
     shutil.copy(src_file, dst4_file)
 
-    shutil.copy(src_file, os.path.join(source_dir, "sub1", "hw10.jpg"))
-    shutil.copy(src_file, os.path.join(source_dir, "hw10.jpg"))
-    shutil.copy(src_file, os.path.join(source_dir, "sub2", "HW10.jpg"))
+    shutil.copy(src_file, os.path.join(scan_dir, "sub1", "hw10.jpg"))
+    shutil.copy(src_file, os.path.join(scan_dir, "hw10.jpg"))
+    shutil.copy(src_file, os.path.join(scan_dir, "sub2", "HW10.jpg"))
 
-    # source content:
+    # scan_dir content:
     # sub1: hw10.jpg
     # hw10.jpg
     # sub2: HW10.jpg
@@ -243,9 +252,9 @@ def test17(setup_teardown):
     args = parse_arguments(common_args)
     main(args)
 
-    # Check if all files from source are now in base folder of move_to
-    source_files = set(os.listdir(source_dir))
-    assert not source_files, "Source directory is not empty"
+    # Check if all files from scan_dir are now in base folder of move_to
+    scan_files = set(os.listdir(scan_dir))
+    assert not scan_files, "Scan directory is not empty"
 
     # check that move_to has files hw10.jpg, hw11.jpg, sub1
     move_to_files = set(os.listdir(move_to_dir))
@@ -258,37 +267,37 @@ def test17(setup_teardown):
 
 # all the tests with the same file content - 1.jpg
 # 2 duplicates in source, same name, different folders
-# 2 duplicates in the same name but different folders as in source, 8 more duplicates in target with different name
-def setup_for_few_sources_many_targets_tests(source_dir, target_dir):
-    # Create the necessary subdirectories in the source and target directories
-    os.makedirs(os.path.join(source_dir, "sub1"))
-    os.makedirs(os.path.join(target_dir, "sub1"))
+# 2 duplicates in the same name but different folders as in source, 8 more duplicates in ref with different name
+def setup_for_few_scans_many_refs_tests(scan_dir, reference_dir):
+    # Create the necessary subdirectories in the scan_dir and ref directories
+    os.makedirs(os.path.join(scan_dir, "sub1"))
+    os.makedirs(os.path.join(reference_dir, "sub1"))
 
     src_file = os.path.join(IMG_DIR, "1.jpg")
 
-    shutil.copy(src_file, os.path.join(source_dir, "sub1", "main.jpg"))
-    shutil.copy(src_file, os.path.join(source_dir, "main.jpg"))
-    shutil.copy(src_file, os.path.join(target_dir, "main.jpg"))
-    shutil.copy(src_file, os.path.join(target_dir, "sub1", "main.jpg"))
+    shutil.copy(src_file, os.path.join(scan_dir, "sub1", "main.jpg"))
+    shutil.copy(src_file, os.path.join(scan_dir, "main.jpg"))
+    shutil.copy(src_file, os.path.join(reference_dir, "main.jpg"))
+    shutil.copy(src_file, os.path.join(reference_dir, "sub1", "main.jpg"))
 
     for i in range(2, 11):
-        shutil.copy(src_file, os.path.join(target_dir, f"hw{i}.jpg"))
+        shutil.copy(src_file, os.path.join(reference_dir, f"hw{i}.jpg"))
 
-    # source content:
+    # scan_dir content:
     # sub1: main.jpg
     # main.jpg
 
-    # target content:
+    # reference content:
     # main.jpg
     # sub1: main.jpg
     # hw2.jpg - hw10.jpg
 
 
 # ignore_diff is set to mdate.
-def test_few_sources_many_targets_ignore_diff_mdate(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+def test_few_scans_many_refs_ignore_diff_mdate(setup_teardown):
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
 
-    setup_for_few_sources_many_targets_tests(source_dir, target_dir)
+    setup_for_few_scans_many_refs_tests(scan_dir, reference_dir)
 
     common_args.append("--ignore_diff")
     common_args.append("mdate")
@@ -297,19 +306,19 @@ def test_few_sources_many_targets_ignore_diff_mdate(setup_teardown):
     args = parse_arguments(common_args)
     main(args)
 
-    # Check if all files from source are now in base folder of move_to
-    source_files = set(os.listdir(source_dir))
-    assert not source_files, "Source directory is not empty"
+    # Check if all files from scan_dir are now in base folder of move_to
+    scan_files = set(os.listdir(scan_dir))
+    assert not scan_files, "Scan directory is not empty"
 
     # check that move_to has files main.jpg, sub1
     move_to_files = set(os.listdir(move_to_dir))
     assert move_to_files == {"main.jpg", "sub1"}, "wrong files in move_to"
 
 
-def test_few_sources_many_targets_ignore_diff_mdate_filename(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+def test_few_scans_many_refs_ignore_diff_mdate_filename(setup_teardown):
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
 
-    setup_for_few_sources_many_targets_tests(source_dir, target_dir)
+    setup_for_few_scans_many_refs_tests(scan_dir, reference_dir)
 
     common_args.append("--ignore_diff")
     common_args.append("mdate,filename")
@@ -318,44 +327,44 @@ def test_few_sources_many_targets_ignore_diff_mdate_filename(setup_teardown):
     args = parse_arguments(common_args)
     main(args)
 
-    # Check if all files from source are now in base folder of move_to
-    source_files = set(os.listdir(source_dir))
-    assert not source_files, "Source directory is not empty"
+    # Check if all files from scan_dir are now in base folder of move_to
+    scan_files = set(os.listdir(scan_dir))
+    assert not scan_files, "Scan directory is not empty"
 
     # check that move_to has files main.jpg, sub1 and hw2.jpg to hw10.jpg
     move_to_files = set(os.listdir(move_to_dir))
     assert move_to_files == {"main.jpg", "sub1"} | {f"hw{i}.jpg" for i in range(2, 11)}, "wrong files in move_to"
 
 
-def setup_for_many_sources_few_targets_tests(source_dir, target_dir):
-    # Create the necessary subdirectories in the source and target directories
-    os.makedirs(os.path.join(source_dir, "sub1"))
-    os.makedirs(os.path.join(target_dir, "sub1"))
+def setup_for_many_scans_few_refs_tests(scan_dir, reference_dir):
+    # Create the necessary subdirectories in the scan_dir and ref directories
+    os.makedirs(os.path.join(scan_dir, "sub1"))
+    os.makedirs(os.path.join(reference_dir, "sub1"))
 
     src_file = os.path.join(IMG_DIR, "1.jpg")
 
-    shutil.copy(src_file, os.path.join(source_dir, "sub1", "main.jpg"))
-    shutil.copy(src_file, os.path.join(source_dir, "main.jpg"))
-    shutil.copy(src_file, os.path.join(target_dir, "main.jpg"))
-    shutil.copy(src_file, os.path.join(target_dir, "sub1", "main.jpg"))
+    shutil.copy(src_file, os.path.join(scan_dir, "sub1", "main.jpg"))
+    shutil.copy(src_file, os.path.join(scan_dir, "main.jpg"))
+    shutil.copy(src_file, os.path.join(reference_dir, "main.jpg"))
+    shutil.copy(src_file, os.path.join(reference_dir, "sub1", "main.jpg"))
 
     for i in range(2, 11):
-        shutil.copy(src_file, os.path.join(source_dir, f"hw{i}.jpg"))
+        shutil.copy(src_file, os.path.join(scan_dir, f"hw{i}.jpg"))
 
-    # source content:
+    # scan_dir content:
     # sub1: main.jpg
     # main.jpg
     # hw2.jpg, hw3.jpg, hw4.jpg, hw5.jpg, hw6.jpg, hw7.jpg, hw8.jpg, hw9.jpg, hw10.jpg
 
-    # target content:
+    # reference content:
     # main.jpg
     # sub1: main.jpg
 
 
-def test_many_sources_few_targets_ignore_diff_mdate(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+def test_many_scans_few_refs_ignore_diff_mdate(setup_teardown):
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
 
-    setup_for_many_sources_few_targets_tests(source_dir, target_dir)
+    setup_for_many_scans_few_refs_tests(scan_dir, reference_dir)
 
     common_args.append("--ignore_diff")
     common_args.append("mdate")
@@ -364,25 +373,25 @@ def test_many_sources_few_targets_ignore_diff_mdate(setup_teardown):
     args = parse_arguments(common_args)
     main(args)
 
-    source_files = set(os.listdir(source_dir))
-    assert source_files == {f"hw{i}.jpg" for i in range(2, 11)}, "Wrong files in source"
+    scan_files = set(os.listdir(scan_dir))
+    assert scan_files == {f"hw{i}.jpg" for i in range(2, 11)}, "Wrong files in source"
 
     # check that move_to has files main.jpg, sub1
     move_to_files = set(os.listdir(move_to_dir))
     assert move_to_files == {"main.jpg", "sub1"}, "wrong files in move_to"
 
 
-def test_many_sources_few_targets_ignore_diff_mdate_extended(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+def test_many_scans_few_refs_ignore_diff_mdate_extended(setup_teardown):
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
 
-    setup_for_many_sources_few_targets_tests(source_dir, target_dir)
+    setup_for_many_scans_few_refs_tests(scan_dir, reference_dir)
 
     src_file = os.path.join(IMG_DIR, "1.jpg")
 
-    shutil.copy(src_file, os.path.join(source_dir, "sub1", "main2.jpg"))
-    shutil.copy(src_file, os.path.join(source_dir, "main2.jpg"))
-    shutil.copy(src_file, os.path.join(target_dir, "main2.jpg"))
-    shutil.copy(src_file, os.path.join(target_dir, "sub1", "main2.jpg"))
+    shutil.copy(src_file, os.path.join(scan_dir, "sub1", "main2.jpg"))
+    shutil.copy(src_file, os.path.join(scan_dir, "main2.jpg"))
+    shutil.copy(src_file, os.path.join(reference_dir, "main2.jpg"))
+    shutil.copy(src_file, os.path.join(reference_dir, "sub1", "main2.jpg"))
 
     common_args.append("--ignore_diff")
     common_args.append("mdate")
@@ -391,8 +400,8 @@ def test_many_sources_few_targets_ignore_diff_mdate_extended(setup_teardown):
     args = parse_arguments(common_args)
     main(args)
 
-    source_files = set(os.listdir(source_dir))
-    assert source_files == {f"hw{i}.jpg" for i in range(2, 11)}, "Wrong files in source"
+    scan_files = set(os.listdir(scan_dir))
+    assert scan_files == {f"hw{i}.jpg" for i in range(2, 11)}, "Wrong files in source"
 
     # check that move_to has files main.jpg, sub1
     move_to_files = set(os.listdir(move_to_dir))
@@ -403,11 +412,11 @@ def test_many_sources_few_targets_ignore_diff_mdate_extended(setup_teardown):
     assert move_to_sub_files == {"main.jpg", "main2.jpg"}, "Not all files have been moved to move_to subdirectory"
 
 
-def test_many_sources_few_targets_ignore_diff_mdate_filename(setup_teardown):
-    source_dir, target_dir, move_to_dir, common_args = setup_teardown
+def test_many_scans_few_refs_ignore_diff_mdate_filename(setup_teardown):
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
 
-    setup_for_many_sources_few_targets_tests(source_dir, target_dir)
-    print_all_folders(source_dir, target_dir, move_to_dir)
+    setup_for_many_scans_few_refs_tests(scan_dir, reference_dir)
+    print_all_folders(scan_dir, reference_dir, move_to_dir)
 
     common_args.append("--ignore_diff")
     common_args.append("mdate,filename")
@@ -416,21 +425,21 @@ def test_many_sources_few_targets_ignore_diff_mdate_filename(setup_teardown):
     args = parse_arguments(common_args)
     main(args)
 
-    # Check if all files from source are now in base folder of move_to
-    source_files = set(os.listdir(source_dir))
-    assert not source_files, "Source directory is not empty"
+    # Check if all files from scan_dir are now in base folder of move_to
+    scan_files = set(os.listdir(scan_dir))
+    assert not scan_files, "Scan directory is not empty"
 
-    # sources_dups should contain 9 files, in root and maybe in sub1 (if exists)
+    # scans_dups should contain 9 files, in root and maybe in sub1 (if exists)
     conditions = [
         {
             'type': 'files_count_including_subfolders',
-            'folder': 'source_dups',
+            'folder': 'scan_dups',
             'expected_count': 9
         },
         {
             'type': 'items_in_folder',
             'folder': '',
-            'items': {"main.jpg", "sub1", "source_dups"}
+            'items': {"main.jpg", "sub1", "scan_dups"}
         }
     ]
     check_folder_conditions(move_to_dir, conditions)

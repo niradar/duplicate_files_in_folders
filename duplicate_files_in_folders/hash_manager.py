@@ -34,13 +34,13 @@ class HashManager:
         with cls._lock:
             cls._instance = None
 
-    def __init__(self, target_folder: str = None, filename='hashes.pkl', full_hash=False):
+    def __init__(self, reference_dir: str = None, filename='hashes.pkl', full_hash=False):
         if self.__initialized:
             return
         self.__initialized = True
 
         self.filename = filename
-        self.target_folder = target_folder
+        self.reference_dir = reference_dir
         self.full_hash = full_hash
         if not self.full_hash and self.filename is not None:
             self.filename = self.filename.replace('.pkl', '_partial.pkl')
@@ -56,15 +56,15 @@ class HashManager:
         self.temporary_cache_requests = 0
 
     def load_data(self) -> pd.DataFrame:
-        """Load only data relevant to the target folder from the file, or create a new DataFrame if the file doesn't
+        """Load only data relevant to the ref folder from the file, or create a new DataFrame if the file doesn't
         exist."""
         if self.filename is None:  # for testing purposes
             return pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
         if os.path.exists(self.filename):
             all_data = pd.read_pickle(self.filename)
-            if self.target_folder:
-                # os.sep is needed in case target folder is a substring of another folder,  example: /target, /target2
-                relevant_data = all_data[all_data['file_path'].str.startswith(self.target_folder + os.sep)]
+            if self.reference_dir:
+                # os.sep is needed in case ref folder is a substring of another folder,  example: /target, /target2
+                relevant_data = all_data[all_data['file_path'].str.startswith(self.reference_dir + os.sep)]
                 return relevant_data
             return all_data
         else:
@@ -84,15 +84,15 @@ class HashManager:
         """Save the current persistent DataFrame to a file."""
         if self.filename is None:  # for testing purposes
             return
-        # Clean expired cache before saving - only for target folder
+        # Clean expired cache before saving - only for ref folder
         self.clean_expired_cache()
 
         if os.path.exists(self.filename):
             all_data = pd.read_pickle(self.filename)
             all_data = HashManager.ensure_columns(all_data)
 
-            # Remove old data related to the current target folder
-            all_data = all_data[~all_data['file_path'].str.startswith(self.target_folder + os.sep)]
+            # Remove old data related to the current ref folder
+            all_data = all_data[~all_data['file_path'].str.startswith(self.reference_dir + os.sep)]
 
             # Drop all-NA rows in all_data and self.persistent_data
             all_data = all_data.dropna(how='all')
@@ -115,7 +115,7 @@ class HashManager:
         current_time = datetime.now()
         new_entry = pd.DataFrame({'file_path': [file_path], 'hash_value': [hash_value], 'last_update': [current_time]})
 
-        if self.target_folder and file_path.startswith(self.target_folder + os.sep):
+        if self.reference_dir and file_path.startswith(self.reference_dir + os.sep):
             if not self.persistent_data.empty:
                 # Remove the existing entry if it exists
                 self.persistent_data = self.persistent_data[self.persistent_data.file_path != file_path]
@@ -137,7 +137,7 @@ class HashManager:
 
     def get_hash(self, file_path: str) -> str:
         """Get the hash of a file, computing and storing it if necessary."""
-        if self.target_folder and file_path.startswith(self.target_folder + os.sep):
+        if self.reference_dir and file_path.startswith(self.reference_dir + os.sep):
             self.persistent_cache_requests += 1  # Increment persistent cache requests
             result = self.persistent_data[self.persistent_data.file_path == file_path]
         else:
@@ -149,7 +149,7 @@ class HashManager:
             current_time = datetime.now()
             last_update = result['last_update'].values[0]
             if pd.Timestamp(last_update) > current_time - timedelta(seconds=self.MAX_CACHE_TIME):
-                if self.target_folder and file_path.startswith(self.target_folder + os.sep):
+                if self.reference_dir and file_path.startswith(self.reference_dir + os.sep):
                     self.persistent_cache_hits += 1  # Increment persistent cache hits
                 else:
                     self.temporary_cache_hits += 1  # Increment temporary cache hits
@@ -225,15 +225,3 @@ class HashManager:
         logger.info(f"Persistent cache requests: {self.persistent_cache_requests}")
         logger.info(f"Temporary cache hits: {self.temporary_cache_hits}")
         logger.info(f"Temporary cache requests: {self.temporary_cache_requests}")
-
-
-# Example usage
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    manager = HashManager(target_folder='/path/to/target')
-    manager.add_hash('/path/to/target/file1.txt', 'hash1')
-    manager.add_hash('/path/to/temp/file2.txt', 'hash2')
-    print(manager.get_hash('/path/to/target/file1.txt'))
-    manager.clear_cache()
-    manager.clean_expired_cache()
-    manager.save_data()

@@ -197,7 +197,7 @@ class FileManager:
         if not self.run_mode:
             logger.info(f"Would have deleted empty folders in {base_path}")
             return 0
-        folders_by_depth = {}  # collect all folders in the source folder by depth
+        folders_by_depth = {}  # collect all folders in the scan_dir folder by depth
         for root, dirs, files in os.walk(base_path, topdown=False):
             if base_path == root:
                 continue

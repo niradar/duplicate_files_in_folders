@@ -11,18 +11,18 @@ from duplicate_files_in_folders.utils import parse_arguments, get_file_key
 from typing import Dict, List
 import pandas as pd
 
-target_directory = '/path/to/target/folder'
-source_directory = '/path/to/source/folder'
+ref_directory = '/path/to/ref/folder'
+scan_directory = '/path/to/source/folder'
 
-hash_manager = HashManager(target_directory)
+hash_manager = HashManager(ref_directory)
 
 
-def reset_hash_manager(target_folder, no_reset_target=False):
+def reset_hash_manager(reference_dir, no_reset_target=False):
     global hash_manager
     if not no_reset_target:
         hash_manager.reset_instance()
-    hash_manager = HashManager(target_folder, None)
-    # hash_manager.target_folder = target_folder
+    hash_manager = HashManager(reference_dir, None)
+    # hash_manager.reference_dir = reference_dir
 
     # clear temporary data anyway
     hash_manager.temporary_data = pd.DataFrame(columns=['file_path', 'hash_value', 'last_update'])
@@ -63,30 +63,30 @@ def filter_files_by_args(args, files_stats: List[Dict]) -> List[Dict]:
 
 
 def find_duplicates_files(args, source, target, no_reset=False):
-    reset_hash_manager(target_directory, no_reset)
-    source_stats = filter_files_by_args(args, FileManager.get_files_and_stats(source))
-    target_stats = filter_files_by_args(args, FileManager.get_files_and_stats(target))
+    reset_hash_manager(ref_directory, no_reset)
+    scan_stats = filter_files_by_args(args, FileManager.get_files_and_stats(source))
+    ref_stats = filter_files_by_args(args, FileManager.get_files_and_stats(target))
 
-    print(f"Found {len(source_stats)} files in source directory")
-    print(f"Found {len(target_stats)} files in target directory")
+    print(f"Found {len(scan_stats)} files in scan_dir directory")
+    print(f"Found {len(ref_stats)} files in reference directory")
 
-    potential_source_duplicates = find_potential_duplicates(target_stats, source_stats, args.ignore_diff)
-    potential_target_duplicates = find_potential_duplicates(source_stats, target_stats, args.ignore_diff)
+    potential_scan_duplicates = find_potential_duplicates(ref_stats, scan_stats, args.ignore_diff)
+    potential_ref_duplicates = find_potential_duplicates(scan_stats, ref_stats, args.ignore_diff)
 
     combined = defaultdict(defaultdict)
-    for file_info in potential_source_duplicates:
+    for file_info in potential_scan_duplicates:
         file_info_key = get_file_key(args, file_info['path'])
         if 'source' not in combined[file_info_key]:
             combined[file_info_key]['source'] = []
         combined[file_info_key]['source'].append(file_info)
 
-    for file_info in potential_target_duplicates:
+    for file_info in potential_ref_duplicates:
         file_info_key = get_file_key(args, file_info['path'])
         if 'target' not in combined[file_info_key]:
             combined[file_info_key]['target'] = []
         combined[file_info_key]['target'].append(file_info)
 
-    # filter out combined items that don't have both source and target - ie size = 2
+    # filter out combined items that don't have both scan_dir and ref - ie size = 2
     combined = {k: v for k, v in combined.items() if len(v) == 2}
     return combined
 
@@ -119,21 +119,21 @@ def process_potential_duplicates(potential_duplicates, combined, key, args):
 
 
 def find_duplicates_files_v2(args, source, target, no_reset=False):
-    reset_hash_manager(target_directory, no_reset)
-    source_stats = filter_files_by_args(args, FileManager.get_files_and_stats(source))
-    target_stats = filter_files_by_args(args, FileManager.get_files_and_stats(target))
+    reset_hash_manager(ref_directory, no_reset)
+    scan_stats = filter_files_by_args(args, FileManager.get_files_and_stats(source))
+    ref_stats = filter_files_by_args(args, FileManager.get_files_and_stats(target))
 
-    print(f"Found {len(source_stats)} files in source directory")
-    print(f"Found {len(target_stats)} files in target directory")
+    print(f"Found {len(scan_stats)} files in scan_dir directory")
+    print(f"Found {len(ref_stats)} files in reference directory")
 
-    potential_source_duplicates = find_potential_duplicates(target_stats, source_stats, args.ignore_diff)
-    potential_target_duplicates = find_potential_duplicates(source_stats, target_stats, args.ignore_diff)
+    potential_scan_duplicates = find_potential_duplicates(ref_stats, scan_stats, args.ignore_diff)
+    potential_ref_duplicates = find_potential_duplicates(scan_stats, ref_stats, args.ignore_diff)
 
     combined = defaultdict(defaultdict)
-    combined = process_potential_duplicates(potential_source_duplicates, combined, 'source', args)
-    combined = process_potential_duplicates(potential_target_duplicates, combined, 'target', args)
+    combined = process_potential_duplicates(potential_scan_duplicates, combined, 'source', args)
+    combined = process_potential_duplicates(potential_ref_duplicates, combined, 'target', args)
 
-    # Filter out combined items that don't have both source and target - ie size = 2
+    # Filter out combined items that don't have both scan_dir and ref - ie size = 2
     combined = {k: v for k, v in combined.items() if len(v) == 2}
     return combined
 
@@ -149,51 +149,51 @@ def process_potential_duplicates_v3(potential_duplicates, combined, key, args, k
 
 
 def find_duplicates_files_v3(args, source, target, no_reset=False):
-    reset_hash_manager(target_directory, no_reset)
-    source_stats = filter_files_by_args(args, FileManager.get_files_and_stats(source))
-    target_stats = filter_files_by_args(args, FileManager.get_files_and_stats(target))
+    reset_hash_manager(ref_directory, no_reset)
+    scan_stats = filter_files_by_args(args, FileManager.get_files_and_stats(source))
+    ref_stats = filter_files_by_args(args, FileManager.get_files_and_stats(target))
 
-    print(f"Found {len(source_stats)} files in source directory")
-    print(f"Found {len(target_stats)} files in target directory")
+    print(f"Found {len(scan_stats)} files in scan_dir directory")
+    print(f"Found {len(ref_stats)} files in reference directory")
 
-    potential_source_duplicates = find_potential_duplicates(target_stats, source_stats, args.ignore_diff)
-    potential_target_duplicates = find_potential_duplicates(source_stats, target_stats, args.ignore_diff)
+    potential_scan_duplicates = find_potential_duplicates(ref_stats, scan_stats, args.ignore_diff)
+    potential_ref_duplicates = find_potential_duplicates(scan_stats, ref_stats, args.ignore_diff)
 
     combined = defaultdict(defaultdict)
-    combined = process_potential_duplicates_v3(potential_source_duplicates, combined, 'source', args)
+    combined = process_potential_duplicates_v3(potential_scan_duplicates, combined, 'source', args)
     get_keys_function = get_file_key_parallel \
-        if (len(hash_manager.get_hashes_by_folder(target)) > len(target_stats) / 2) else get_files_keys
-    combined = process_potential_duplicates_v3(potential_target_duplicates, combined, 'target', args, get_keys_function)
+        if (len(hash_manager.get_hashes_by_folder(target)) > len(ref_stats) / 2) else get_files_keys
+    combined = process_potential_duplicates_v3(potential_ref_duplicates, combined, 'target', args, get_keys_function)
 
-    # Filter out combined items that don't have both source and target - ie size = 2
+    # Filter out combined items that don't have both scan_dir and ref - ie size = 2
     combined = {k: v for k, v in combined.items() if len(v) == 2}
     return combined
 
 
 def find_duplicates_files_v4(args, source, target, no_reset=False):
-    reset_hash_manager(target_directory, no_reset)
-    source_stats = filter_files_by_args(args, FileManager.get_files_and_stats(source))
-    target_stats = filter_files_by_args(args, FileManager.get_files_and_stats(target))
+    reset_hash_manager(ref_directory, no_reset)
+    scan_stats = filter_files_by_args(args, FileManager.get_files_and_stats(source))
+    ref_stats = filter_files_by_args(args, FileManager.get_files_and_stats(target))
 
-    print(f"Found {len(source_stats)} files in source directory")
-    print(f"Found {len(target_stats)} files in target directory")
+    print(f"Found {len(scan_stats)} files in scan_dir directory")
+    print(f"Found {len(ref_stats)} files in reference directory")
 
-    potential_source_duplicates = find_potential_duplicates(target_stats, source_stats, args.ignore_diff)
-    potential_target_duplicates = find_potential_duplicates(source_stats, target_stats, args.ignore_diff)
+    potential_scan_duplicates = find_potential_duplicates(ref_stats, scan_stats, args.ignore_diff)
+    potential_ref_duplicates = find_potential_duplicates(scan_stats, ref_stats, args.ignore_diff)
 
     combined = defaultdict(defaultdict)
-    combined = process_potential_duplicates(potential_source_duplicates, combined, 'source', args)
-    should_use_parallel = len(hash_manager.get_hashes_by_folder(target)) > len(target_stats) / 2
+    combined = process_potential_duplicates(potential_scan_duplicates, combined, 'source', args)
+    should_use_parallel = len(hash_manager.get_hashes_by_folder(target)) > len(ref_stats) / 2
     if should_use_parallel:
-        combined = process_potential_duplicates(potential_target_duplicates, combined, 'target', args)
+        combined = process_potential_duplicates(potential_ref_duplicates, combined, 'target', args)
     else:
-        for file_info in potential_target_duplicates:
+        for file_info in potential_ref_duplicates:
             file_info_key = get_file_key(args, file_info['path'])
             if 'target' not in combined[file_info_key]:
                 combined[file_info_key]['target'] = []
             combined[file_info_key]['target'].append(file_info)
 
-    # Filter out combined items that don't have both source and target - ie size = 2
+    # Filter out combined items that don't have both scan_dir and ref - ie size = 2
     combined = {k: v for k, v in combined.items() if len(v) == 2}
     return combined
 
@@ -210,8 +210,8 @@ def get_files_keys(args, file_infos):
 
 if __name__ == "__main__":
     custom_args = [
-        '--src', source_directory,
-        '--target', target_directory,
+        '--scan', scan_directory,
+        '--reference_dir', ref_directory,
         '--move_to', 'c:\\temp\\',
         '--min_size', '1',
         # '--max_size', '20KB',
@@ -226,19 +226,19 @@ if __name__ == "__main__":
 
     num = 2
 
-    time2 = timeit.timeit(lambda: find_duplicates_files_v2(final_args, source_directory, target_directory), number=num)
-    time2_2 = timeit.timeit(lambda: find_duplicates_files_v2(final_args, source_directory, target_directory, True),
+    time2 = timeit.timeit(lambda: find_duplicates_files_v2(final_args, scan_directory, ref_directory), number=num)
+    time2_2 = timeit.timeit(lambda: find_duplicates_files_v2(final_args, scan_directory, ref_directory, True),
                             number=num)
-    time1 = timeit.timeit(lambda: find_duplicates_files(final_args, source_directory, target_directory), number=num)
-    time1_2 = timeit.timeit(lambda: find_duplicates_files(final_args, source_directory, target_directory, True),
-                            number=num)
-
-    time3 = timeit.timeit(lambda: find_duplicates_files_v3(final_args, source_directory, target_directory), number=num)
-    time3_2 = timeit.timeit(lambda: find_duplicates_files_v3(final_args, source_directory, target_directory, True),
+    time1 = timeit.timeit(lambda: find_duplicates_files(final_args, scan_directory, ref_directory), number=num)
+    time1_2 = timeit.timeit(lambda: find_duplicates_files(final_args, scan_directory, ref_directory, True),
                             number=num)
 
-    time4 = timeit.timeit(lambda: find_duplicates_files_v4(final_args, source_directory, target_directory), number=num)
-    time4_2 = timeit.timeit(lambda: find_duplicates_files_v4(final_args, source_directory, target_directory, True),
+    time3 = timeit.timeit(lambda: find_duplicates_files_v3(final_args, scan_directory, ref_directory), number=num)
+    time3_2 = timeit.timeit(lambda: find_duplicates_files_v3(final_args, scan_directory, ref_directory, True),
+                            number=num)
+
+    time4 = timeit.timeit(lambda: find_duplicates_files_v4(final_args, scan_directory, ref_directory), number=num)
+    time4_2 = timeit.timeit(lambda: find_duplicates_files_v4(final_args, scan_directory, ref_directory, True),
                             number=num)
 
     print(f"find_duplicates_files: {time1:.6f} seconds")
@@ -253,25 +253,25 @@ if __name__ == "__main__":
 
     # CHECK CORRECTNESS:
 
-    # verified_duplicates = find_duplicates_files(final_args, source_directory, target_directory)
+    # verified_duplicates = find_duplicates_files(final_args, scan_directory, ref_directory)
     #
     # count_source = 0
-    # count_target = 0
+    # count_ref = 0
     # for k, v in verified_duplicates.items():
     #     if len(v) == 2:
     #         count_source += len(v['source'])
-    #         count_target += len(v['target'])
-    # print(f"Found {len(verified_duplicates)} unique duplicates files in {source_directory}")
-    # print(f"Total of {count_source} files from source are duplicates of files in {target_directory}")
-    # print(f"Those files are {count_target} files in {target_directory}")
+    #         count_ref += len(v['target'])
+    # print(f"Found {len(verified_duplicates)} unique duplicates files in {scan_directory}")
+    # print(f"Total of {count_source} files from scan_dir are duplicates of files in {ref_directory}")
+    # print(f"Those files are {count_target} files in {ref_directory}")
     #
-    # verified_duplicates2 = find_duplicates_files_v2(final_args, source_directory, target_directory)
+    # verified_duplicates2 = find_duplicates_files_v2(final_args, scan_directory, ref_directory)
     # count_source = 0
-    # count_target = 0
+    # count_ref = 0
     # for k, v in verified_duplicates2.items():
     #     if len(v) == 2:
     #         count_source += len(v['source'])
-    #         count_target += len(v['target'])
-    # print(f"V2 found {len(verified_duplicates2)} unique duplicates files in {source_directory}")
-    # print(f"Total of {count_source} files from source are duplicates of files in {target_directory}")
-    # print(f"Those files are {count_target} files in {target_directory}")
+    #         count_ref += len(v['target'])
+    # print(f"V2 found {len(verified_duplicates2)} unique duplicates files in {scan_directory}")
+    # print(f"Total of {count_source} files from scan_dir are duplicates of files in {ref_directory}")
+    # print(f"Those files are {count_target} files in {ref_directory}")

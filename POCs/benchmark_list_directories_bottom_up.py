@@ -29,7 +29,7 @@ def list_directories_bottom_up(directory, raise_on_permission_error=False):
 
 
 def list_directories_bottom_up_walk(base_path):
-    folders_by_depth = {}  # collect all folders in the source folder by depth
+    folders_by_depth = {}  # collect all folders in the scan_dir folder by depth
     for root, dirs, files in os.walk(base_path, topdown=False):
         if base_path == root:
             continue

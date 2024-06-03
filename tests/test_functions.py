@@ -1,4 +1,4 @@
-from duplicate_files_in_folders.duplicates_finder import clean_source_duplications, find_duplicates_files_v3, \
+from duplicate_files_in_folders.duplicates_finder import clean_scan_dir_duplications, find_duplicates_files_v3, \
     process_duplicates
 from duplicate_files_in_folders.file_manager import FileManager
 from duplicate_files_in_folders.utils import parse_arguments, any_is_subfolder_of, parse_size, \
@@ -11,21 +11,21 @@ logger = logging.getLogger(__name__)
 
 # Pytest test cases for parse_arguments function
 def test_parse_arguments():
-    # Test case 1: No arguments provided - will fail as src and target are required
+    # Test case 1: No arguments provided - will fail as src and ref are required
     try:
         parse_arguments([])
         assert False
     except SystemExit:
         assert True
 
-    # Test case 2: Only source and target provided - the test make sure the folders fits to the os folder style
-    source_folder = get_folder_path('source')
-    target_folder = get_folder_path('target')
+    # Test case 2: Only scan_dir and ref provided - the test make sure the folders fits to the os folder style
+    scan_dir = get_folder_path(SCAN_DIR_NAME)
+    reference_dir = get_folder_path(REF_DIR_NAME)
     move_to_folder = get_folder_path('move_to')
 
-    args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder], False)
-    assert args.src == get_folder_path('source')
-    assert args.target == get_folder_path('target')
+    args = parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder], False)
+    assert args.scan_dir == get_folder_path(SCAN_DIR_NAME)
+    assert args.reference_dir == get_folder_path(REF_DIR_NAME)
     assert args.move_to == get_folder_path('move_to')
     assert args.run is False
     assert args.extra_logging is False
@@ -40,10 +40,10 @@ def test_parse_arguments():
     assert args.old_script is False
 
     # Test case 3: Many arguments provided
-    args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+    args = parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                             '--run', '--extra_logging', '--ignore_diff', 'mdate,filename', '--copy_to_all'], False)
-    assert args.src == get_folder_path('source')
-    assert args.target == get_folder_path('target')
+    assert args.scan_dir == get_folder_path(SCAN_DIR_NAME)
+    assert args.reference_dir == get_folder_path(REF_DIR_NAME)
     assert args.move_to == get_folder_path('move_to')
     assert args.run is True
     assert args.extra_logging is True
@@ -52,11 +52,11 @@ def test_parse_arguments():
     assert args.delete_empty_folders is True
 
     # Test case 4: Many arguments provided
-    args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+    args = parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                             '--run', '--ignore_diff', 'mdate,filename', '--min_size', '1KB', '--max_size', '1MB',
                             '--whitelist_ext', 'jpg'], False)
-    assert args.src == get_folder_path('source')
-    assert args.target == get_folder_path('target')
+    assert args.scan_dir == get_folder_path(SCAN_DIR_NAME)
+    assert args.reference_dir == get_folder_path(REF_DIR_NAME)
     assert args.move_to == get_folder_path('move_to')
     assert args.run is True
     assert args.extra_logging is False
@@ -69,41 +69,41 @@ def test_parse_arguments():
 
     # Test case 5: --ignore_diff argument with invalid values
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+        parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--ignore_diff', 'invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+        parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--ignore_diff', 'mdate,invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+        parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--ignore_diff', 'mdate,checkall'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
-    args = parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+    args = parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                             '--ignore_diff', 'checkall'], False)
     assert args.ignore_diff == set()
 
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+        parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--min_size', 'invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+        parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--max_size', 'invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
     with pytest.raises(SystemExit) as excinfo:
-        parse_arguments(['--src', source_folder, '--target', target_folder, '--move_to', move_to_folder,
+        parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--min_size', '-10'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
@@ -209,55 +209,55 @@ def test_parse_size():
 
 
 def test_delete_empty_folders_in_tree(setup_teardown):
-    source_dir, target_dir, move_to_dir, _ = setup_teardown
+    scan_dir, reference_dir, move_to_dir, _ = setup_teardown
 
-    # Create the necessary subdirectories in the source and target directories
-    os.makedirs(os.path.join(source_dir, "sub1"))
-    os.makedirs(os.path.join(source_dir, "sub2"))
-    os.makedirs(os.path.join(source_dir, "sub2", "sub2_2"))
+    # Create the necessary subdirectories in the scan_dir and ref directories
+    os.makedirs(os.path.join(scan_dir, "sub1"))
+    os.makedirs(os.path.join(scan_dir, "sub2"))
+    os.makedirs(os.path.join(scan_dir, "sub2", "sub2_2"))
 
-    os.makedirs(os.path.join(target_dir, "sub1"))
+    os.makedirs(os.path.join(reference_dir, "sub1"))
 
-    # Setup the files in the source directory
-    copy_files(range(1, 6), source_dir)
-    copy_files(range(1, 6), os.path.join(source_dir, "sub1"))
-    copy_files(range(1, 6), os.path.join(source_dir, "sub2"))
-    copy_files(range(1, 6), os.path.join(source_dir, "sub2", "sub2_2"))
+    # Setup the files in the scan_dir directory
+    copy_files(range(1, 6), scan_dir)
+    copy_files(range(1, 6), os.path.join(scan_dir, "sub1"))
+    copy_files(range(1, 6), os.path.join(scan_dir, "sub2"))
+    copy_files(range(1, 6), os.path.join(scan_dir, "sub2", "sub2_2"))
 
-    copy_files(range(1, 6), target_dir)
-    copy_files(range(1, 6), os.path.join(target_dir, "sub1"))
+    copy_files(range(1, 6), reference_dir)
+    copy_files(range(1, 6), os.path.join(reference_dir, "sub1"))
 
-    common_args = ["--src", source_dir, "--target", target_dir, "--move_to", move_to_dir, "--copy_to_all"]
+    common_args = ["--scan", scan_dir, "--reference_dir", reference_dir, "--move_to", move_to_dir, "--copy_to_all"]
     test_args = common_args.copy()
 
     args = parse_arguments(test_args)
     setup_file_manager(args)
-    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, scan_dir, reference_dir)
     process_duplicates(duplicates, args)
-    clean_source_duplications(args, duplicates)
+    clean_scan_dir_duplications(args, duplicates)
     fm = FileManager.get_instance()
-    fm.delete_empty_folders_in_tree(source_dir)
+    fm.delete_empty_folders_in_tree(scan_dir)
 
-    assert os.path.exists(os.path.join(source_dir, "sub1")), "sub1 folder is empty"
-    assert os.path.exists(os.path.join(source_dir, "sub2")), "sub2 folder is empty"
-    assert os.path.exists(os.path.join(source_dir, "sub2", "sub2_2")), "sub2_2 folder is empty"
-    assert os.path.exists(os.path.join(target_dir, "sub1")), "target sub1 folder is empty"
+    assert os.path.exists(os.path.join(scan_dir, "sub1")), "sub1 folder is empty"
+    assert os.path.exists(os.path.join(scan_dir, "sub2")), "sub2 folder is empty"
+    assert os.path.exists(os.path.join(scan_dir, "sub2", "sub2_2")), "sub2_2 folder is empty"
+    assert os.path.exists(os.path.join(reference_dir, "sub1")), "ref sub1 folder is empty"
 
     run_args = common_args.copy()
     run_args.append("--run")
 
     args = parse_arguments(run_args)
     setup_file_manager(args)
-    duplicates, source_stats, target_stats = find_duplicates_files_v3(args, source_dir, target_dir)
+    duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, scan_dir, reference_dir)
     process_duplicates(duplicates, args)
-    clean_source_duplications(args, duplicates)
+    clean_scan_dir_duplications(args, duplicates)
     fm = FileManager.get_instance()
-    fm.delete_empty_folders_in_tree(source_dir)
-    logger.debug(get_folder_structure_include_subfolders(source_dir))
-    logger.debug(get_folder_structure_include_subfolders(target_dir))
+    fm.delete_empty_folders_in_tree(scan_dir)
+    logger.debug(get_folder_structure_include_subfolders(scan_dir))
+    logger.debug(get_folder_structure_include_subfolders(reference_dir))
     logger.debug(get_folder_structure_include_subfolders(move_to_dir))
 
     # check if all empty folders have been deleted
-    assert not os.path.exists(os.path.join(source_dir, "sub1")), "sub1 folder is not empty"
-    assert not os.path.exists(os.path.join(source_dir, "sub2")), "sub2 folder is not empty"  # no need to check sub2_2
-    assert os.path.exists(os.path.join(target_dir, "sub1")), "target sub1 folder is empty"
+    assert not os.path.exists(os.path.join(scan_dir, "sub1")), "sub1 folder is not empty"
+    assert not os.path.exists(os.path.join(scan_dir, "sub2")), "sub2 folder is not empty"  # no need to check sub2_2
+    assert os.path.exists(os.path.join(reference_dir, "sub1")), "reference sub1 folder is empty"
