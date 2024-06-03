@@ -235,11 +235,11 @@ def test_clean_scan_duplications_same_name_different_files_ignore_filename(setup
 
     # sub1 folder should be the same - files 1, 2 and 5
     scan_sub_files = set(os.listdir(os.path.join(scan_dir, "sub1")))
-    assert scan_sub_files == set([f"{i}.jpg" for i in range(1, 3)] + ['5.jpg']), "Source sub1 files have been moved"
+    assert scan_sub_files == set([f"{i}.jpg" for i in range(1, 3)] + ['5.jpg']), "Scan sub1 files have been moved"
 
     # sub2 folder should be - files 1 and 2
     scan_sub_files = set(os.listdir(os.path.join(scan_dir, "sub2")))
-    assert scan_sub_files == set([f"{i}.jpg" for i in range(1, 3)]), "Source sub2 files is not correct"
+    assert scan_sub_files == set([f"{i}.jpg" for i in range(1, 3)]), "Scan sub2 files is not correct"
 
     assert unique_duplicate_files_found == 1, "Unique duplicate files found"
     assert duplicate_files_moved == 1, "Wrong calculation of files to be moved to move_to directory"
