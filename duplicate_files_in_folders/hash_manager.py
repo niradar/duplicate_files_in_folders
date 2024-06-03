@@ -63,7 +63,6 @@ class HashManager:
         if os.path.exists(self.filename):
             all_data = pd.read_pickle(self.filename)
             if self.reference_dir:
-                # os.sep is needed in case ref folder is a substring of another folder,  example: /target, /target2
                 relevant_data = all_data[all_data['file_path'].str.startswith(self.reference_dir + os.sep)]
                 return relevant_data
             return all_data
@@ -159,7 +158,11 @@ class HashManager:
         return hash_value
 
     def get_hashes_by_folder(self, folder_path: str) -> dict:
-        """Get all hashes for files in a specific folder, checking both persistent and temporary data."""
+        """
+        Get all hashes stored in the cache for a folder, checking both persistent and temporary data.
+        :param folder_path: path to the folder
+        :return: a dictionary with the file paths and hash values.
+        """
         persistent_result = self.persistent_data[self.persistent_data.file_path.str.startswith(folder_path + os.sep)]
         temporary_result = self.temporary_data[self.temporary_data.file_path.str.startswith(folder_path + os.sep)]
         if persistent_result.empty and temporary_result.empty:
@@ -175,7 +178,9 @@ class HashManager:
         logger.info("Cache cleaned. All data removed.")
 
     def clean_expired_cache(self) -> None:
-        """Clean cache files that have expired."""
+        """
+        Clean the cache of expired items. Only cleans the persistent data. It doesn't save the data to the file.
+        """
         current_time = datetime.now()
         expired_files = self.persistent_data[
             (self.persistent_data.last_update < current_time - timedelta(seconds=self.MAX_CACHE_TIME))
@@ -186,8 +191,13 @@ class HashManager:
             logger.info(f"{expired_files_count} expired cache items cleaned.")
 
     def compute_hash(self, file_path: str, buffer_size=8*1024*1024) -> str:
-        """Method to compute the hash of a file."""
-
+        """
+        Compute the hash of a file by reading it in chunks. User should not call this method directly but use get_hash()
+        :param file_path: path to the file
+        :param buffer_size: size of the buffer to read the file
+        :return: the hash of the file
+        :raises: Exception if there is an error hashing the file. Should not happen in normal circumstances.
+        """
         if not self.full_hash:
             return HashManager.compute_partial_hash(file_path)
         try:
@@ -205,7 +215,12 @@ class HashManager:
 
     @staticmethod
     def compute_partial_hash(file_path: str, initial_bytes=2 * 1024 * 1024) -> str:
-        """Method to compute the partial hash of a file."""
+        """
+        Compute the hash of the first initial_bytes of a file.
+        :param file_path: path to the file
+        :param initial_bytes: number of bytes to read from the file
+        :return: the hash of the file based on the initial_bytes
+        """
         try:
             hasher = hashlib.sha256()
             with open(file_path, 'rb') as file:
@@ -217,8 +232,8 @@ class HashManager:
             logger.error(f"Error hashing {file_path}: {e}")
             raise
 
-    # debug method to print the current state of the HashManager
     def print_state(self):
+        """Print the state of the HashManager. For debugging purposes."""
         logger.info(f"Persistent data:\n{self.persistent_data}")
         logger.info(f"Temporary data:\n{self.temporary_data}")
         logger.info(f"Persistent cache hits: {self.persistent_cache_hits}")
