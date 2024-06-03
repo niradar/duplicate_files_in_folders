@@ -1,6 +1,5 @@
 import os
 import concurrent.futures
-from collections import defaultdict
 from probables import BloomFilter
 from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.file_manager import FileManager
@@ -111,6 +110,8 @@ def aggregate_duplicate_candidates(potential_duplicates: List[Dict], combined: D
     """
     parallel_results = key_func(args, potential_duplicates)
     for file_info_key, file_infos in parallel_results.items():
+        if file_info_key not in combined:
+            combined[file_info_key] = {}
         if key not in combined[file_info_key]:
             combined[file_info_key][key] = []
         for file_info in file_infos:
@@ -134,7 +135,7 @@ def find_duplicates_files_v3(args: Namespace, scan_dir: str, ref_dir: str) -> (D
     potential_ref_duplicates = find_potential_duplicates(scan_stats, ref_stats, args.ignore_diff)
 
     # Aggregate the potential duplicates into one dictionary
-    combined = defaultdict(defaultdict)
+    combined = {}
     combined = aggregate_duplicate_candidates(potential_scan_duplicates, combined, 'scan', args)
     get_keys_function = get_files_keys_parallel \
         if (len(hash_manager.get_hashes_by_folder(ref_dir)) > len(ref_stats) / 2) else get_files_keys
