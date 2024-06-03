@@ -78,7 +78,7 @@ def get_ignore_diff_string(ignore_diff_set: set[str]) -> str:
     return result
 
 
-def format_number_with_commas(number):
+def format_number_with_commas(number: int) -> str:
     """ Format a number with commas. """
     return f"{number:,}"
 
