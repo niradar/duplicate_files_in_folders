@@ -32,8 +32,12 @@ class FileManager:
 
     @classmethod
     def get_instance(cls):
+        """
+        :return: Singleton instance of the FileManager class
+        """
         if cls._instance is None:
             # create a new instance if it doesn't exist - run_mode is False by default. Should not happen in real life
+            logger.warning("Creating a new instance of FileManager with run_mode=False")
             cls._instance = cls(False)
         return cls._instance
 
@@ -205,7 +209,7 @@ class FileManager:
         }
 
     @staticmethod
-    def list_tree_os_scandir_bfs(directory: str | Path, raise_on_permission_error=False):
+    def list_tree_os_scandir_bfs(directory: str | Path, raise_on_permission_error: bool = False):
         """
         List all files in a directory and its subdirectories using os.scandir and a breadth-first search algorithm.
         :param directory: path to the directory
