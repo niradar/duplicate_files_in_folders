@@ -13,11 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 def log_and_print(message: str):
+    """ Log and print a message. """
     print(message)
     logger.info(message)
 
 
 def display_initial_config(args: Namespace):
+    """ Display the initial configuration of the script. """
     header = "=== Script Configuration ==="
     separator = "-" * 50
     blank_line = ""
@@ -56,7 +58,8 @@ def display_initial_config(args: Namespace):
     log_and_print(blank_line)
 
 
-def get_ignore_diff_string(ignore_diff_set):
+def get_ignore_diff_string(ignore_diff_set: set[str]) -> str:
+    """ Get the ignore_diff human-readable string. """
     ignore_options = {
         'mdate': 'Modification Date',
         'filename': 'File Name'
@@ -76,6 +79,7 @@ def get_ignore_diff_string(ignore_diff_set):
 
 
 def format_number_with_commas(number):
+    """ Format a number with commas. """
     return f"{number:,}"
 
 
@@ -118,9 +122,12 @@ def any_is_subfolder_of(folders: List[str]) -> bool:
     return False
 
 
-def parse_size(size_str) -> int:
+def parse_size(size_str: str | int) -> int:
     """
-    Parses a human-readable file size string (e.g., '10MB') and returns the size in bytes.
+    Parse a size string with units (B, KB, MB) to an integer size in bytes.
+    :param size_str: the size string (or integer)
+    :return: the size in bytes
+    :raises ValueError: if the size string is invalid or negative
     """
     units = {"KB": 1024, "MB": 1024 ** 2, "GB": 1024 ** 3, "B": 1}  # 'B' must be last to avoid matching 'KB'
     size_str = size_str.upper()
@@ -227,6 +234,17 @@ def parse_arguments(cust_args=None, check_folders=True):
 
 def output_results(args: Namespace, files_moved: int, files_created: int, deleted_scan_folders: int,
                    duplicate_scan_files_moved: int, scan_stats=None, ref_stats=None):
+    """
+    Output the results of the script execution.
+    :param args: The parsed arguments
+    :param files_moved: Number of files moved
+    :param files_created: Number of files created
+    :param deleted_scan_folders: Number of empty folders deleted
+    :param duplicate_scan_files_moved: Number of duplicate files moved from the scan folder
+    :param scan_stats: Output of get_files_and_stats() for the scan folder
+    :param ref_stats: Output of get_files_and_stats() for the reference folder
+    :return: None
+    """
     summary_header = "Summary (Test Mode):" if not args.run else "Summary:"
     separator = "-" * max(len(summary_header), 40)
     fixed_width = 25
