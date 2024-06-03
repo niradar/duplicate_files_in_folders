@@ -10,7 +10,12 @@ from argparse import Namespace
 
 
 def get_files_keys(args: Namespace, file_infos: List[Dict]) -> Dict[str, List[Dict]]:
-    """Generate keys for a list of files."""
+    """
+    Generate keys for a list of files.
+    :param args: Parsed arguments
+    :param file_infos: List of file stats to generate keys for
+    :return: Dictionary of file keys to file stats - each key maps to a list of file stats
+    """
     results = {}
     for file_info in file_infos:
         file_info_key = get_file_key(args, file_info['path'])
@@ -21,7 +26,12 @@ def get_files_keys(args: Namespace, file_infos: List[Dict]) -> Dict[str, List[Di
 
 
 def get_files_keys_parallel(args: Namespace, file_infos: List[Dict]) -> Dict[str, List[Dict]]:
-    """Generate keys for a list of files using parallel processing."""
+    """
+    Generate keys for a list of files using threads.
+    :param args: Parsed arguments
+    :param file_infos: List of file stats to generate keys for
+    :return: Dictionary of file keys to file stats - each key maps to a list of file stats
+    """
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_file = {executor.submit(get_file_key, args, file_info['path']): file_info for file_info in file_infos}
         results = {}
@@ -39,7 +49,12 @@ def get_files_keys_parallel(args: Namespace, file_infos: List[Dict]) -> Dict[str
 
 
 def filter_files_by_args(args: Namespace, files_stats: List[Dict]) -> List[Dict]:
-    """Filter files based on size and extensions criteria."""
+    """
+    Filter files based on size and extensions criteria.
+    :param args: Parsed arguments
+    :param files_stats: List of file stats to filter (the output of FileManager.get_files_and_stats())
+    :return: Filtered list of file stats based on the arguments
+    """
     min_size = args.min_size if args.min_size is not None else 0
     max_size = args.max_size if args.max_size is not None else float('inf')
     filtered_files = [file_info for file_info in files_stats
@@ -50,13 +65,20 @@ def filter_files_by_args(args: Namespace, files_stats: List[Dict]) -> List[Dict]
 
 
 def find_potential_duplicates(dir1_stats: List[Dict], dir2_stats: List[Dict], ignore_diff: Set[str]) -> List[Dict]:
-    """Identify potential duplicates between two directories."""
+    """
+    Find potential duplicates between two directories based on file size, name, and modified time.
+    :param dir1_stats: file stats for the first directory
+    :param dir2_stats: file stats for the second directory
+    :param ignore_diff: set of differences to ignore when comparing files
+    :return: List of potential duplicates, where each element is a dictionary of file stats
+    """
     size_bloom = BloomFilter(est_elements=len(dir1_stats), false_positive_rate=0.05)
     name_bloom = BloomFilter(est_elements=len(dir1_stats), false_positive_rate=0.05)
     modified_time_bloom = BloomFilter(est_elements=len(dir1_stats), false_positive_rate=0.05)
     check_name = 'filename' not in ignore_diff
     check_mdate = 'mdate' not in ignore_diff
 
+    # Add the file sizes, names, and modified times of the first directory to the bloom filters
     for file_info in dir1_stats:
         size_bloom.add(str(file_info['size']))
         if check_name:
@@ -64,6 +86,7 @@ def find_potential_duplicates(dir1_stats: List[Dict], dir2_stats: List[Dict], ig
         if check_mdate:
             modified_time_bloom.add(str(file_info['modified_time']))
 
+    # Find potential duplicates in the second directory based on the bloom filters
     potential_duplicates = []
     for file_info in dir2_stats:
         if (size_bloom.check(str(file_info['size'])) and
@@ -71,6 +94,7 @@ def find_potential_duplicates(dir1_stats: List[Dict], dir2_stats: List[Dict], ig
                 (not check_mdate or modified_time_bloom.check(str(file_info['modified_time'])))):
             potential_duplicates.append(file_info)
 
+    # Return the potential duplicates
     return potential_duplicates
 
 
@@ -80,10 +104,10 @@ def aggregate_duplicate_candidates(potential_duplicates: List[Dict], combined: D
     Aggregate potential duplicates into a dictionary.
     :param potential_duplicates:
     :param combined: Dictionary to store the combined results as a list under the given key
-    :param key:
-    :param args:
+    :param key: A key to store the results under
+    :param args: Parsed arguments
     :param key_func: Function to generate keys for the files
-    :return:
+    :return: Dictionary of results
     """
     parallel_results = key_func(args, potential_duplicates)
     for file_info_key, file_infos in parallel_results.items():
@@ -129,9 +153,15 @@ def find_duplicates_files_v3(args: Namespace, scan_dir: str, ref_dir: str) -> (D
 
 
 def process_duplicates(combined: Dict, args: Namespace) -> (int, int):
-    """Process the duplicates found by find_duplicates_files_v3 and move/copy it."""
+    """
+    Process the duplicates from source by moving or copying the files to the move_to folder.
+    :param combined: the dictionary of duplicates returned by find_duplicates_files_v3
+    :param args: parsed arguments
+    :return: number of files moved, number of files created
+    """
     files_created = files_moved = 0
 
+    # Process each file key in the combined dictionary - it contains the scan and ref locations of the duplicates
     for file_key, locations in combined.items():
         scan_files = locations.get('scan', [])
         ref_files = locations.get('ref', [])
@@ -164,7 +194,7 @@ def clean_scan_dir_duplications(args: Namespace, combined: Dict) -> int:
     :return: number of files moved
     """
     scan_paths = [file_info['path'] for key, locations in combined.items() if 'scan' in locations for file_info in
-                    locations['scan'] if os.path.exists(file_info['path'])]
+                  locations['scan'] if os.path.exists(file_info['path'])]
     scan_dups_move_to: str = str(os.path.join(args.move_to, os.path.basename(args.scan_dir) + "_dups"))
     for src_path in scan_paths:
         copy_or_move_file(src_path, scan_dups_move_to, src_path, args.scan_dir, move=True)
