@@ -90,6 +90,12 @@ pip install -r requirements.txt
 ## Possible Future Improvements
 - [ ] Better handling of folders with saved html files
   - [ ] Deal with `_files` folders in the scan folder - Move it only if all files are duplicates
+- [ ] Search duplicates in compressed files
+- [ ] Detect older versions of files
+- [ ] Add a GUI for the script
+- [ ] Compare folders, not single files
+- [ ] Ability to ask questions on the data, e.g.:
+  - [ ] "How many files with the same name are in specific folders?"
 ## Known Issues
 - [ ] Even if argument --copy_to_all is not present, still need to move the duplicates to the move_to folder without copying them to other folders
 - [ ] Issue with files with non-standard characters in the filename - not reproducible yet
