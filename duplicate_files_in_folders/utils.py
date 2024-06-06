@@ -154,6 +154,7 @@ def parse_arguments(cust_args=None, check_folders=True):
     :param check_folders: for testing - if False, skip folder validation
     :return: the parsed arguments
     """
+    # Define the command line arguments
     parser = argparse.ArgumentParser(
         description="Identify duplicate files between scan and reference folders, "
                     "move duplicates from scan folder to a separate folder.")
@@ -188,6 +189,7 @@ def parse_arguments(cust_args=None, check_folders=True):
     parser.add_argument('--old_script', action='store_true', help=argparse.SUPPRESS)  # for testing
     args = parser.parse_args(cust_args if cust_args else None)
 
+    # Validate the folders given in the arguments
     if check_folders:
         folders = [(args.scan_dir, "Scan Folder"), (args.reference_dir, "Reference Folder")]
         for folder, name in folders:
@@ -195,11 +197,13 @@ def parse_arguments(cust_args=None, check_folders=True):
                 parser.error(f"{name} folder does not exist.")
             if not os.listdir(folder):
                 parser.error(f"{name} folder is empty.")
-
     any_is_subfolder_of([args.scan_dir, args.reference_dir, args.move_to])
 
+    # for testing, barely used
     if args.extra_logging:
         logger.setLevel(logging.DEBUG)
+
+    # Validate the ignore_diff setting
     args.ignore_diff = set(str(args.ignore_diff).split(','))
     if not args.ignore_diff.issubset({'mdate', 'filename', 'checkall'}):
         parser.error("Invalid ignore_diff setting: must be 'mdate', 'filename' or 'checkall'.")
@@ -211,25 +215,24 @@ def parse_arguments(cust_args=None, check_folders=True):
     # Convert whitelist and blacklist to sets and check for mutual exclusivity
     args.whitelist_ext = set(str(args.whitelist_ext).split(',')) if args.whitelist_ext else None
     args.blacklist_ext = set(str(args.blacklist_ext).split(',')) if args.blacklist_ext else None
-
     if args.whitelist_ext and args.blacklist_ext:
         parser.error("You cannot specify both --whitelist_ext and --blacklist_ext at the same time.")
 
+    # Validate the size constraints
     if args.min_size:
         try:
             args.min_size = parse_size(args.min_size)
         except ValueError as e:
             parser.error(f"Invalid value for --min_size: {e}")
-
     if args.max_size:
         try:
             args.max_size = parse_size(args.max_size)
         except ValueError as e:
             parser.error(f"Invalid value for --max_size: {e}")
-
     if args.min_size and args.max_size and args.min_size > args.max_size:
         parser.error("Minimum size must be less than maximum size.")
 
+    # Return the parsed arguments - at this point, they are valid
     return args
 
 
