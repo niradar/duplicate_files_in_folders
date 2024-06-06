@@ -31,7 +31,7 @@ def display_initial_config(args: Namespace):
         "\"Move to\" Folder": args.move_to,
         "Ignoring Settings": get_ignore_diff_string(args.ignore_diff),
         "Files Content": "Full Content Check (Slower)" if args.full_hash else "Partial Content Check (Faster)",
-        "Size Constraints": get_size_constraints_string(args.min_size, args.max_size),
+        "Size Constraints": get_size_constraints_string(min_size=args.min_size, max_size=args.max_size),
     }
     # args.whitelist_ext is a set
     if args.whitelist_ext:
@@ -61,6 +61,7 @@ def display_initial_config(args: Namespace):
 def get_ignore_diff_string(ignore_diff_set: set[str]) -> str:
     """ Get the ignore_diff human-readable string. """
     ignore_options = {
+        'size': 'File Size',
         'mdate': 'Modification Date',
         'filename': 'File Name'
     }
@@ -74,7 +75,7 @@ def get_ignore_diff_string(ignore_diff_set: set[str]) -> str:
     checked_parts = all_options - ignore_diff_set
     checked_parts_str = ', '.join([ignore_options[item] for item in checked_parts])
 
-    result = f"Ignore: {ignored_str}. Check: File Size, {checked_parts_str}."
+    result = f"Ignore: {ignored_str}. Check: {checked_parts_str}."
     return result
 
 
