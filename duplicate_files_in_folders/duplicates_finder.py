@@ -1,5 +1,7 @@
 import os
 import concurrent.futures
+
+import tqdm
 from probables import BloomFilter
 from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.file_manager import FileManager
@@ -163,7 +165,7 @@ def process_duplicates(combined: Dict, args: Namespace) -> (int, int):
     files_created = files_moved = 0
 
     # Process each file key in the combined dictionary - it contains the scan and ref locations of the duplicates
-    for file_key, locations in combined.items():
+    for file_key, locations in tqdm.tqdm(combined.items(), desc='Processing duplicates'):
         scan_files = locations.get('scan', [])
         ref_files = locations.get('ref', [])
 

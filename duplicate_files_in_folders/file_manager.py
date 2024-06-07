@@ -262,7 +262,7 @@ class FileManager:
         return files_stats
 
     def delete_empty_folders_in_tree(self, base_path: str, show_progress: bool = False,
-                                     progress_desc: str = "Deleting empty folders") -> int:
+                                     progress_desc: str = "Looking for empty folders") -> int:
         """
         Delete empty folders in a directory tree
         :param base_path: path to the directory
