@@ -78,10 +78,12 @@ def find_potential_duplicates(dir1_stats: List[Dict], dir2_stats: List[Dict], ig
     modified_time_bloom = BloomFilter(est_elements=len(dir1_stats), false_positive_rate=0.05)
     check_name = 'filename' not in ignore_diff
     check_mdate = 'mdate' not in ignore_diff
+    check_size = 'size' not in ignore_diff  # for now, size is always checked but can be ignored in the future
 
     # Add the file sizes, names, and modified times of the first directory to the bloom filters
     for file_info in dir1_stats:
-        size_bloom.add(str(file_info['size']))
+        if check_size:
+            size_bloom.add(str(file_info['size']))
         if check_name:
             name_bloom.add(file_info['name'])
         if check_mdate:
@@ -90,7 +92,8 @@ def find_potential_duplicates(dir1_stats: List[Dict], dir2_stats: List[Dict], ig
     # Find potential duplicates in the second directory based on the bloom filters
     potential_duplicates = []
     for file_info in dir2_stats:
-        if (size_bloom.check(str(file_info['size'])) and
+        if (
+                (not check_size or size_bloom.check(str(file_info['size']))) and
                 (not check_name or name_bloom.check(file_info['name'])) and
                 (not check_mdate or modified_time_bloom.check(str(file_info['modified_time'])))):
             potential_duplicates.append(file_info)
