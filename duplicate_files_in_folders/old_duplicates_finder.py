@@ -125,18 +125,18 @@ def move_to_ref_paths(args, src_filepath, ref_paths_to_copy, scan_duplicates, fi
     scan_duplicates.sort(key=lambda x: x[0], reverse=True)  # sort by path name reverse for easier testing
 
     if not args.copy_to_all:
-        copy_or_move_file(ref_paths_to_copy[0], args.move_to, src_filepath, args.reference_dir)
+        copy_or_move_file(src_filepath, args.move_to, ref_paths_to_copy[0], args.reference_dir)
         return files_created, files_moved + 1
 
     num_to_copy = max(0, len(ref_paths_to_copy) - len(scan_duplicates))
     if num_to_copy:  # Copy first scan_dir to make up for fewer scan_dir duplicates
         for i in range(num_to_copy):
-            copy_or_move_file(ref_paths_to_copy[i], args.move_to, src_filepath, args.reference_dir, False)
+            copy_or_move_file(src_filepath, args.move_to, ref_paths_to_copy[i], args.reference_dir, False)
             files_created += 1
 
     # Move each scan_dir duplicate to the corresponding ref path
     for (src, _), tgt in zip(scan_duplicates, ref_paths_to_copy[num_to_copy:]):
-        copy_or_move_file(tgt, args.move_to, src, args.reference_dir, move=True)
+        copy_or_move_file(src, args.move_to, tgt, args.reference_dir, move=True)
         files_moved += 1
 
     return files_created, files_moved

@@ -177,16 +177,16 @@ def process_duplicates(combined: Dict, args: Namespace) -> (int, int):
 
         # Copy or move files to reference locations
         if not args.copy_to_all:
-            copy_or_move_file(ref_files[0]['path'], args.move_to, src_filepath, args.reference_dir, move=True)
+            copy_or_move_file(src_filepath, args.move_to, ref_files[0]['path'], args.reference_dir, move=True)
             files_moved += 1
         else:
             num_to_copy = max(0, len(ref_files) - len(srcs_to_move))
             for i in range(num_to_copy):
-                copy_or_move_file(ref_files[i]['path'], args.move_to, src_filepath, args.reference_dir, False)
+                copy_or_move_file(src_filepath, args.move_to, ref_files[i]['path'], args.reference_dir, False)
                 files_created += 1
 
             for (src, _), tgt in zip(srcs_to_move, ref_files[num_to_copy:]):
-                copy_or_move_file(tgt['path'], args.move_to, src, args.reference_dir, move=True)
+                copy_or_move_file(src, args.move_to, tgt['path'], args.reference_dir, move=True)
                 files_moved += 1
 
     return files_moved, files_created

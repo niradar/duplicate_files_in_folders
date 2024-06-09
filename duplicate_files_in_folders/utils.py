@@ -309,14 +309,16 @@ def setup_file_manager(args: Namespace):
     return fm
 
 
-def copy_or_move_file(ref_file_path: str, destination_base_path: str, scan_file_path: str, base_ref_path: str,
+def copy_or_move_file(scan_file_path: str, destination_base_path: str, ref_file_path: str, base_ref_path: str,
                       move: bool = True) -> str:
     """
     Copy or move a file from the source to the reference directory.
-    :param ref_file_path:
-    :param destination_base_path:
-    :param scan_file_path:
-    :param base_ref_path:
+    :param scan_file_path: Full path of the file we want to copy/move
+    :param ref_file_path: The full path to the reference file within the base reference directory.
+                          This path is used to determine the relative path for the destination.
+    :param destination_base_path: The base path where the file should be copied or moved to.
+    :param base_ref_path: The base directory path of the reference files.
+                          This is used to calculate the relative path of the ref_file_path.
     :param move: True to move the file, False to copy it
     :return: the final destination path
     """
@@ -333,17 +335,16 @@ def copy_or_move_file(ref_file_path: str, destination_base_path: str, scan_file_
     return final_destination_path
 
 
-def check_and_update_filename(original_filename: str) -> str:
+def check_and_update_filename(original_filename: str, renaming_function=lambda original_filename: f"{os.path.splitext(original_filename)[0]}_{int(time.time())}{os.path.splitext(original_filename)[1]}") -> str:
     """
     Check if the filename already exists and rename it to avoid overwriting.
-    :param original_filename:
+    :param original_filename: the original filename
+    :param renaming_function: function that receives the original filename and returns the new filename
     :return:
     """
     new_filename = original_filename
     if os.path.exists(original_filename):
-        timestamp = int(time.time())  # Get current Unix timestamp
-        base, ext = os.path.splitext(original_filename)
-        new_filename = f"{base}_{timestamp}{ext}"  # Append timestamp to the filename
+        new_filename = renaming_function(original_filename)
         logger.info(f"Renaming of {original_filename} to {new_filename} is needed to avoid overwrite.")
     return new_filename
 
