@@ -5,8 +5,8 @@ from duplicate_files_in_folders.duplicates_finder import find_duplicates_files_v
     clean_scan_dir_duplications
 from duplicate_files_in_folders.logging_config import setup_logging
 from duplicate_files_in_folders.old_duplicates_finder import find_and_process_duplicates
-from duplicate_files_in_folders.utils import (confirm_script_execution, parse_arguments, output_results,
-                                              display_initial_config, setup_hash_manager, setup_file_manager)
+from duplicate_files_in_folders.utils import parse_arguments, setup_hash_manager, setup_file_manager
+from duplicate_files_in_folders.utils_io import display_initial_config, output_results, confirm_script_execution
 
 
 def main(args):
