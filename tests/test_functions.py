@@ -227,6 +227,7 @@ def test_delete_empty_folders_in_tree(setup_teardown):
     copy_files(range(1, 6), reference_dir)
     copy_files(range(1, 6), os.path.join(reference_dir, "sub1"))
 
+    # run in test mode, no files will be moved
     common_args = ["--scan", scan_dir, "--reference_dir", reference_dir, "--move_to", move_to_dir, "--copy_to_all"]
     test_args = common_args.copy()
 
@@ -238,11 +239,12 @@ def test_delete_empty_folders_in_tree(setup_teardown):
     fm = FileManager.get_instance()
     fm.delete_empty_folders_in_tree(scan_dir)
 
-    assert os.path.exists(os.path.join(scan_dir, "sub1")), "sub1 folder is empty"
-    assert os.path.exists(os.path.join(scan_dir, "sub2")), "sub2 folder is empty"
-    assert os.path.exists(os.path.join(scan_dir, "sub2", "sub2_2")), "sub2_2 folder is empty"
-    assert os.path.exists(os.path.join(reference_dir, "sub1")), "ref sub1 folder is empty"
+    assert os.path.exists(os.path.join(scan_dir, "sub1")), "sub1 folder does not exist"
+    assert os.path.exists(os.path.join(scan_dir, "sub2")), "sub2 folder does not exist"
+    assert os.path.exists(os.path.join(scan_dir, "sub2", "sub2_2")), "sub2_2 folder does not exist"
+    assert os.path.exists(os.path.join(reference_dir, "sub1")), "ref sub1 folder does not exist"
 
+    # run in run mode, files will be moved
     run_args = common_args.copy()
     run_args.append("--run")
 
@@ -258,6 +260,6 @@ def test_delete_empty_folders_in_tree(setup_teardown):
     logger.debug(get_folder_structure_include_subfolders(move_to_dir))
 
     # check if all empty folders have been deleted
-    assert not os.path.exists(os.path.join(scan_dir, "sub1")), "sub1 folder is not empty"
-    assert not os.path.exists(os.path.join(scan_dir, "sub2")), "sub2 folder is not empty"  # no need to check sub2_2
-    assert os.path.exists(os.path.join(reference_dir, "sub1")), "reference sub1 folder is empty"
+    assert not os.path.exists(os.path.join(scan_dir, "sub1")), "sub1 folder exists"
+    assert not os.path.exists(os.path.join(scan_dir, "sub2")), "sub2 folder exists"  # no need to check sub2_2
+    assert os.path.exists(os.path.join(reference_dir, "sub1")), "reference sub1 folder does not exist"
