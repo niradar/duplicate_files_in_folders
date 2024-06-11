@@ -37,7 +37,6 @@ def test_parse_arguments():
     assert args.whitelist_ext is None
     assert args.blacklist_ext is None
     assert args.full_hash is False
-    assert args.old_script is False
 
     # Test case 3: Many arguments provided
     args = parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,

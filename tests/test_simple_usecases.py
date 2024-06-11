@@ -218,14 +218,3 @@ def test_scan_argument_instead_of_src_to_instead_of_move_to(setup_teardown):
     main(args)
 
     simple_usecase_test(scan_dir, reference_dir, move_to_dir, 3)
-
-
-def test_old_script_sanity(setup_teardown):
-    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
-    setup_test_files(range(1, 4), range(1, 4))
-    common_args.append("--old_script")
-    args = parse_arguments(common_args)
-    assert args.old_script, "Old script flag not set"
-    main(args)
-
-    simple_usecase_test(scan_dir, reference_dir, move_to_dir, 3)
