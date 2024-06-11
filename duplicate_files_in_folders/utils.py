@@ -97,11 +97,23 @@ def get_size_constraints_string(min_size=None, max_size=None) -> str:
 def confirm_script_execution(args: Namespace):
     """ Confirm the script execution if not run by pytest. """
     if not detect_pytest():
-        print(f"This script will move duplicate files from {args.scan_dir}. No additional confirmation will be asked.")
+        if not args.run:
+            print("This script is currently in test mode. No files will be moved.")
+            print(f"In run mode, duplicate files will be moved from {args.scan_dir} to {args.move_to}.")
+        else:
+            print(f"This script will move duplicate files from {args.scan_dir}. "
+                  f"No additional confirmation will be asked.")
         print("Do you want to continue? (y/n): ")
-        if input().lower() != 'y':
-            print("Exiting the script.")
-            sys.exit(0)
+        # while loop until the user enters 'y' or 'n'
+        while True:
+            user_input = input().lower()
+            if user_input == 'y':
+                break
+            elif user_input == 'n':
+                print("Exiting the script.")
+                sys.exit(0)
+            else:
+                print("Invalid input. Please enter 'y' or 'n'.")
 
 
 def detect_pytest():
