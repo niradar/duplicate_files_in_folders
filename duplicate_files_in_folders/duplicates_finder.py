@@ -196,7 +196,7 @@ def clean_scan_dir_duplications(args: Namespace, combined: Dict) -> int:
     """
     Clean up the scan_dir duplications after moving files to the move_to folder.
     :param args:
-    :param combined: a dictionary which all the files until 'scan' (for all keys) are moved to the move_to folder
+    :param combined: a dictionary which all the files under 'scan' (for all keys) are moved to the move_to folder
     :return: number of files moved
     """
     scan_paths = [file_info['path'] for key, locations in combined.items() if 'scan' in locations for file_info in
