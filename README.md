@@ -43,7 +43,9 @@ python df_finder3.py --scan_dir <scan_folder> --reference_dir <reference_folder>
 - `--min_size`: Minimum file size to include. Specify with units (B, KB, MB).
 - `--max_size`: Maximum file size to include. Specify with units (B, KB, MB).
 - `--full_hash`: Use full file hash for comparison. Default is partial.
-
+- `--action`: Action to take on duplicates. Default is `move_duplicates`. Options are `create_csv`, `move_duplicates`. 
+    - `create_csv` - Create a CSV file with the list of duplicates.
+    - `move_duplicates` - Move duplicates from scan folder to move_to folder.
 ### Example
 
 #### Simple usage:
@@ -53,21 +55,21 @@ python df_finder3.py --scan_dir /path/to/scan_dir --reference_dir /path/to/refer
 #### Most common usage:
 Ignore differences in modification dates, copy the file to all target folders if found in multiple folders, and run without test mode:
 ```sh
-python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --move_to /path/to/move_to --run --ignore_diff mdate --copy_to_all
+python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --run --ignore_diff mdate --copy_to_all
 ```
 
 #### Using Whitelist and Blacklist
 ```sh
-python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --move_to /path/to/move_to --whitelist_ext jpg,png --run
+python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --whitelist_ext jpg,png --run
 ```
 
 ```sh
-python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --move_to /path/to/move_to --blacklist_ext tmp,log --run
+python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --blacklist_ext tmp,log --run
 ```
 
 #### Filtering by File Size
 ```sh
-python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --move_to /path/to/move_to --min_size 1MB --max_size 100MB --run
+python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --min_size 1MB --max_size 100MB --run
 ```
 
 ## Installation

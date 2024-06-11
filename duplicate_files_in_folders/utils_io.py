@@ -38,7 +38,11 @@ def display_initial_config(args: Namespace):
     if not args.delete_empty_folders:
         config_items["Empty Folders"] = "Do Not Delete Empty Folders in Scan Folder"
 
-    config_items["Script Mode"] = "Run Mode" if args.run else "Test Mode"
+    config_items["Script Mode"] = (
+        "Create CSV File" if args.action == 'create_csv' else
+        "Run Mode" if args.run else
+        "Test Mode"
+    )
 
     # Print header
     log_and_print(blank_line)
@@ -142,12 +146,17 @@ def output_results(args: Namespace, files_moved: int, files_created: int, delete
 def confirm_script_execution(args: Namespace):
     """ Confirm the script execution if not run by pytest. """
     if not detect_pytest():
-        if not args.run:
-            print("This script is currently in test mode. No files will be moved.")
-            print(f"In run mode, duplicate files will be moved from {args.scan_dir} to {args.move_to}.")
-        else:
-            print(f"This script will move duplicate files from {args.scan_dir}. "
-                  f"No additional confirmation will be asked.")
+        if args.action == 'move_duplicates':
+            if not args.run:
+                print("This script is currently in test mode. No files will be moved.")
+                print(f"In run mode, duplicate files will be moved from {args.scan_dir} to {args.move_to}.")
+            else:
+                print(f"This script will move duplicate files from {args.scan_dir}. "
+                      f"No additional confirmation will be asked.")
+        elif args.action == 'create_csv':
+            print(f"This script will create a CSV file in {args.move_to}. The folder will be created if it doesn't "
+                  f"exist.")
+
         print("Do you want to continue? (y/n): ")
         # while loop until the user enters 'y' or 'n'
         while True:

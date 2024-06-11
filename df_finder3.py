@@ -2,7 +2,7 @@
 # https://github.com/niradar/duplicate_files_in_folders
 
 from duplicate_files_in_folders.duplicates_finder import find_duplicates_files_v3, process_duplicates, \
-    clean_scan_dir_duplications
+    clean_scan_dir_duplications, create_csv_file
 from duplicate_files_in_folders.logging_config import setup_logging
 from duplicate_files_in_folders.utils import parse_arguments, setup_hash_manager, setup_file_manager
 from duplicate_files_in_folders.utils_io import display_initial_config, output_results, confirm_script_execution
@@ -16,13 +16,19 @@ def main(args):
     hash_manager = setup_hash_manager(args)
 
     duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, args.scan_dir, args.reference_dir)
-    files_moved, files_created = process_duplicates(duplicates, args)
-    duplicate_scan_files_moved = clean_scan_dir_duplications(args, duplicates)
-    deleted_scan_folders = fm.delete_empty_folders_in_tree(args.scan_dir, True) if args.delete_empty_folders else 0
+
+    if args.action == 'move_duplicates':
+        files_moved, files_created = process_duplicates(duplicates, args)
+        duplicate_scan_files_moved = clean_scan_dir_duplications(args, duplicates)
+        deleted_scan_folders = fm.delete_empty_folders_in_tree(args.scan_dir, True) if args.delete_empty_folders else 0
+
+        output_results(args, files_moved, files_created, deleted_scan_folders, duplicate_scan_files_moved,
+                       scan_stats, ref_stats)
+    elif args.action == 'create_csv':
+        # Always run in run mode as it creates a file and maybe a folder.
+        fm.with_run_mode(create_csv_file, args, duplicates)
 
     hash_manager.save_data()
-    output_results(args, files_moved, files_created, deleted_scan_folders, duplicate_scan_files_moved,
-                   scan_stats, ref_stats)
 
 
 if __name__ == "__main__":

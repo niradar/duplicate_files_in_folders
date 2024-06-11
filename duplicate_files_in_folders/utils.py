@@ -94,6 +94,14 @@ def parse_arguments(cust_args=None, check_folders=True):
     parser.set_defaults(delete_empty_folders=True)
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)  # for testing
     parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
+
+    # add new argument for action that can get the following values: 'move_duplicates', 'create_csv' only as values
+    parser.add_argument('--action', type=str, choices=['move_duplicates', 'create_csv'],
+                        help='Action to perform: move_duplicates, create_csv', default='move_duplicates')
+
+
+
+
     args = parser.parse_args(cust_args if cust_args else None)
 
     # Validate the folders given in the arguments

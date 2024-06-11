@@ -332,3 +332,17 @@ class FileManager:
         for dir_path in allowed_dirs:
             fm.add_allowed_dir(dir_path)
         return fm
+
+    def with_run_mode(self, func, *args, **kwargs):
+        """
+        Run a function with the run_mode set to True, then reset it to its previous state.
+        :param func: function to run
+        :param args:
+        :param kwargs:
+        :return: result of the function
+        """
+        prev_state = self.run_mode
+        self.run_mode = True
+        result = func(*args, **kwargs)
+        self.run_mode = prev_state
+        return result

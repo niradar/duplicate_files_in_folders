@@ -1,5 +1,7 @@
+import csv
 import os
 import concurrent.futures
+from datetime import datetime
 
 import tqdm
 from probables import BloomFilter
@@ -192,10 +194,34 @@ def process_duplicates(combined: Dict, args: Namespace) -> (int, int):
     return files_moved, files_created
 
 
+def create_csv_file(args: Namespace, combined: Dict) -> None:
+    """
+    Create a CSV file with the duplicate files' information.
+    :param args: parsed arguments
+    :param combined: the dictionary of duplicates returned by find_duplicates_files_v3
+    :return: number of files moved
+    """
+    csv_file = os.path.join(args.move_to, os.path.basename(args.scan_dir) + "_dups.csv")
+    if not os.path.exists(args.move_to):
+        FileManager.get_instance().make_dirs(args.move_to)
+
+    # Every line in the CSV file will contain a single duplicate file. The first line will contain the header.
+    with open(csv_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["key", "path", "size", "modified_time"])
+        key = 1
+        for file_key, locations in combined.items():
+            for category, files in locations.items():
+                for file in files:
+                    writer.writerow([key, file['path'], file['size'], datetime.fromtimestamp(file['modified_time'])])
+            key += 1
+
+
+
 def clean_scan_dir_duplications(args: Namespace, combined: Dict) -> int:
     """
     Clean up the scan_dir duplications after moving files to the move_to folder.
-    :param args:
+    :param args: parsed arguments
     :param combined: a dictionary which all the files under 'scan' (for all keys) are moved to the move_to folder
     :return: number of files moved
     """
