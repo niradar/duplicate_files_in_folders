@@ -130,6 +130,11 @@ def find_duplicates_files_v3(args: Namespace, scan_dir: str, ref_dir: str) -> (D
     """
      Find duplicate files between scan_dir and ref directories.
      Returns a dictionary of duplicates and the file stats for both directories.
+    :param args: parsed arguments
+    :param scan_dir: the directory to scan for duplicates
+    :param ref_dir: the reference directory
+    :return: a dictionary of duplicates, the file stats for the scan directory, and the file stats for the reference directory
+             Dictionary format: {file_key: {'scan': [file_info], 'ref': [file_info]}}
     """
     hash_manager = HashManager.get_instance()
 
