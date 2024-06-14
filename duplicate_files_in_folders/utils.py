@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 def detect_pytest():
-    """ Detect if the script is run by pytest. """
+    """ Detect if the script is run by pytest.
+    :return: True if the script is run by pytest, False otherwise"""
     return 'PYTEST_CURRENT_TEST' in os.environ
 
 
@@ -98,9 +99,6 @@ def parse_arguments(cust_args=None, check_folders=True):
     # add new argument for action that can get the following values: 'move_duplicates', 'create_csv' only as values
     parser.add_argument('--action', type=str, choices=['move_duplicates', 'create_csv'],
                         help='Action to perform: move_duplicates, create_csv', default='move_duplicates')
-
-
-
 
     args = parser.parse_args(cust_args if cust_args else None)
 
@@ -206,7 +204,7 @@ def check_and_update_filename(original_filename: str, renaming_function=lambda o
     Check if the filename already exists and rename it to avoid overwriting.
     :param original_filename: the original filename
     :param renaming_function: function that receives the original filename and returns the new filename
-    :return:
+    :return: the new filename if the original filename exists, otherwise the original filename
     """
     new_filename = original_filename
     if os.path.exists(original_filename):
@@ -219,6 +217,9 @@ def get_file_key(args: Namespace, file_path: str) -> str:
     """
     Generate a unique key for the file based on hash, filename, and modified date. Ignores components based on args.
     Example: 'hash_key_filename_mdate' or 'hash_key_mdate' or 'hash_key_filename' or 'hash_key'
+    :param args: the parsed arguments
+    :param file_path: the full path of the file
+    :return: the unique key for the file
     """
     hash_key: str = HashManager.get_instance().get_hash(file_path)
     file_key: str = file_path[file_path.rfind(os.sep) + 1:] if 'filename' not in args.ignore_diff else None
