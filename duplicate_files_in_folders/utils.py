@@ -1,9 +1,7 @@
 import argparse
 import logging
 import os
-import sys
 import time
-from typing import List
 from argparse import Namespace
 
 from duplicate_files_in_folders.file_manager import FileManager
@@ -51,12 +49,6 @@ def initialize_arguments(cust_args=None):
     parser = argparse.ArgumentParser(
         description="Identify duplicate files between scan and reference folders, "
                     "move duplicates from scan folder to a separate folder.")
-    parser.add_argument('--scan_dir', '--scan', '--s', dest='scan_dir', required=True,
-                        help='Path - folder to scan for duplicates.')
-    parser.add_argument('--reference_dir', '--reference', '--r', required=True,
-                        help='Path - folder to compare with scan_dir.')
-    parser.add_argument('--move_to', '--to', required=True, type=str,
-                        help='Path - duplicate files from scan_dir will be moved to this folder.')
     parser.add_argument('--run', action='store_true', help='Run without test mode. Default is test mode.')
     parser.add_argument('--ignore_diff', type=str, help='Comma-separated list of differences to ignore: '
                                                         'mdate, filename, none. Default is ignore mdate.',
@@ -82,6 +74,13 @@ def initialize_arguments(cust_args=None):
 
     parser.add_argument('--action', type=str, choices=['move_duplicates', 'create_csv'],
                         help='Action to perform: move_duplicates, create_csv', default='move_duplicates')
+
+    parser.add_argument('--scan_dir', '--scan', '--s', dest='scan_dir', required=True,
+                        help='Path - folder to scan for duplicates.')
+    parser.add_argument('--reference_dir', '--reference', '--r', required=True,
+                        help='Path - folder to compare with scan_dir.')
+    parser.add_argument('--move_to', '--to', required=True, type=str,
+                        help='Path - duplicate files from scan_dir will be moved to this folder.')
 
     args = parser.parse_args(cust_args if cust_args else None)
     return args

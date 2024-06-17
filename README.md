@@ -50,30 +50,30 @@ python df_finder3.py --scan_dir <scan_folder> --reference_dir <reference_folder>
 
 #### Simple usage:
 ```sh
-python df_finder3.py --scan_dir /path/to/scan_dir --reference_dir /path/to/reference_dir --move_to /path/to/move_to --run
+python df_finder3.py --run --scan_dir /path/to/scan_dir --reference_dir /path/to/reference_dir --move_to /path/to/move_to
 ```
 #### Most common usage:
 Ignore differences in modification dates, copy the file to all target folders if found in multiple folders, and run without test mode:
 ```sh
-python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --run --ignore_diff mdate --copy_to_all
+python df_finder3.py --run --ignore_diff mdate --copy_to_all --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to
 ```
 
 #### Using Whitelist and Blacklist
 ```sh
-python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --whitelist_ext jpg,png --run
+python df_finder3.py --whitelist_ext jpg,png --run --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to
 ```
 
 ```sh
-python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --blacklist_ext tmp,log --run
+python df_finder3.py --blacklist_ext tmp,log --run --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to
 ```
 
 #### Filtering by File Size
 ```sh
-python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --min_size 1MB --max_size 100MB --run
+python df_finder3.py --min_size 1MB --max_size 100MB --run --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to
 ```
 #### Ignore none of the differences
 ```sh
-python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --ignore_diff none --run
+python df_finder3.py --ignore_diff none --run --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to
 ```
 
 ## Installation
