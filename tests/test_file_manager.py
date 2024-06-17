@@ -1,11 +1,12 @@
 from tests.helpers_testing import *
 from pathlib import Path
+from duplicate_files_in_folders.file_manager import FileManager
 
 
 def test_move_file(setup_teardown):
     scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
     setup_test_files(range(1, 6), [2])
-    fm = file_manager.FileManager(True).reset_all()
+    fm = FileManager(True).reset_all()
     fm.add_protected_dir(reference_dir)
     file_to_move = os.path.join(scan_dir, "1.jpg")
     dst_file = os.path.join(reference_dir, "1.jpg")
@@ -41,7 +42,7 @@ def test_move_file(setup_teardown):
 def test_copy_file(setup_teardown):
     scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
     setup_test_files(range(1, 6), [2, 3])
-    fm = file_manager.FileManager(True).reset_all()
+    fm = FileManager(True).reset_all()
     fm.add_protected_dir(reference_dir)
     file_to_copy = os.path.join(scan_dir, "1.jpg")
     dst_file = os.path.join(reference_dir, "1.jpg")
@@ -85,7 +86,7 @@ def test_copy_file(setup_teardown):
 def test_delete_file(setup_teardown):
     scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
     setup_test_files(range(1, 6), [2, 3])
-    fm = file_manager.FileManager(True).reset_all()
+    fm = FileManager(True).reset_all()
     fm.add_protected_dir(reference_dir)
     file_to_delete = os.path.join(scan_dir, "1.jpg")
 
@@ -117,7 +118,7 @@ def test_delete_file(setup_teardown):
 
 def test_make_dirs(setup_teardown):
     scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
-    fm = file_manager.FileManager(True).reset_all()
+    fm = FileManager(True).reset_all()
     fm.add_protected_dir(reference_dir)
     dir_to_make = os.path.join(scan_dir, "new_dir")
 
@@ -150,7 +151,7 @@ def test_make_dirs(setup_teardown):
 
 def test_rmdir(setup_teardown):
     scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
-    fm = file_manager.FileManager(True).reset_all()
+    fm = FileManager(True).reset_all()
     fm.add_protected_dir(reference_dir)
     dir_to_remove = os.path.join(scan_dir, "new_dir")
     os.makedirs(dir_to_remove)
@@ -188,8 +189,8 @@ def test_rmdir(setup_teardown):
 
 # The FileManager class should be a singleton, so we should not be able to create multiple instances of it.
 def test_singleton():
-    fm1 = file_manager.FileManager(True)
-    fm2 = file_manager.FileManager(True)
+    fm1 = FileManager(True)
+    fm2 = FileManager(True)
     assert fm1 is fm2
     assert fm1 == fm2
     assert fm1 is not None
@@ -197,7 +198,7 @@ def test_singleton():
 
 
 def test_add_protected_dir():
-    fm = file_manager.FileManager(True).reset_all()
+    fm = FileManager(True).reset_all()
     fm.add_protected_dir("C:\\")
     fm.add_protected_dir("D:\\")
     assert len(fm.protected_dirs) == 2
@@ -216,7 +217,7 @@ def get_folder_files_as_set(folder):
 def test_list_tree_os_scandir_bfs_simple(setup_teardown):
     scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
     setup_test_files(range(1, 6), [2, 3])
-    fm = file_manager.FileManager.get_instance()
+    fm = FileManager.get_instance()
 
     scan_files = get_folder_files_as_set(scan_dir)
     scan_tree = fm.list_tree_os_scandir_bfs(scan_dir)  # result is in the form of full path
@@ -247,10 +248,54 @@ def test_list_tree_os_scandir_bfs_tree_with_many_subfolders(setup_teardown):
     copy_files(range(2, 5), os.path.join(scan_dir, "sub2", "sub1"))
     copy_files(range(1, 5), os.path.join(scan_dir, "sub2", "sub2"))
 
-    fm = file_manager.FileManager.get_instance()
+    fm = FileManager.get_instance()
     scan_files = get_folder_files_as_set(scan_dir)
     scan_tree = fm.list_tree_os_scandir_bfs(scan_dir)  # result is in the form of full path
     assert set(scan_tree) == scan_files
+
+
+def test_file_manager_any_is_subfolder_of():
+    # Test case 1: one folder is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["C:\\Users\\user\\Desktop\\folder", "C:\\Users\\user\\Desktop\\folder\\subfolder"])
+    assert is_subfolder is True
+
+    # Test case 2: no folder is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2"])
+    assert is_subfolder is False
+
+    # Test case 3: one folder is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["/path/to/folder", "/path/to/folder/subfolder"])
+    assert is_subfolder is True
+
+    # Test case 4: no folder is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["/path/to/folder1", "/path/to/folder2"])
+    assert is_subfolder is False
+
+    # Test case 5: 3 folders, one is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["/path/to/folder1", "/path/to/folder2", "/path/to/folder2/subfolder"])
+    assert is_subfolder is True
+
+    # Test case 6: 3 folders, no folder is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["/path/to/folder1", "/path/to/folder2", "/path/to/folder3"])
+    assert is_subfolder is False
+
+    # Test case 7: 3 folders, one is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2",
+         "C:\\Users\\user\\Desktop\\folder2\\subfolder"])
+    assert is_subfolder is True
+
+    # Test case 8: 3 folders, no folder is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2",
+         "C:\\Users\\user\\Desktop\\folder3"])
+    assert is_subfolder is False
 
 
 def test_python_source_files():

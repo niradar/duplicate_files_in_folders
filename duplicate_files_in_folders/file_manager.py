@@ -3,7 +3,7 @@ import shutil
 import os
 import logging
 from collections import deque
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import tqdm
 
 logger = logging.getLogger(__name__)
@@ -309,6 +309,21 @@ class FileManager:
             progress_bar.close()
 
         return deleted_folders
+
+    @staticmethod
+    def any_is_subfolder_of(folders: List[str]) -> Tuple[bool, List[Tuple[str, str]]]:
+        """
+        Check if any folder is a subfolder of another folder.
+
+        :param folders: list of folder paths
+        :return: Tuple containing a boolean and a list of subfolder relationships
+        """
+        subfolder_pairs = []
+        for i in range(len(folders)):
+            for j in range(len(folders)):
+                if i != j and folders[i].startswith(folders[j]):
+                    subfolder_pairs.append((folders[i], folders[j]))
+        return bool(subfolder_pairs), subfolder_pairs
 
     def reset_all(self):
         """Reset the protected_dirs and allowed_dirs to empty sets."""

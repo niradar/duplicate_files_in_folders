@@ -18,20 +18,6 @@ def detect_pytest():
     return 'PYTEST_CURRENT_TEST' in os.environ
 
 
-def any_is_subfolder_of(folders: List[str]) -> bool:
-    """
-    Check if any folder is a subfolder of another folder.
-    :param folders: list of folder paths
-    :return: False if no folder is a subfolder of another folder, otherwise exit the script
-    """
-    for i in range(len(folders)):
-        for j in range(len(folders)):
-            if i != j and folders[i].startswith(folders[j]):
-                logger.error(f"{folders[i]} is a subfolder of {folders[j]}")
-                sys.exit(1)
-    return False
-
-
 def parse_size(size_str: str | int) -> int:
     """
     Parse a size string with units (B, KB, MB) to an integer size in bytes.
@@ -116,7 +102,14 @@ def validate_arguments(args, parser, check_folders=True):
                 parser.error(f"{name} folder does not exist.")
             if not os.listdir(folder):
                 parser.error(f"{name} folder is empty.")
-    any_is_subfolder_of([args.scan_dir, args.reference_dir, args.move_to])
+
+    is_subfolder, relationships = FileManager.any_is_subfolder_of([args.scan_dir, args.reference_dir, args.move_to])
+    if is_subfolder:
+        for subfolder, parent in relationships:
+            if subfolder != parent:
+                parser.error(f"{subfolder} is a subfolder of {parent}")
+            else:
+                parser.error(f"Several arguments are the same folder: {subfolder}")
 
     # for testing, barely used
     if args.extra_logging:

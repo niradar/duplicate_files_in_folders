@@ -1,8 +1,7 @@
 from duplicate_files_in_folders.duplicates_finder import clean_scan_dir_duplications, find_duplicates_files_v3, \
     process_duplicates
 from duplicate_files_in_folders.file_manager import FileManager
-from duplicate_files_in_folders.utils import parse_arguments, any_is_subfolder_of, parse_size, \
-    check_and_update_filename
+from duplicate_files_in_folders.utils import parse_arguments, parse_size, check_and_update_filename
 from duplicate_files_in_folders.initializer import setup_file_manager
 
 from tests.helpers_testing import *
@@ -118,7 +117,8 @@ def test_parse_arguments():
     assert excinfo.type == SystemExit
 
     with pytest.raises(SystemExit) as excinfo:  # invalid value for reference_dir - subfolder of scan_dir
-        parse_arguments(['--scan', scan_dir, '--reference_dir', os.path.join(scan_dir, 'subfolder'), '--move_to', move_to_folder], False)
+        parse_arguments(['--scan', scan_dir, '--reference_dir', os.path.join(scan_dir, 'subfolder'),
+                         '--move_to', move_to_folder], False)
     assert excinfo.type == SystemExit
 
     with pytest.raises(SystemExit) as excinfo:  # invalid value for reference_dir - subfolder of move_to
