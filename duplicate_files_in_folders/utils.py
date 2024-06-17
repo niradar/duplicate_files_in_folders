@@ -56,14 +56,12 @@ def parse_size(size_str: str | int) -> int:
     return int_value
 
 
-def parse_arguments(cust_args=None, check_folders=True):
+def initialize_arguments(cust_args=None):
     """
-    Parse command line arguments and validate them.
+    Initialize and parse command line arguments.
     :param cust_args: if not None, use these arguments instead of command line arguments
-    :param check_folders: for testing - if False, skip folder validation
     :return: the parsed arguments
     """
-    # Define the command line arguments
     parser = argparse.ArgumentParser(
         description="Identify duplicate files between scan and reference folders, "
                     "move duplicates from scan folder to a separate folder.")
@@ -96,12 +94,20 @@ def parse_arguments(cust_args=None, check_folders=True):
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)  # for testing
     parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
 
-    # add new argument for action that can get the following values: 'move_duplicates', 'create_csv' only as values
     parser.add_argument('--action', type=str, choices=['move_duplicates', 'create_csv'],
                         help='Action to perform: move_duplicates, create_csv', default='move_duplicates')
 
     args = parser.parse_args(cust_args if cust_args else None)
+    return args
 
+
+def validate_arguments(args, parser, check_folders=True):
+    """
+    Validate the parsed command line arguments.
+    :param args: the parsed arguments
+    :param parser: the argument parser
+    :param check_folders: for testing - if False, skip folder validation
+    """
     # Validate the folders given in the arguments
     if check_folders:
         folders = [(args.scan_dir, "Scan Folder"), (args.reference_dir, "Reference Folder")]
@@ -145,7 +151,19 @@ def parse_arguments(cust_args=None, check_folders=True):
     if args.min_size and args.max_size and args.min_size > args.max_size:
         parser.error("Minimum size must be less than maximum size.")
 
-    # Return the parsed arguments - at this point, they are valid
+
+def parse_arguments(cust_args=None, check_folders=True):
+    """
+    Parse and validate command line arguments.
+    :param cust_args: if not None, use these arguments instead of command line arguments
+    :param check_folders: for testing - if False, skip folder validation
+    :return: the parsed and validated arguments
+    """
+    parser = argparse.ArgumentParser(
+        description="Identify duplicate files between scan and reference folders, "
+                    "move duplicates from scan folder to a separate folder.")
+    args = initialize_arguments(cust_args)
+    validate_arguments(args, parser, check_folders)
     return args
 
 

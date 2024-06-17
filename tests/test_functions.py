@@ -82,7 +82,7 @@ def test_parse_arguments():
 
     with pytest.raises(SystemExit) as excinfo:
         parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
-                         '--ignore_diff', 'mdate,checkall'], False)
+                         '--ignore_diff', 'mdate,none'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
