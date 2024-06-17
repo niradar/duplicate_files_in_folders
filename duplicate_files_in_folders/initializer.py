@@ -38,15 +38,17 @@ def setup_logging():
         logger.addHandler(file_handler)
 
 
-def setup_hash_manager(args: Namespace):
+def setup_hash_manager(reference_dir: str = None, full_hash: bool = False, clear_cache: bool = False):
     """
-    Setup the hash manager with the reference directory and full hash setting from the arguments.
-    :param args: the parsed arguments
+    Setup the hash manager with the given reference directory and full hash setting.
+    :param reference_dir: the reference directory
+    :param full_hash: whether to use full hash
+    :param clear_cache: whether to clear the cache
     :return: the hash manager instance
     """
-    hash_manager = HashManager(reference_dir=args.reference_dir if not detect_pytest() else None,
-                               full_hash=args.full_hash)
-    if args.clear_cache:
+    hash_manager = HashManager(reference_dir=reference_dir if not detect_pytest() else None,
+                               full_hash=full_hash)
+    if clear_cache:
         hash_manager.clear_cache()
         hash_manager.save_data()
     return hash_manager

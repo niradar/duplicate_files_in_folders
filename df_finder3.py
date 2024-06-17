@@ -13,7 +13,7 @@ def main(args):
     fm = setup_file_manager(args)
     display_initial_config(args)
     confirm_script_execution(args)
-    hash_manager = setup_hash_manager(args)
+    hash_manager = setup_hash_manager(args.reference_dir, args.full_hash, args.clear_cache)
 
     duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, args.scan_dir, args.reference_dir)
 
