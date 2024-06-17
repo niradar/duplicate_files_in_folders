@@ -56,13 +56,13 @@ def initialize_arguments():
                         help='Copy file to all folders if found in multiple ref folders. Default is move file to the'
                              ' first folder.', default=False)
     parser.add_argument('--whitelist_ext', type=str, help='Comma-separated list of file extensions to '
-                        'whitelist (only these will be checked).')
+                                                          'whitelist (only these will be checked).')
     parser.add_argument('--blacklist_ext', type=str, help='Comma-separated list of file extensions to '
-                        'blacklist (these will not be checked).')
+                                                          'blacklist (these will not be checked).')
     parser.add_argument('--min_size', type=str, help='Minimum file size to check. Specify with units '
-                        '(B, KB, MB).', default=None)
+                                                     '(B, KB, MB).', default=None)
     parser.add_argument('--max_size', type=str, help='Maximum file size to check. Specify with units '
-                        '(B, KB, MB).', default=None)
+                                                     '(B, KB, MB).', default=None)
     parser.add_argument('--keep_empty_folders', dest='delete_empty_folders', action='store_false',
                         help='Do not delete empty folders in the scan_dir folder. Default is to delete.')
     parser.add_argument('--full_hash', action='store_true',
@@ -180,13 +180,25 @@ def copy_or_move_file(scan_file_path: str, destination_base_path: str, ref_file_
     return final_destination_path
 
 
-def check_and_update_filename(original_filename: str, renaming_function=lambda original_filename: f"{os.path.splitext(original_filename)[0]}_{int(time.time())}{os.path.splitext(original_filename)[1]}") -> str:
+def default_renaming_function(original_filename: str) -> str:
+    """
+    Default renaming function that appends the current timestamp to the filename.
+    :param original_filename: the original filename
+    :return: the new filename with the timestamp appended
+    """
+    return f"{os.path.splitext(original_filename)[0]}_{int(time.time())}{os.path.splitext(original_filename)[1]}"
+
+
+def check_and_update_filename(original_filename: str, renaming_function=None) -> str:
     """
     Check if the filename already exists and rename it to avoid overwriting.
     :param original_filename: the original filename
     :param renaming_function: function that receives the original filename and returns the new filename
     :return: the new filename if the original filename exists, otherwise the original filename
     """
+    if renaming_function is None:
+        renaming_function = default_renaming_function
+
     new_filename = original_filename
     if os.path.exists(original_filename):
         new_filename = renaming_function(original_filename)
