@@ -3,7 +3,7 @@ import pytest
 import os
 import shutil
 from duplicate_files_in_folders.hash_manager import HashManager
-from duplicate_files_in_folders.logging_config import setup_logging
+from duplicate_files_in_folders.initializer import setup_logging
 from duplicate_files_in_folders import file_manager
 
 logger = logging.getLogger(__name__)

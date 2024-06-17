@@ -266,7 +266,7 @@ def test_python_source_files():
     python_files = [str(file) for file in python_files if "__init__.py" not in str(file)]
     disallowed_functions = ["shutil.copy", "shutil.move", "shutil.rmtree", "os.makedirs", "os.rmdir", "os.remove"]
     exceptions_list = {  # allow these functions in these files
-        "logging_config.py": ["os.makedirs"]
+        "initializer.py": ["os.makedirs"]
     }
     for file in python_files:
         filename = file[file.rfind(os.sep) + 1:]

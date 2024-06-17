@@ -1,6 +1,11 @@
 import logging
 import os
+from argparse import Namespace
 from datetime import datetime
+
+from duplicate_files_in_folders.file_manager import FileManager
+from duplicate_files_in_folders.hash_manager import HashManager
+from duplicate_files_in_folders.utils import detect_pytest
 
 
 def setup_logging():
@@ -31,3 +36,27 @@ def setup_logging():
         file_handler = logging.FileHandler(log_filename)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
+
+
+def setup_hash_manager(args: Namespace):
+    """
+    Setup the hash manager with the reference directory and full hash setting from the arguments.
+    :param args: the parsed arguments
+    :return: the hash manager instance
+    """
+    hash_manager = HashManager(reference_dir=args.reference_dir if not detect_pytest() else None,
+                               full_hash=args.full_hash)
+    if args.clear_cache:
+        hash_manager.clear_cache()
+        hash_manager.save_data()
+    return hash_manager
+
+
+def setup_file_manager(args: Namespace):
+    """
+    Setup the file manager with the reference and scan directories and the move to directory from the arguments.
+    :param args: the parsed arguments
+    :return: the file manager instance
+    """
+    fm = FileManager.reset_file_manager([args.reference_dir], [args.scan_dir, args.move_to], args.run)
+    return fm

@@ -3,8 +3,8 @@
 
 from duplicate_files_in_folders.duplicates_finder import find_duplicates_files_v3, process_duplicates, \
     clean_scan_dir_duplications, create_csv_file
-from duplicate_files_in_folders.logging_config import setup_logging
-from duplicate_files_in_folders.utils import parse_arguments, setup_hash_manager, setup_file_manager
+from duplicate_files_in_folders.initializer import setup_logging, setup_hash_manager, setup_file_manager
+from duplicate_files_in_folders.utils import parse_arguments
 from duplicate_files_in_folders.utils_io import display_initial_config, output_results, confirm_script_execution
 
 

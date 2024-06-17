@@ -2,7 +2,8 @@ from duplicate_files_in_folders.duplicates_finder import clean_scan_dir_duplicat
     process_duplicates
 from duplicate_files_in_folders.file_manager import FileManager
 from duplicate_files_in_folders.utils import parse_arguments, any_is_subfolder_of, parse_size, \
-    check_and_update_filename, setup_file_manager
+    check_and_update_filename
+from duplicate_files_in_folders.initializer import setup_file_manager
 
 from tests.helpers_testing import *
 
