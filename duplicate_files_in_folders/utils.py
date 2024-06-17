@@ -40,11 +40,10 @@ def parse_size(size_str: str | int) -> int:
     return int_value
 
 
-def initialize_arguments(cust_args=None):
+def initialize_arguments():
     """
-    Initialize and parse command line arguments.
-    :param cust_args: if not None, use these arguments instead of command line arguments
-    :return: the parsed arguments
+    Initialize and return the argument parser.
+    :return: the argument parser
     """
     parser = argparse.ArgumentParser(
         description="Identify duplicate files between scan and reference folders, "
@@ -81,9 +80,7 @@ def initialize_arguments(cust_args=None):
                         help='Path - folder to compare with scan_dir.')
     parser.add_argument('--move_to', '--to', required=True, type=str,
                         help='Path - duplicate files from scan_dir will be moved to this folder.')
-
-    args = parser.parse_args(cust_args if cust_args else None)
-    return args
+    return parser
 
 
 def validate_arguments(args, parser, check_folders=True):
@@ -151,10 +148,8 @@ def parse_arguments(cust_args=None, check_folders=True):
     :param check_folders: for testing - if False, skip folder validation
     :return: the parsed and validated arguments
     """
-    parser = argparse.ArgumentParser(
-        description="Identify duplicate files between scan and reference folders, "
-                    "move duplicates from scan folder to a separate folder.")
-    args = initialize_arguments(cust_args)
+    parser = initialize_arguments()
+    args = parser.parse_args(cust_args if cust_args else None)
     validate_arguments(args, parser, check_folders)
     return args
 
