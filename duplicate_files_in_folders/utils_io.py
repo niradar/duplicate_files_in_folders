@@ -121,12 +121,14 @@ def output_results(args: Namespace, files_moved: int, files_created: int, delete
                  f"Cache hits: {hash_manager.persistent_cache_hits + hash_manager.temporary_cache_hits}"
     logger.debug(cache_hits)
 
+    files_left = len(scan_stats) - files_moved - duplicate_scan_files_moved
     # Detailed summary
     summary_lines = {
         'Scan Folder Files': f"{format_number_with_commas(len(scan_stats)) if scan_stats else 'N/A'} files",
         'Reference Folder Files': f"{format_number_with_commas(len(ref_stats)) if ref_stats else 'N/A'} files",
         'Files Moved': f"{format_number_with_commas(files_moved)} files",
         'Files Created': f"{format_number_with_commas(files_created)} copies",
+        'Left in Scan Folder': f"{format_number_with_commas(files_left)} files",
     }
 
     if duplicate_scan_files_moved:
