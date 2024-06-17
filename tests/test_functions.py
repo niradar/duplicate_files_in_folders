@@ -68,19 +68,19 @@ def test_parse_arguments():
     assert args.whitelist_ext == {'jpg'}
 
     # Test case 5: --ignore_diff argument with invalid values
-    with pytest.raises(SystemExit) as excinfo:
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for ignore_diff
         parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--ignore_diff', 'invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
-    with pytest.raises(SystemExit) as excinfo:
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for ignore_diff
         parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--ignore_diff', 'mdate,invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
-    with pytest.raises(SystemExit) as excinfo:
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for ignore_diff - none in addition to mdate
         parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--ignore_diff', 'mdate,none'], False)
     assert excinfo.type == SystemExit
@@ -90,23 +90,45 @@ def test_parse_arguments():
                             '--ignore_diff', 'none'], False)
     assert args.ignore_diff == set()
 
-    with pytest.raises(SystemExit) as excinfo:
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for min_size - invalid
         parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--min_size', 'invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
-    with pytest.raises(SystemExit) as excinfo:
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for max_size - invalid
         parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--max_size', 'invalid'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
 
-    with pytest.raises(SystemExit) as excinfo:
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for min_size - negative
         parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
                          '--min_size', '-10'], False)
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 2
+
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for max_size - negative
+        parse_arguments(['--scan', scan_dir, '--reference_dir', reference_dir, '--move_to', move_to_folder,
+                        '--max_size', '-10'], False)
+    assert excinfo.type == SystemExit
+
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for reference_dir - same as scan_dir
+        parse_arguments(['--scan', scan_dir, '--reference_dir', scan_dir, '--move_to', move_to_folder], False)
+    assert excinfo.type == SystemExit
+
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for reference_dir - subfolder of scan_dir
+        parse_arguments(['--scan', scan_dir, '--reference_dir', os.path.join(scan_dir, 'subfolder'), '--move_to', move_to_folder], False)
+    assert excinfo.type == SystemExit
+
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for reference_dir - subfolder of move_to
+        parse_arguments(['--scan', scan_dir, '--reference_dir', os.path.join(move_to_folder, 'subfolder'),
+                         '--move_to', move_to_folder], False)
+    assert excinfo.type == SystemExit
+
+    with pytest.raises(SystemExit) as excinfo:  # invalid value for reference_dir - same as move_to
+        parse_arguments(['--scan', scan_dir, '--reference_dir', move_to_folder, '--move_to', move_to_folder], False)
+    assert excinfo.type == SystemExit
 
 
 # Pytest test cases for check_and_update_filename function
@@ -118,46 +140,6 @@ def test_check_and_update_filename():
     # Test case 2: Test for a file that exists
     exist_file = 'tests/imgs/5.jpg'
     assert check_and_update_filename(exist_file) != exist_file
-
-
-def test_any_is_subfolder_of():
-    # Test case 1: one folder is subfolder of another
-    with pytest.raises(SystemExit) as excinfo:
-        any_is_subfolder_of(["C:\\Users\\user\\Desktop\\folder", "C:\\Users\\user\\Desktop\\folder\\subfolder"])
-    assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
-
-    # Test case 2: no folder is subfolder of another
-    assert any_is_subfolder_of(["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2"]) is False
-
-    # Test case 3: one folder is subfolder of another
-    with pytest.raises(SystemExit) as excinfo:
-        any_is_subfolder_of(["/path/to/folder", "/path/to/folder/subfolder"])
-    assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
-
-    # Test case 4: no folder is subfolder of another
-    assert any_is_subfolder_of(["/path/to/folder1", "/path/to/folder2"]) is False
-
-    # Test case 5: 3 folders, one is subfolder of another
-    with pytest.raises(SystemExit) as excinfo:
-        any_is_subfolder_of(["/path/to/folder1", "/path/to/folder2", "/path/to/folder2/subfolder"])
-    assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
-
-    # Test case 6: 3 folders, no folder is subfolder of another
-    assert any_is_subfolder_of(["/path/to/folder1", "/path/to/folder2", "/path/to/folder3"]) is False
-
-    # Test case 7: 3 folders, one is subfolder of another
-    with pytest.raises(SystemExit) as excinfo:
-        any_is_subfolder_of(["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2",
-                             "C:\\Users\\user\\Desktop\\folder2\\subfolder"])
-    assert excinfo.type == SystemExit
-    assert excinfo.value.code == 1
-
-    # Test case 8: 3 folders, no folder is subfolder of another
-    assert any_is_subfolder_of(["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2",
-                                "C:\\Users\\user\\Desktop\\folder3"]) is False
 
 
 def test_parse_size():
