@@ -41,7 +41,7 @@ def test_get_file_key(setup_teardown):
 
     # ignore none
     common_args = ["--scan", scan_dir, "--reference_dir", reference_dir, "--move_to", move_to_dir, "--run",
-                   "--ignore_diff", "checkall"]
+                   "--ignore_diff", "none"]
     args = parse_arguments(common_args)
     key = get_file_key(args, file_info['path'])
     # split key to hash and the rest
@@ -84,7 +84,7 @@ def test_find_duplicate_files_v3_same_scan_and_target(setup_teardown):
 
     # ignore none
     common_args = ["--scan", scan_dir, "--reference_dir", reference_dir, "--move_to", move_to_dir, "--run",
-                   "--ignore_diff", "checkall"]
+                   "--ignore_diff", "none"]
     args = parse_arguments(common_args)
     duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, scan_dir, reference_dir)
     assert len(duplicates) == 0
@@ -123,7 +123,7 @@ def test_find_duplicate_files_v3_different_scan_and_target(setup_teardown):
 
     # ignore none
     common_args = ["--scan", scan_dir, "--reference_dir", reference_dir, "--move_to", move_to_dir, "--run",
-                   "--ignore_diff", "checkall"]
+                   "--ignore_diff", "none"]
     args = parse_arguments(common_args)
     duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, scan_dir, reference_dir)
     assert len(duplicates) == 0
@@ -164,7 +164,7 @@ def test_find_duplicate_files_v3_unique_and_duplicate_files(setup_teardown):
 
     # ignore none
     common_args = ["--scan", scan_dir, "--reference_dir", reference_dir, "--move_to", move_to_dir, "--run",
-                   "--ignore_diff", "checkall"]
+                   "--ignore_diff", "none"]
     args = parse_arguments(common_args)
     duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, scan_dir, reference_dir)
     assert len(duplicates) == 0
@@ -201,7 +201,7 @@ def test_process_duplicates(setup_teardown):
     # ignore none
     # no need to reset the files
     common_args = ["--scan", scan_dir, "--reference_dir", reference_dir, "--move_to", move_to_dir, "--run",
-                   "--ignore_diff", "checkall"]
+                   "--ignore_diff", "none"]
     args = parse_arguments(common_args)
     duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, scan_dir, reference_dir)
     files_moved, files_created = process_duplicates(duplicates, args)

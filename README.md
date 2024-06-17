@@ -35,7 +35,7 @@ python df_finder3.py --scan_dir <scan_folder> --reference_dir <reference_folder>
 - `--reference_dir` or `--reference` or `--r`: (Required) Path to the folder where duplicates are searched for reference.
 - `--move_to` or `--to`: (Required) Path to the folder where duplicate files will be moved.
 - `--run`: Executes the script. If not specified, the script runs in test mode.
-- `--ignore_diff`: Comma-separated list of differences to ignore: `mdate`, `filename`, `checkall` (default is `mdate`).
+- `--ignore_diff`: Comma-separated list of differences to ignore: `mdate`, `filename`, `none` (default is `mdate`).
 - `--copy_to_all`: Copy file to all folders if found in multiple target folders (default is to move file to the first folder).
 - `--keep_empty_folders`: Keep empty folders after moving files. Default is `False`.
 - `--whitelist_ext`: Comma-separated list of extensions to include.
@@ -70,6 +70,10 @@ python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path
 #### Filtering by File Size
 ```sh
 python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --min_size 1MB --max_size 100MB --run
+```
+#### Ignore none of the differences
+```sh
+python df_finder3.py --s /path/to/scan_dir --r /path/to/reference_dir --to /path/to/move_to --ignore_diff none --run
 ```
 
 ## Installation

@@ -75,7 +75,7 @@ def parse_arguments(cust_args=None, check_folders=True):
                         help='Path - duplicate files from scan_dir will be moved to this folder.')
     parser.add_argument('--run', action='store_true', help='Run without test mode. Default is test mode.')
     parser.add_argument('--ignore_diff', type=str, help='Comma-separated list of differences to ignore: '
-                                                        'mdate, filename, checkall. Default is ignore mdate.',
+                                                        'mdate, filename, none. Default is ignore mdate.',
                         default='mdate')
     parser.add_argument('--copy_to_all', action='store_true',
                         help='Copy file to all folders if found in multiple ref folders. Default is move file to the'
@@ -118,11 +118,11 @@ def parse_arguments(cust_args=None, check_folders=True):
 
     # Validate the ignore_diff setting
     args.ignore_diff = set(str(args.ignore_diff).split(','))
-    if not args.ignore_diff.issubset({'mdate', 'filename', 'checkall'}):
-        parser.error("Invalid ignore_diff setting: must be 'mdate', 'filename' or 'checkall'.")
-    if 'checkall' in args.ignore_diff:
+    if not args.ignore_diff.issubset({'mdate', 'filename', 'none'}):
+        parser.error("Invalid ignore_diff setting: must be 'mdate', 'filename' or 'none'.")
+    if 'none' in args.ignore_diff:
         if len(args.ignore_diff) > 1:
-            parser.error("Invalid ignore_diff setting: checkall cannot be used with other settings.")
+            parser.error("Invalid ignore_diff setting: none cannot be used with other settings.")
         args.ignore_diff = set()
 
     # Convert whitelist and blacklist to sets and check for mutual exclusivity
