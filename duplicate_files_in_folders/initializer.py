@@ -14,7 +14,6 @@ def setup_logging():
     Only errors (and above) are logged to the console.
     :return: None
     """
-    is_test = 'PYTEST_CURRENT_TEST' in os.environ
     formatter = logging.Formatter('[%(levelname)s]\t%(asctime)s:\t%(message)s')
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -24,7 +23,7 @@ def setup_logging():
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    if not is_test:
+    if not detect_pytest():
         # create logs folder if it doesn't exist
         base_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         logs_folder = os.path.join(base_folder, 'logs')
