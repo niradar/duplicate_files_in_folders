@@ -99,13 +99,8 @@ class FileManager:
         if not self.allowed_dirs:
             return True  # If allowed_dirs is an empty set, all paths are allowed
 
-        # resolve all path parents
-        path_parents = [p.resolve() for p in path.parents]
-
-        logger.debug(f"path: {path}, path_parents: {path_parents}, allowed_dirs: {self.allowed_dirs}")
-
         # True if the path is in any of the allowed directories
-        return any(path == allowed_dir or allowed_dir in path_parents for allowed_dir in self.allowed_dirs)
+        return any(path == allowed_dir or allowed_dir in path.parents for allowed_dir in self.allowed_dirs)
 
     def move_file(self, src: str, dst: str) -> bool:
         """
