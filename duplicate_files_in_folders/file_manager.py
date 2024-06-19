@@ -102,6 +102,8 @@ class FileManager:
         # resolve all path parents
         path_parents = [p.resolve() for p in path.parents]
 
+        logger.debug(f"path: {path}, path_parents: {path_parents}, allowed_dirs: {self.allowed_dirs}")
+
         # True if the path is in any of the allowed directories
         return any(path == allowed_dir or allowed_dir in path_parents for allowed_dir in self.allowed_dirs)
 
