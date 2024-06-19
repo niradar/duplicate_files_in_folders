@@ -152,62 +152,60 @@ class FileManager:
             logger.info(f"Would have copied {src_to_dst}")
         return True
 
-    def delete_file(self, file_path: str) -> bool:
+    def _perform_single_file_operation(self, path: str | Path, operation: str, operation_text: str):
         """
-        Delete a file
-        :param file_path: path to the file
-        :return: True if the file was deleted successfully
-        :raises: ProtectedPathError if the file path is in a protected directory
+        Perform a single file operation (delete, make_dirs, rmdir) with error handling for protected paths.
+
+        :param operation: The operation to perform ('delete', 'make_dirs', 'rmdir').
+        :param path: Path to the file or directory.
+        :raises: ProtectedPathError if the path is in a protected directory.
+        :raises: ValueError if the operation is invalid.
+        """
+        if self.is_protected_path(path):
+            raise ProtectedPathError(f"Operation not allowed: Attempt to {operation} protected path: {path}")
+
+        if self.run_mode:
+            if operation == 'delete':
+                os.remove(path)
+            elif operation == 'make_dirs':
+                os.makedirs(path, exist_ok=True)
+            elif operation == 'rmdir':
+                shutil.rmtree(path)
+            else:
+                raise ValueError(f"Invalid operation: {operation}")
+            logger.info(f"{operation_text.capitalize()} {path}")
+        else:
+            logger.info(f"Would have {operation_text} {path}")
+
+    def delete_file(self, file_path: str):
+        """
+        Delete a file.
+
+        :param file_path: Path to the file.
+        :raises: ProtectedPathError if the file path is in a protected directory.
         """
         file_path = Path(file_path).resolve()
+        self._perform_single_file_operation(file_path, 'delete', 'deleted')
 
-        if self.is_protected_path(file_path):
-            raise ProtectedPathError(f"Operation not allowed: Attempt to delete protected file: {file_path}")
-
-        if self.run_mode:
-            os.remove(file_path)
-            logger.info(f"Deleted {file_path}")
-        else:
-            logger.info(f"Would have deleted {file_path}")
-        return True
-
-    def make_dirs(self, dir_path: str) -> bool:
+    def make_dirs(self, dir_path: str):
         """
-        Create a directory
-        :param dir_path: path to the directory(s) to create
-        :return: True if the directory was created successfully
-        :raises: ProtectedPathError if the directory path is in a protected directory
+        Create a directory.
+
+        :param dir_path: Path to the directory(s) to create.
+        :raises: ProtectedPathError if the directory path is in a protected directory.
         """
         dir_path = Path(dir_path).resolve()
+        self._perform_single_file_operation(dir_path, 'make_dirs', 'created directory')
 
-        if self.is_protected_path(dir_path):
-            raise ProtectedPathError(f"Operation not allowed: Attempt to create directory in protected path: "
-                                     f"{dir_path}")
-        if self.run_mode:
-            os.makedirs(dir_path, exist_ok=True)
-            logger.info(f"Created directory {dir_path}")
-        else:
-            logger.info(f"Would have created directory {dir_path}")
-        return True
-
-    def rmdir(self, dir_path: str) -> bool:
+    def rmdir(self, dir_path: str):
         """
-        Delete a directory
-        :param dir_path: path to the directory(s) to delete
-        :return: True if the directory was deleted successfully
-        :raises: ProtectedPathError if the directory path is in a protected directory
+        Delete a directory.
+
+        :param dir_path: Path to the directory(s) to delete.
+        :raises: ProtectedPathError if the directory path is in a protected directory.
         """
         dir_path = Path(dir_path).resolve()
-
-        if self.is_protected_path(dir_path):
-            raise ProtectedPathError(f"Operation not allowed: Attempt to delete protected directory: {dir_path}")
-
-        if self.run_mode:
-            shutil.rmtree(dir_path)
-            logger.info(f"Deleted directory {dir_path}")
-        else:
-            logger.info(f"Would have deleted directory {dir_path}")
-        return True
+        self._perform_single_file_operation(dir_path, 'rmdir', 'deleted directory')
 
     @staticmethod
     def get_file_info(file_path: str) -> Dict:
