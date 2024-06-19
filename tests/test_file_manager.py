@@ -298,6 +298,30 @@ def test_file_manager_any_is_subfolder_of():
     assert is_subfolder is False
 
 
+def test_file_manager_is_allowed_path():
+    fm = FileManager(True).reset_all()
+    fm.add_protected_dir("C:\\Users\\user\\Desktop\\folder")
+    fm.add_protected_dir("C:\\Users\\user\\Desktop\\folder1")
+    fm.add_allowed_dir("C:\\Users\\user\\Desktop\\folder2")
+
+    # Test case 1: protected path
+    assert not fm.is_allowed_path("C:\\Users\\user\\Desktop\\folder\\subfolder")
+
+    # Test case 2: protected path
+    assert not fm.is_allowed_path("C:\\Users\\user\\Desktop\\folder1\\subfolder")
+
+    # Test case 3: allowed path
+    assert fm.is_allowed_path("C:\\Users\\user\\Desktop\\folder2\\subfolder")
+
+    # Test case 4: non-protected path - should be disallowed as allowed directories are set
+    assert not fm.is_allowed_path("C:\\Users\\user\\Desktop\\folder3\\subfolder")
+
+    fm = FileManager(True).reset_all()
+    # Test case 5: no protected or allowed directories set - all paths should be allowed
+    assert fm.is_allowed_path("C:\\Users\\user\\Desktop\\folder3\\subfolder")
+    assert not fm.is_protected_path("C:\\Users\\user\\Desktop\\folder3\\subfolder")
+
+
 def test_python_source_files():
     """
     Test all python files in the project under duplicate_files_in_folders folder. Make sure that all python files

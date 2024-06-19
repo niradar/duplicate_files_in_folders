@@ -84,9 +84,23 @@ class FileManager:
             raise FileManagerError("Protected directories not set")
 
         # True if the path is in any of the protected directories or if it is not in any of the allowed directories
-        return any(path == protected_dir or protected_dir in path.parents for protected_dir in self.protected_dirs) or \
-                  (self.allowed_dirs and not any(path == allowed_dir or allowed_dir in path.parents for allowed_dir
-                                                 in self.allowed_dirs))
+        # use is_allowed_path instead of the second condition to avoid a circular dependency
+        return any(path == protected_dir or protected_dir in path.parents for protected_dir in self.protected_dirs) \
+            or not self.is_allowed_path(path)
+
+    def is_allowed_path(self, path: str | Path) -> bool:
+        """
+        Check if a path is in an allowed directory or in a subdirectory of an allowed directory
+        If allowed_dirs is empty, all paths are allowed
+        :param path: path to check
+        :return: True if the path is in an allowed directory or in a subdirectory of an allowed directory
+        """
+        path = Path(path).resolve()
+        if not self.allowed_dirs:
+            return True  # If allowed_dirs is an empty set, all paths are allowed
+
+        # True if the path is in any of the allowed directories
+        return any(path == allowed_dir or allowed_dir in path.parents for allowed_dir in self.allowed_dirs)
 
     def move_file(self, src: str, dst: str) -> bool:
         """
@@ -126,6 +140,9 @@ class FileManager:
         if self.is_protected_path(dst_path):
             raise ProtectedPathError(
                 f"Operation not allowed: Attempt to copy file to protected directory: {src} -> {dst}")
+        if not self.is_allowed_path(src_path):
+            raise ProtectedPathError(
+                f"Operation not allowed: Attempt to copy file from disallowed directory: {src} -> {dst}")
 
         src_to_dst = f"{src_path} to {dst_path}"
         if self.run_mode:
@@ -323,6 +340,7 @@ class FileManager:
         :param folders: list of folder paths
         :return: Tuple containing a boolean and a list of subfolder relationships
         """
+        folders = [str(Path(folder).resolve()) for folder in folders]
         subfolder_pairs = []
         for i in range(len(folders)):
             for j in range(len(folders)):
