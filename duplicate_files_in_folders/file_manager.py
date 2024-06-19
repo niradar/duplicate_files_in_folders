@@ -199,10 +199,12 @@ class FileManager:
         :param file_path: path to the file
         :return: dictionary with file information
         """
+        file_path = Path(file_path).resolve()
+
         stats = os.stat(file_path)
         return {
-            'path': file_path,
-            'name': os.path.basename(file_path),
+            'path': str(file_path),
+            'name': file_path.name,
             'size': stats.st_size,
             'modified_time': stats.st_mtime,
             'created_time': stats.st_ctime
@@ -216,6 +218,7 @@ class FileManager:
         :param raise_on_permission_error: if True, raise a PermissionError if a directory cannot be accessed
         :return: generator of file paths
         """
+        directory = str(Path(directory).resolve())  # use the absolute path, but convert it to a string to avoid issues
         queue = deque([directory])
         while queue:
             current_dir = queue.popleft()
@@ -235,13 +238,15 @@ class FileManager:
     @staticmethod
     def get_files_and_stats(directory: str | Path, raise_on_permission_error: bool = False) -> List[Dict]:
         """
-        Get file information for all files in a directory and its subdirectories. Optimized for speed.
+        Get file information for all files in a directory and its subdirectories. Optimized for speed by not using
+        generators and returning a list of dictionaries with file information.
         :param directory: path to the directory
         :param raise_on_permission_error: if True, raise a PermissionError if a directory cannot be accessed
         :return: list of dictionaries with file information
         :raises: PermissionError if a directory cannot be accessed and raise_on_permission_error is True
         """
         files_stats = []
+        directory = str(Path(directory).resolve())  # use the absolute path, but convert it to a string to avoid issues
         queue = deque([directory])
         while queue:
             current_dir = queue.popleft()
