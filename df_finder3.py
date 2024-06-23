@@ -5,7 +5,8 @@ from duplicate_files_in_folders.duplicates_finder import find_duplicates_files_v
     clean_scan_dir_duplications, create_csv_file
 from duplicate_files_in_folders.initializer import setup_logging, setup_hash_manager, setup_file_manager
 from duplicate_files_in_folders.utils import parse_arguments
-from duplicate_files_in_folders.utils_io import display_initial_config, output_results, confirm_script_execution
+from duplicate_files_in_folders.utils_io import display_initial_config, output_results, confirm_script_execution, \
+    output_csv_file_creation_results
 
 
 def main(args):
@@ -27,6 +28,7 @@ def main(args):
     elif args.action == 'create_csv':
         # Always run in run mode as it creates a file and maybe a folder.
         fm.with_run_mode(create_csv_file, args, duplicates)
+        output_csv_file_creation_results(args, duplicates, scan_stats, ref_stats)
 
     hash_manager.save_data()
 

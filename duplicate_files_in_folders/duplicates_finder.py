@@ -199,6 +199,15 @@ def process_duplicates(combined: Dict, args: Namespace) -> (int, int):
     return files_moved, files_created
 
 
+def get_csv_file_path(args: Namespace) -> str:
+    """
+    Get the path of the CSV file to create.
+    :param args: parsed arguments
+    :return: the path of the CSV file
+    """
+    return str(os.path.join(args.move_to, os.path.basename(args.scan_dir) + "_dups.csv"))
+
+
 def create_csv_file(args: Namespace, combined: Dict) -> None:
     """
     Create a CSV file with the duplicate files' information.
@@ -206,7 +215,7 @@ def create_csv_file(args: Namespace, combined: Dict) -> None:
     :param combined: the dictionary of duplicates returned by find_duplicates_files_v3
     :return: number of files moved
     """
-    csv_file = os.path.join(args.move_to, os.path.basename(args.scan_dir) + "_dups.csv")
+    csv_file = get_csv_file_path(args)
     if not os.path.exists(args.move_to):
         FileManager.get_instance().make_dirs(args.move_to)
 
@@ -220,7 +229,6 @@ def create_csv_file(args: Namespace, combined: Dict) -> None:
                 for file in files:
                     writer.writerow([key, file['path'], file['size'], datetime.fromtimestamp(file['modified_time'])])
             key += 1
-
 
 
 def clean_scan_dir_duplications(args: Namespace, combined: Dict) -> int:

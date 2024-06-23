@@ -2,6 +2,7 @@ import logging
 import sys
 from argparse import Namespace
 
+from duplicate_files_in_folders.duplicates_finder import get_csv_file_path
 from duplicate_files_in_folders.hash_manager import HashManager
 from duplicate_files_in_folders.utils import detect_pytest
 
@@ -108,18 +109,6 @@ def output_results(args: Namespace, files_moved: int, files_created: int, delete
     :return: None
     """
     summary_header = "Summary (Test Mode):" if not args.run else "Summary:"
-    separator = "-" * max(len(summary_header), 40)
-    fixed_width = 25
-
-    # Header
-    log_and_print("")
-    log_and_print(summary_header)
-    log_and_print(separator)
-    hash_manager = HashManager.get_instance()
-    # Cache hits information
-    cache_hits = f"Hash requests: {hash_manager.persistent_cache_requests + hash_manager.temporary_cache_requests}, " \
-                 f"Cache hits: {hash_manager.persistent_cache_hits + hash_manager.temporary_cache_hits}"
-    logger.debug(cache_hits)
 
     files_left = len(scan_stats) - files_moved - duplicate_scan_files_moved
     # Detailed summary
@@ -137,6 +126,44 @@ def output_results(args: Namespace, files_moved: int, files_created: int, delete
     if deleted_scan_folders:
         summary_lines['Empty Folders Deleted'] = f"{deleted_scan_folders} empty folders in the scan folder"
 
+    common_output_results(summary_header, summary_lines)
+
+
+def output_csv_file_creation_results(args: Namespace, combined_duplicates: dict, scan_stats=None, ref_stats=None):
+    """ Output the results of the CSV file creation.
+    :param args: The parsed arguments
+    :param combined_duplicates: The combined duplicates dictionary
+    :param scan_stats: Output of get_files_and_stats() for the scan folder
+    :param ref_stats: Output of get_files_and_stats() for the reference folder
+    """
+    summary_header = "CSV File Creation Summary:"
+
+    # Detailed summary
+    summary_lines = {
+        'CSV File Path': get_csv_file_path(args),
+        'Scan Folder Files': f"{format_number_with_commas(len(scan_stats)) if scan_stats else 'N/A'} files",
+        'Reference Folder Files': f"{format_number_with_commas(len(ref_stats)) if ref_stats else 'N/A'} files",
+        'Total Duplicate Files': len(combined_duplicates),
+    }
+
+    common_output_results(summary_header, summary_lines)
+
+
+def common_output_results(title: str, summary_lines: dict):
+    """ Output the common results of the script execution.
+    :param title: The title of the summary.
+    :param summary_lines: Summary lines to output.
+    """
+    summary_header = f"{title}:"
+    separator = "-" * max(len(summary_header), 40)
+    fixed_width = 25
+
+    # Header
+    log_and_print("")
+    log_and_print(summary_header)
+    log_and_print(separator)
+
+    # Detailed summary
     for key, value in summary_lines.items():
         log_and_print(f"{key.ljust(fixed_width)}: {value}")
 
