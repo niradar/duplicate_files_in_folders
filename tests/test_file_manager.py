@@ -254,7 +254,37 @@ def test_list_tree_os_scandir_bfs_tree_with_many_subfolders(setup_teardown):
     assert set(scan_tree) == scan_files
 
 
-def test_file_manager_any_is_subfolder_of():
+@pytest.mark.skipif(os.name == 'nt', reason="Test is only for Linux paths")
+def test_file_manager_any_is_subfolder_of_linux():
+
+    # Test case 1: one folder is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["/path/to/folder", "/path/to/folder/subfolder"])
+    assert is_subfolder is True
+
+    # Test case 2: no folder is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["/path/to/folder1", "/path/to/folder2"])
+    assert is_subfolder is False
+
+    # Test case 3: 3 folders, one is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["/path/to/folder1", "/path/to/folder2", "/path/to/folder2/subfolder"])
+    assert is_subfolder is True
+
+    # Test case 4: 3 folders, no folder is subfolder of another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["/path/to/folder1", "/path/to/folder2", "/path/to/folder3"])
+    assert is_subfolder is False
+
+    # test case 5: one folder starts with another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["/path/to/folder1", "/path/to/folder11"])
+    assert is_subfolder is False
+
+
+@pytest.mark.skipif(os.name != 'nt', reason="Test is only for Windows paths")
+def test_file_manager_any_is_subfolder_of_windows():
     # Test case 1: one folder is subfolder of another
     is_subfolder, relationships = FileManager.any_is_subfolder_of(
         ["C:\\Users\\user\\Desktop\\folder", "C:\\Users\\user\\Desktop\\folder\\subfolder"])
@@ -265,39 +295,19 @@ def test_file_manager_any_is_subfolder_of():
         ["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2"])
     assert is_subfolder is False
 
-    # Test case 3: one folder is subfolder of another
-    is_subfolder, relationships = FileManager.any_is_subfolder_of(
-        ["/path/to/folder", "/path/to/folder/subfolder"])
-    assert is_subfolder is True
-
-    # Test case 4: no folder is subfolder of another
-    is_subfolder, relationships = FileManager.any_is_subfolder_of(
-        ["/path/to/folder1", "/path/to/folder2"])
-    assert is_subfolder is False
-
-    # Test case 5: 3 folders, one is subfolder of another
-    is_subfolder, relationships = FileManager.any_is_subfolder_of(
-        ["/path/to/folder1", "/path/to/folder2", "/path/to/folder2/subfolder"])
-    assert is_subfolder is True
-
-    # Test case 6: 3 folders, no folder is subfolder of another
-    is_subfolder, relationships = FileManager.any_is_subfolder_of(
-        ["/path/to/folder1", "/path/to/folder2", "/path/to/folder3"])
-    assert is_subfolder is False
-
-    # Test case 7: 3 folders, one is subfolder of another
+    # Test case 3: 3 folders, one is subfolder of another
     is_subfolder, relationships = FileManager.any_is_subfolder_of(
         ["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2",
          "C:\\Users\\user\\Desktop\\folder2\\subfolder"])
     assert is_subfolder is True
 
-    # Test case 8: 3 folders, no folder is subfolder of another
+    # Test case 4: 3 folders, no folder is subfolder of another
     is_subfolder, relationships = FileManager.any_is_subfolder_of(
         ["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder2",
          "C:\\Users\\user\\Desktop\\folder3"])
     assert is_subfolder is False
 
-    # test case 9: one folder starts with another
+    # test case 5: one folder starts with another
     is_subfolder, relationships = FileManager.any_is_subfolder_of(
         ["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder11"])
     assert is_subfolder is False
