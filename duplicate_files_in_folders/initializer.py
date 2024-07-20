@@ -32,7 +32,7 @@ def setup_logging():
 
         # Get the current time when the script starts
         log_filename = os.path.join(logs_folder, f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
-        file_handler = logging.FileHandler(log_filename)
+        file_handler = logging.FileHandler(log_filename, encoding='utf-8')
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
