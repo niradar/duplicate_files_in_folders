@@ -342,7 +342,7 @@ class FileManager:
         subfolder_pairs = []
         for i in range(len(folders)):
             for j in range(len(folders)):
-                if i != j and folders[i].startswith(folders[j]):
+                if i != j and (folders[i].startswith(folders[j] + os.sep) or folders[i] == folders[j]):
                     subfolder_pairs.append((folders[i], folders[j]))
         return bool(subfolder_pairs), subfolder_pairs
 

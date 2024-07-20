@@ -297,6 +297,11 @@ def test_file_manager_any_is_subfolder_of():
          "C:\\Users\\user\\Desktop\\folder3"])
     assert is_subfolder is False
 
+    # test case 9: one folder starts with another
+    is_subfolder, relationships = FileManager.any_is_subfolder_of(
+        ["C:\\Users\\user\\Desktop\\folder1", "C:\\Users\\user\\Desktop\\folder11"])
+    assert is_subfolder is False
+
 
 def test_file_manager_is_allowed_path(setup_teardown):
     scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
