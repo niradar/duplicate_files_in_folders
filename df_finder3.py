@@ -16,7 +16,8 @@ def main(args):
     confirm_script_execution(args)
     hash_manager = setup_hash_manager(args.reference_dir, args.full_hash, args.clear_cache)
 
-    duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, args.scan_dir, args.reference_dir)
+    duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, args.scan_dir, args.reference_dir,
+                                                                 output_progress=True)
 
     if args.action == 'move_duplicates':
         files_moved, files_created = process_duplicates(duplicates, args)

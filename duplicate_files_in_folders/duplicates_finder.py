@@ -126,17 +126,22 @@ def aggregate_duplicate_candidates(potential_duplicates: List[Dict], combined: D
     return combined
 
 
-def find_duplicates_files_v3(args: Namespace, scan_dir: str, ref_dir: str) -> (Dict, List[Dict], List[Dict]):
+def find_duplicates_files_v3(args: Namespace, scan_dir: str, ref_dir: str, output_progress=False) \
+        -> (Dict, List[Dict], List[Dict]):
     """
      Find duplicate files between scan_dir and ref directories.
      Returns a dictionary of duplicates and the file stats for both directories.
     :param args: parsed arguments
     :param scan_dir: the directory to scan for duplicates
     :param ref_dir: the reference directory
+    :param output_progress: whether to output progress
     :return: a dictionary of duplicates, the file stats for the scan directory, and the file stats for the reference directory
              Dictionary format: {file_key: {'scan': [file_info], 'ref': [file_info]}}
     """
     hash_manager = HashManager.get_instance()
+
+    if output_progress:
+        print(f"Scanning directories for duplicates: {scan_dir} and {ref_dir}")
 
     # Get the file stats for both directories and filter them based on the arguments
     scan_stats = filter_files_by_args(args, FileManager.get_files_and_stats(scan_dir))
@@ -145,6 +150,13 @@ def find_duplicates_files_v3(args: Namespace, scan_dir: str, ref_dir: str) -> (D
     # Use bloom filters to find potential duplicates between the two directories
     potential_scan_duplicates = find_potential_duplicates(ref_stats, scan_stats, args.ignore_diff)
     potential_ref_duplicates = find_potential_duplicates(scan_stats, ref_stats, args.ignore_diff)
+
+    if output_progress:
+        print(f"Found {len(potential_scan_duplicates)} potential duplicates in the scan directory out of " +
+              f"{len(scan_stats)} files.")
+        print(f"Found {len(potential_ref_duplicates)} potential duplicates in the reference directory out of " +
+              f"{len(ref_stats)} files.")
+        print("Aggregating potential duplicates...")
 
     # Aggregate the potential duplicates into one dictionary
     combined = {}
