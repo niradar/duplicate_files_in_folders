@@ -37,7 +37,10 @@ def display_initial_config(args: Namespace):
         config_items["File Types (Blacklist)"] = ', '.join(args.blacklist_ext)
 
     if not args.delete_empty_folders:
-        config_items["Empty Folders"] = "Do Not Delete Empty Folders in Scan Folder"
+        config_items["Empty Folders"] = "Do not delete empty folders in Scan folder"
+
+    if args.copy_to_all:
+        config_items["Additional Settings"] = "Copy duplicate files to all folders"
 
     config_items["Script Mode"] = (
         "Create CSV File" if args.action == 'create_csv' else
