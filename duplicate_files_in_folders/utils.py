@@ -67,6 +67,8 @@ def initialize_arguments():
                         help='Do not delete empty folders in the scan_dir folder. Default is to delete.')
     parser.add_argument('--full_hash', action='store_true',
                         help='Use full file hash for comparison. Default is partial.')
+    parser.add_argument('--keep_structure', action='store_true',
+                        help='Keep the original scan folder structure in the destination folder.')
     parser.set_defaults(delete_empty_folders=True)
     parser.add_argument('--clear_cache', action='store_true', help=argparse.SUPPRESS)  # for testing
     parser.add_argument('--extra_logging', action='store_true', help=argparse.SUPPRESS)  # for testing
@@ -155,7 +157,7 @@ def parse_arguments(cust_args=None, check_folders=True):
 
 
 def copy_or_move_file(scan_file_path: str, destination_base_path: str, ref_file_path: str, base_ref_path: str,
-                      move: bool = True) -> str:
+                      move: bool = True, keep_structure: bool = False) -> str:
     """
     Copy or move a file from the scan directory to the destination directory based on the reference file path.
     :param scan_file_path: Full path of the file we want to copy/move
@@ -167,7 +169,10 @@ def copy_or_move_file(scan_file_path: str, destination_base_path: str, ref_file_
     :param move: True to move the file, False to copy it
     :return: the final destination path
     """
-    destination_path = os.path.join(destination_base_path, os.path.relpath(ref_file_path, base_ref_path))
+    if keep_structure:
+        destination_path = os.path.join(destination_base_path, os.path.relpath(scan_file_path, base_ref_path))
+    else:
+        destination_path = os.path.join(destination_base_path, os.path.relpath(ref_file_path, base_ref_path))
     destination_dir = os.path.dirname(destination_path)
     file_manager = FileManager.get_instance()
     if not os.path.exists(destination_dir):
