@@ -167,6 +167,7 @@ def copy_or_move_file(scan_file_path: str, destination_base_path: str, ref_file_
     :param base_ref_path: The base directory path of the reference files.
                           This is used to calculate the relative path of the ref_file_path.
     :param move: True to move the file, False to copy it
+    :param keep_structure: True to keep the original scan folder structure in the destination folder, False otherwise
     :return: the final destination path
     """
     if keep_structure:
