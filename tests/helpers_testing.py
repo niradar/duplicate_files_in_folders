@@ -46,9 +46,11 @@ def get_folder_path(folder):
     return res[:-1]
 
 
-def copy_files(file_numbers, src_dir):
+def copy_files(file_numbers, src_dir, base_dir=None):
+    if base_dir is None:
+        base_dir = IMG_DIR
     for file_number in file_numbers:
-        src_file = os.path.join(IMG_DIR, f"{file_number}.jpg")
+        src_file = os.path.join(base_dir, f"{file_number}.jpg")
         dst_file = os.path.join(src_dir, f"{file_number}.jpg")
         shutil.copy(src_file, dst_file)
 
