@@ -79,9 +79,11 @@ def setup_teardown():
     shutil.rmtree(TEMP_DIR)
 
 
-def setup_test_files(scan_files, ref_files):
-    copy_files(scan_files, os.path.join(TEMP_DIR, SCAN_DIR_NAME))
-    copy_files(ref_files, os.path.join(TEMP_DIR, REF_DIR_NAME))
+def setup_test_files(scan_files, ref_files, base_dir=None):
+    if base_dir is None:
+        base_dir = TEMP_DIR
+    copy_files(scan_files, os.path.join(base_dir, SCAN_DIR_NAME))
+    copy_files(ref_files, os.path.join(base_dir, REF_DIR_NAME))
 
 
 def get_folder_structure_include_subfolders(folder):
