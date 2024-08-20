@@ -244,3 +244,28 @@ def test_process_duplicates(setup_teardown):
     files_moved, files_created = process_duplicates(duplicates, args)
     assert files_created == 0
     assert files_moved == 5
+
+
+def test_process_duplicates_keep_structure(setup_teardown):
+    scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
+    os.makedirs(os.path.join(scan_dir, "subfolder"))
+    setup_test_files(range(1, 6), [])
+    setup_test_files(range(6, 11), [], subfolder="subfolder")
+    time.sleep(0.1)  # sleep to make sure the modified date is different
+    setup_test_files([], range(1, 11))
+
+    common_args = ["--scan", scan_dir, "--reference_dir", reference_dir, "--move_to", move_to_dir, "--run",
+                   "--keep_structure"]
+    args = parse_arguments(common_args)
+    duplicates, scan_stats, ref_stats = find_duplicates_files_v3(args, scan_dir, reference_dir)
+    files_moved, files_created = process_duplicates(duplicates, args)
+
+    assert files_created == 0
+    assert files_moved == 10
+
+    print_all_folders(scan_dir, reference_dir, move_to_dir)
+    assert os.path.exists(os.path.join(move_to_dir, "subfolder", "6.jpg"))
+    assert os.path.exists(os.path.join(move_to_dir, "subfolder", "7.jpg"))
+    assert os.path.exists(os.path.join(move_to_dir, "subfolder", "8.jpg"))
+    assert os.path.exists(os.path.join(move_to_dir, "subfolder", "9.jpg"))
+    assert os.path.exists(os.path.join(move_to_dir, "subfolder", "10.jpg"))
