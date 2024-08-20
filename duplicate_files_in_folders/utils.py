@@ -157,9 +157,10 @@ def parse_arguments(cust_args=None, check_folders=True):
 
 
 def copy_or_move_file(scan_file_path: str, destination_base_path: str, ref_file_path: str, base_ref_path: str,
-                      move: bool = True, keep_structure: bool = False) -> str:
+                      move: bool = True, keep_structure: bool = False, scan_base_path: str = None) -> str:
     """
     Copy or move a file from the scan directory to the destination directory based on the reference file path.
+    :param scan_base_path: The base path of the scan directory. Required if keep_structure is True.
     :param scan_file_path: Full path of the file we want to copy/move
     :param ref_file_path: The full path to the reference file within the base reference directory.
                           This path is used to determine the relative path for the destination.
@@ -171,9 +172,13 @@ def copy_or_move_file(scan_file_path: str, destination_base_path: str, ref_file_
     :return: the final destination path
     """
     if keep_structure:
-        destination_path = os.path.join(destination_base_path, os.path.relpath(scan_file_path, base_ref_path))
+        if scan_base_path is None:
+            raise ValueError("scan_base_path must be provided if keep_structure is True.")
+        sub_path = os.path.relpath(scan_file_path, scan_base_path)
+        destination_path = os.path.join(destination_base_path, sub_path)
     else:
         destination_path = os.path.join(destination_base_path, os.path.relpath(ref_file_path, base_ref_path))
+    logger.debug(f"Copying {scan_file_path} to {destination_path}")
     destination_dir = os.path.dirname(destination_path)
     file_manager = FileManager.get_instance()
     if not os.path.exists(destination_dir):
