@@ -248,7 +248,7 @@ def test_process_duplicates_keep_structure(setup_teardown):
     scan_dir, reference_dir, move_to_dir, common_args = setup_teardown
     os.makedirs(os.path.join(scan_dir, "subfolder"))
     setup_test_files(range(1, 6), [])
-    setup_test_files(range(6, 11), [], base_dir=os.path.join(scan_dir, "subfolder"))
+    setup_test_files(range(6, 11), [])
     time.sleep(0.1)  # sleep to make sure the modified date is different
     setup_test_files([], range(1, 11))
 
